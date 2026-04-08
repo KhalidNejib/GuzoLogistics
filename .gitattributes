@@ -1,0 +1,3 @@
+# Direct PNPM and Git to treat the lockfile as a binary-like file 
+# to prevent line-ending corruption on Windows.
+pnpm-lock.yaml binary lockfile
