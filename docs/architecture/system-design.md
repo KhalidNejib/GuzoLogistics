@@ -1,9 +1,11 @@
 # System Design: Delivery Tracking Flow
 
 ## Overview
+
 This document outlines the architecture and data flow for the real-time delivery tracking system, engineered for high availability and low latency on a zero-budget/free tier stack (Vercel, Render, MongoDB Atlas, Redis Cloud).
 
 ## High-Level Architecture Components
+
 1. **API/WebSocket Server**: Node.js + Express + Socket.io (Hosted on Render for persistent WebSocket connections).
 2. **Web Dashboard**: React (Vite) + Tailwind + Shadcn UI (Hosted on Vercel).
 3. **Primary Database**: MongoDB Atlas (Free Tier) for persistence (Orders, Users).
@@ -13,6 +15,7 @@ This document outlines the architecture and data flow for the real-time delivery
 ## Delivery Lifecycle & Data Flow
 
 ### 1. Order Creation
+
 - **Action**: Merchant creates a Delivery Order in the Web Dashboard.
 - **Flow**:
   1. Dashboard sends POST `/api/orders` to Express server.
@@ -22,6 +25,7 @@ This document outlines the architecture and data flow for the real-time delivery
   5. Available Riders in the zone receive the push/socket notification.
 
 ### 2. Order Acceptance
+
 - **Action**: Rider views the `order-created` event and taps "Accept".
 - **Flow**:
   1. Rider App sends HTTP POST `/api/orders/{id}/accept` to Node backend.
@@ -30,6 +34,7 @@ This document outlines the architecture and data flow for the real-time delivery
   4. Rider App begins connecting to the specific order socket room (e.g., `order:{id}`).
 
 ### 3. Live Tracking
+
 - **Action**: Rider picks up the item and is on the move. Background Geolocation kicks in.
 - **Flow**:
   1. Expo Background Geolocation grabs GPS coords every 5-10 seconds.
@@ -41,6 +46,7 @@ This document outlines the architecture and data flow for the real-time delivery
   7. Client frontends (Merchant Dashboard, Tracking Link) receive the event and animate the map marker using **Leaflet.js**.
 
 ### 4. Delivered Confirmation
+
 - **Action**: Rider arrives and marks order as "Delivered".
 - **Flow**:
   1. Rider App sends HTTP POST `/api/orders/{id}/deliver`.

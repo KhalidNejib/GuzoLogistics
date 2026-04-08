@@ -23,6 +23,19 @@ importers:
         specifier: latest
         version: 2.9.4
 
+  packages/env:
+    dependencies:
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+
 packages:
   '@eslint-community/eslint-utils@4.9.1':
     resolution:
@@ -277,6 +290,13 @@ packages:
       {
         integrity: sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==,
       }
+
+  dotenv@16.6.1:
+    resolution:
+      {
+        integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==,
+      }
+    engines: { node: '>=12' }
 
   emoji-regex@10.6.0:
     resolution:
@@ -735,6 +755,14 @@ packages:
       }
     engines: { node: '>= 0.8.0' }
 
+  typescript@5.9.3:
+    resolution:
+      {
+        integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==,
+      }
+    engines: { node: '>=14.17' }
+    hasBin: true
+
   uri-js@4.4.1:
     resolution:
       {
@@ -777,6 +805,12 @@ packages:
         integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==,
       }
     engines: { node: '>=10' }
+
+  zod@3.25.76:
+    resolution:
+      {
+        integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==,
+      }
 
 snapshots:
   '@eslint-community/eslint-utils@4.9.1(eslint@10.2.0)':
@@ -895,6 +929,8 @@ snapshots:
       ms: 2.1.3
 
   deep-is@0.1.4: {}
+
+  dotenv@16.6.1: {}
 
   emoji-regex@10.6.0: {}
 
@@ -1159,6 +1195,8 @@ snapshots:
     dependencies:
       prelude-ls: 1.2.1
 
+  typescript@5.9.3: {}
+
   uri-js@4.4.1:
     dependencies:
       punycode: 2.3.1
@@ -1178,3 +1216,5 @@ snapshots:
   yaml@2.8.3: {}
 
   yocto-queue@0.1.0: {}
+
+  zod@3.25.76: {}
