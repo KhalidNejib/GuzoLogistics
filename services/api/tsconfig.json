@@ -1,19 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "lib": ["ES2022"],
+    "outDir": "dist",
+    "composite": true,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "composite": true
+    "resolveJsonModule": true,
+    "baseUrl": "."
   },
+  "references": [{ "path": "../../packages/env" }],
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
