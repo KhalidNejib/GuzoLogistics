@@ -1,61 +1,47 @@
-/**
- * 1. GATEKEEPER: Import environment variables first.
- * This will validate credentials and crash the process if any are missing.
- */
-import { appConfig, env } from '@ethio-logistics/env';
-
 import express from 'express';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { appConfig } from '@ethio-logistics/env';
+import connectDB from './lib/mongoose.js';
+
+/**
+ * Ethio Logistics API - Day 3 Milestone
+ * Core Server Initialization
+ */
 
 const app = express();
-const httpServer = createServer(app);
 
-// 2. MIDDLEWARE
-app.use(helmet()); // Security headers
-app.use(cors()); // Enable cross-origin requests
-app.use(morgan('dev')); // Request logging
-app.use(express.json()); // Body parsing
+// 1. Database Connection
+connectDB();
 
-// 3. SOCKET.IO INITIALIZATION
-const io = new Server(httpServer, {
-  cors: {
-    origin: '*', // In production, we should restrict this to our dashboard URL
-    methods: ['GET', 'POST'],
-  },
-});
+// 2. Global Middlewares
+app.use(helmet()); // Adds security headers
+app.use(cors()); // Enables Cross-Origin Resource Sharing
+app.use(morgan('dev')); // Logs requests to the console
+app.use(express.json()); // Parses incoming JSON payloads
 
-// 4. BASIC ROUTES
-app.get('/health', (req, res) => {
+// 3. Health Check Route
+app.get('/', (req, res) => {
   res.json({
-    status: 'healthy',
+    status: 'online',
+    message: 'Ethio Logistics API is running',
     timestamp: new Date().toISOString(),
-    env: appConfig.nodeEnv,
-    version: '1.0.0',
   });
 });
 
-// 5. SOCKET CONNECTION HANDLER (The brain of real-time tracking)
-io.on('connection', (socket) => {
-  console.info(`📡 New connection: ${socket.id}`);
+// 4. Start Server
+const PORT = appConfig.port || 5000;
 
-  // We will add tracking events like 'location-update' here in the next session
-
-  socket.on('disconnect', () => {
-    console.info(`🔌 Disconnected: ${socket.id}`);
-  });
+app.listen(PORT, () => {
+  console.log('──────────────────────────────────────────');
+  console.log(`🚀 Server running in ${appConfig.nodeEnv} mode`);
+  console.log(`📡 Listening on: http://localhost:${PORT}`);
+  console.log('──────────────────────────────────────────');
 });
 
-// 6. START SERVER
-const PORT = appConfig.port;
-
-httpServer.listen(PORT, () => {
-  console.info('');
-  console.info('🚀 Ethio Logistics API is ready!');
-  console.info(`📍 Port: ${PORT}`);
-  console.info(`🌍 Environment: ${appConfig.nodeEnv}`);
-  console.info('');
+// Handle unhandled rejections
+process.on('unhandledRejection', (err: Error) => {
+  console.error(`🔴 Unhandled Rejection: ${err.message}`);
+  // In a real prod environment, you might want to restart the process here
 });
