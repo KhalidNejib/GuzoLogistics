@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { appConfig } from '@ethio-logistics/env';
 import connectDB from './lib/mongoose.js';
+import webhookRoutes from './routes/webhookRoutes.js';
 
 /**
  * Ethio Logistics API - Day 3 Milestone
@@ -19,7 +20,20 @@ connectDB();
 app.use(helmet()); // Adds security headers
 app.use(cors()); // Enables Cross-Origin Resource Sharing
 app.use(morgan('dev')); // Logs requests to the console
-app.use(express.json()); // Parses incoming JSON payloads
+
+// 3. Routes
+// IMPORTANT: We need the raw body for Webhook Signature verification.
+// This middleware captures it before it's parsed.
+app.use(
+  express.json({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
+
+app.use('/api/webhooks', webhookRoutes);
 
 // 3. Health Check Route
 app.get('/', (req, res) => {
@@ -34,10 +48,10 @@ app.get('/', (req, res) => {
 const PORT = appConfig.port || 5000;
 
 app.listen(PORT, () => {
-  console.log('──────────────────────────────────────────');
-  console.log(`🚀 Server running in ${appConfig.nodeEnv} mode`);
-  console.log(`📡 Listening on: http://localhost:${PORT}`);
-  console.log('──────────────────────────────────────────');
+  console.info('──────────────────────────────────────────');
+  console.info(`🚀 Server running in ${appConfig.nodeEnv} mode`);
+  console.info(`📡 Listening on: http://localhost:${PORT}`);
+  console.info('──────────────────────────────────────────');
 });
 
 // Handle unhandled rejections

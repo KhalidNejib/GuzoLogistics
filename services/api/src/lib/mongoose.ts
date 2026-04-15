@@ -13,15 +13,15 @@ const mongooseOptions: mongoose.ConnectOptions = {
 
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2) {
-    console.log(`MongoDB is already connected or connecting. Skipping...`);
+    console.info(`MongoDB is already connected or connecting. Skipping...`);
     return;
   }
   try {
     const conn = await mongoose.connect(mongoConfig.uri, mongooseOptions);
-    console.log(`MongoDB connected: ${conn.connection.host}`);
+    console.info(`MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
     console.error(`❌ Connection Error: ${(error as Error).message}`);
-    console.log(`Retrying MongoDB connection in 5 seconds...`);
+    console.info(`Retrying MongoDB connection in 5 seconds...`);
     setTimeout(connectDB, 5000);
   }
 };
@@ -42,7 +42,7 @@ const gracefulExit = async () => {
 
   try {
     await mongoose.connection.close();
-    console.log('📡 MongoDB connection closed cleanly via app termination');
+    console.info('📡 MongoDB connection closed cleanly via app termination');
     process.exit(0);
   } catch (err) {
     console.error('⚠️ Error during MongoDB disconnection:', err);

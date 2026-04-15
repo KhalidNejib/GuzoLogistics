@@ -30,7 +30,10 @@ const envSchema = z.object({
     .string()
     .min(1, 'CLERK_SECRET_KEY is required')
     .startsWith('sk_', 'CLERK_SECRET_KEY must start with "sk_"'),
-
+  CLERK_WEBHOOK_SIGNING_SECRET: z
+    .string()
+    .min(1, 'CLERK_WEBHOOK_SIGNING_SECRET is required')
+    .startsWith('whsec_', 'CLERK_WEBHOOK_SIGNING_SECRET must start with "whsec_"'),
   // ─── MongoDB Atlas (Database) ────────────────────────────────────
   MONGODB_URI: z
     .string()
@@ -79,6 +82,7 @@ export const appConfig = {
 export const clerkConfig = {
   publishableKey: env.VITE_CLERK_PUBLISHABLE_KEY,
   secretKey: env.CLERK_SECRET_KEY,
+  webhookSecret: env.CLERK_WEBHOOK_SIGNING_SECRET,
 };
 
 export const mongoConfig = {
