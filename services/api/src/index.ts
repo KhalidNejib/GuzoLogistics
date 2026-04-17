@@ -2,9 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import { appConfig } from '@ethio-logistics/env';
+import { clerkMiddleware } from '@clerk/express';
+
+import { appConfig, clerkConfig } from '@ethio-logistics/env';
 import connectDB from './lib/mongoose.js';
 import webhookRoutes from './routes/webhookRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
 
 /**
  * Ethio Logistics API - Day 3 Milestone
@@ -20,6 +23,12 @@ connectDB();
 app.use(helmet()); // Adds security headers
 app.use(cors()); // Enables Cross-Origin Resource Sharing
 app.use(morgan('dev')); // Logs requests to the console
+app.use(
+  clerkMiddleware({
+    publishableKey: clerkConfig.publishableKey,
+    secretKey: clerkConfig.secretKey,
+  })
+);
 
 // 3. Routes
 // IMPORTANT: We need the raw body for Webhook Signature verification.
@@ -34,6 +43,7 @@ app.use(
 );
 
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/orders', orderRoutes);
 
 // 3. Health Check Route
 app.get('/', (req, res) => {

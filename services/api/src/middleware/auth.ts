@@ -30,7 +30,7 @@ export const requireUser = async (req: AuthRequest, res: Response, next: NextFun
 
     // 3. Find the user in our Database.
     // .lean() is crucial here: it forces mongoose to return a raw JSON object
-    // instead of a massive Mongoose Document network, saving RAM and CPU.
+
     const user = await User.findOne({ clerkId: userId }).lean();
 
     // 4. Block if they authenticated via Clerk, but the webhook hasn't saved them yet.

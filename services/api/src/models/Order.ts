@@ -1,4 +1,4 @@
-import { Schema, model, models, InferSchemaType, HydratedDocument, Types } from 'mongoose';
+import mongoose, { Schema, model, InferSchemaType, HydratedDocument } from 'mongoose';
 
 const orderSchema = new Schema(
   {
@@ -59,5 +59,5 @@ orderSchema.index({ 'deliveryAddress.location': '2dsphere' });
 type Order = InferSchemaType<typeof orderSchema>;
 export type OrderDocument = HydratedDocument<Order>;
 
-const Order = models.Order || model<Order>('Order', orderSchema);
-export default Order;
+const Order = mongoose.models.Order || model<Order>('Order', orderSchema);
+export default Order; // 👈 This line is missing
