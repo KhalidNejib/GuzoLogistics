@@ -14,10 +14,9 @@ const isValidZone = (id: string) => /^[a-zA-Z0-9-_]{2,50}$/.test(id);
 
 // --- Basic In-Memory Rate Limiter (Prevents DB Spams) ---
 const rateLimits = new Map<string, number>();
-const RATE_LIMIT_MS = 2000; // 2 seconds between order join requests
+const RATE_LIMIT_MS = 2000;
 
 export const initializeSocket = (io: Server) => {
-  // 1. Connection Authentication Middleware
   io.use(async (socket: Socket, next) => {
     try {
       const token =
