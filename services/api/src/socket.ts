@@ -1,3 +1,4 @@
+import { redis } from './lib/redis.js';
 import { Server, Socket } from 'socket.io';
 import { verifyToken } from '@clerk/express';
 import { clerkConfig } from '@ethio-logistics/env';
@@ -105,6 +106,43 @@ export const initializeSocket = (io: Server) => {
     socket.on('leave_zone', (zoneId: string) => {
       if (zoneId && isValidZone(zoneId)) {
         socket.leave(`zone:${zoneId}`);
+      }
+    });
+
+    // ============================================
+    // LIVE TRACKING (Redis GPS Updates)
+    // ============================================
+    socket.on('location-update', async (data: { orderId: string; lat: number; lng: number }) => {
+      try {
+        const { orderId, lat, lng } = data;
+
+        // Verify the data is safe so the server doesn't crash from bad input
+        if (
+          !orderId ||
+          !isValidObjectId(orderId) ||
+          typeof lat !== 'number' ||
+          typeof lng !== 'number'
+        ) {
+          return socket.emit('socket_error', { message: 'Invalid GPS payload format' });
+        }
+
+        // 1. CACHE TO REDIS: We serialize the data and store it in RAM
+        const locationKey = `order:location:${orderId}`;
+        const locationPayload = JSON.stringify({
+          lat,
+          lng,
+          lastSeen: Date.now(),
+        });
+
+        // 2. TTL (Time to Live): The physical storage mechanism happens here.
+        // 'EX', 60 tells Redis to literally delete this entry in 60 seconds.
+        await redis.set(locationKey, locationPayload, 'EX', 60);
+
+        // 3. BROADCAST TO MERCHANT: Take the coordinates and bounce them to the map
+        // This targets the specific 'order:ID' room
+        io.to(`order:${orderId}`).emit('rider_moved', { orderId, lat, lng });
+      } catch (error) {
+        console.error('[Socket Location Error]:', error);
       }
     });
 

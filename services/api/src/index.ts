@@ -3,26 +3,42 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { clerkMiddleware } from '@clerk/express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+
+// 👉 THIS IS WHAT WAKES UP REDIS ON BOOT
+import './lib/redis.js';
 
 import { appConfig, clerkConfig } from '@ethio-logistics/env';
 import connectDB from './lib/mongoose.js';
 import webhookRoutes from './routes/webhookRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
-
-/**
- * Ethio Logistics API - Day 3 Milestone
- * Core Server Initialization
- */
+import { initializeSocket } from './socket.js';
 
 const app = express();
+
+// 👉 WE WRAP EXPRESS IN A NATIVE HTTP SERVER SO SOCKETS CAN ATTACH
+const httpServer = createServer(app);
+
+// 👉 WE INITIALIZE SOCKET.IO
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*', // We will restrict this in production!
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
+
+// 👉 WE BIND THE ROOM/LOCATION LOGIC WE JUST WROTE
+initializeSocket(io);
 
 // 1. Database Connection
 connectDB();
 
 // 2. Global Middlewares
-app.use(helmet()); // Adds security headers
-app.use(cors()); // Enables Cross-Origin Resource Sharing
-app.use(morgan('dev')); // Logs requests to the console
+app.use(helmet());
+app.use(cors());
+app.use(morgan('dev'));
 app.use(
   clerkMiddleware({
     publishableKey: clerkConfig.publishableKey,
@@ -30,9 +46,7 @@ app.use(
   })
 );
 
-// 3. Routes
-// IMPORTANT: We need the raw body for Webhook Signature verification.
-// This middleware captures it before it's parsed.
+// 3. Webhooks (Must capture raw body before parsing JSON)
 app.use(
   express.json({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,10 +56,11 @@ app.use(
   })
 );
 
+// 4. REST Routes
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/orders', orderRoutes);
 
-// 3. Health Check Route
+// Health Check route
 app.get('/', (req, res) => {
   res.json({
     status: 'online',
@@ -54,18 +69,28 @@ app.get('/', (req, res) => {
   });
 });
 
-// 4. Start Server
 const PORT = appConfig.port || 5000;
 
-app.listen(PORT, () => {
+// 👉 WE CHANGE app.listen TO httpServer.listen
+httpServer.listen(PORT, () => {
   console.info('──────────────────────────────────────────');
   console.info(`🚀 Server running in ${appConfig.nodeEnv} mode`);
-  console.info(`📡 Listening on: http://localhost:${PORT}`);
+  console.info(`📡 HTTP/Socket Listening on: http://localhost:${PORT}`);
   console.info('──────────────────────────────────────────');
 });
 
-// Handle unhandled rejections
+// Graceful Production Shutdowns
+const gracefulShutdown = () => {
+  console.info('🛑 Shutting down server...');
+  httpServer.close(() => {
+    console.info('HTTP/Sockets Closed.');
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
 process.on('unhandledRejection', (err: Error) => {
   console.error(`🔴 Unhandled Rejection: ${err.message}`);
-  // In a real prod environment, you might want to restart the process here
 });
