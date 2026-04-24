@@ -2,6 +2,16 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, Package, Clock, ShieldCheck } from 'lucide-react';
+import LogisticsMap from '@/components/dashboard/LogisticsMap';
+import CreateOrderForm from '@/components/dashboard/CreateOrderForm';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 function Dashboard() {
   return (
@@ -13,9 +23,24 @@ function Dashboard() {
             Here's what's happening with your deliveries today.
           </p>
         </div>
-        <Button className="font-semibold shadow-lg shadow-primary/20">
-          <Package className="mr-2 h-4 w-4" /> Dispatch New Order
-        </Button>
+
+        {/* DISPATCH SHEET */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button className="font-semibold shadow-lg shadow-primary/20">
+              <Package className="mr-2 h-4 w-4" /> Dispatch New Order
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="sm:max-w-[600px] overflow-y-auto">
+            <SheetHeader className="pb-6">
+              <SheetTitle className="text-2xl font-bold">Create New Delivery</SheetTitle>
+              <SheetDescription>
+                Fill in the details below to dispatch a new delivery order.
+              </SheetDescription>
+            </SheetHeader>
+            <CreateOrderForm onSuccess={() => {}} />
+          </SheetContent>
+        </Sheet>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -43,13 +68,25 @@ function Dashboard() {
         ))}
       </div>
 
-      <Card className="border-border/40 shadow-sm">
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+      {/* Enhanced Card for the Live Map */}
+      <Card className="border-border/40 shadow-sm overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Live Fleet Tracking</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Real-time status of Addis Ababa deliveries
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              System Live
+            </span>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="h-[200px] flex items-center justify-center border-2 border-dashed border-border/40 rounded-lg text-muted-foreground">
-            Live Tracking Map Placeholder (Coming Day 10)
+        <CardContent className="p-0 border-t border-border/40">
+          <div className="h-[450px] w-full relative">
+            <LogisticsMap />
           </div>
         </CardContent>
       </Card>
