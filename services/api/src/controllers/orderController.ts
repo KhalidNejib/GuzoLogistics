@@ -125,6 +125,16 @@ export const acceptOrder = async (req: AuthRequest, res: Response) => {
     if (!order) {
       return res.status(400).json({ error: 'Order is no longer available or does not exist.' });
     }
+
+    // BROADCAST STATUS CHANGE: Let the merchant know their order was accepted
+    const io = req.app.get('socketio');
+    if (io) {
+      io.to(`order:${orderId}`).emit('order_status_changed', {
+        orderId,
+        status: 'ACCEPTED',
+      });
+    }
+
     return res.status(200).json({ message: 'Order accepted successfully', order });
   } catch (error) {
     console.error('Error accepting order:', error);

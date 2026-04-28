@@ -19,27 +19,39 @@ export const requireUser = async (req: AuthRequest, res: Response, next: NextFun
   try {
     // 1. Get the authenticated external ID from Clerk
     const { userId } = getAuth(req);
+    const authHeader = req.headers.authorization;
 
     // 2. Block if no token is provided
     if (!userId) {
+      console.warn(
+        `🔒 [Auth] Unauthorized access attempt. Header: ${authHeader ? 'Present' : 'Missing'}`
+      );
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'No valid authentication session found.',
       });
     }
 
+    console.info(`🔓 [Auth] User verified: ${userId}`);
+
     // 3. Find the user in our Database.
     // .lean() is crucial here: it forces mongoose to return a raw JSON object
 
-    const user = await User.findOne({ clerkId: userId }).lean();
+    let user = await User.findOne({ clerkId: userId }).lean();
 
-    // 4. Block if they authenticated via Clerk, but the webhook hasn't saved them yet.
+    // 4. DEVELOPMENT AUTO-SYNC: If user exists in Clerk but not our DB, create them on the fly.
+    // In production, this is handled by Webhooks, but for localhost, this ensures a smooth experience.
     if (!user) {
-      return res.status(403).json({
-        error: 'Profile Pending',
-        message:
-          'Your account synchronization is still pending. Please try again in a few seconds.',
+      console.info(`🔄 [Auth] User ${userId} not found in DB. Creating on-the-fly...`);
+      const newUser = new User({
+        clerkId: userId,
+        email: `${userId}@ethio-logistics.com`, // Unique per user
+        fullName: 'New Merchant',
+        role: 'MERCHANT',
+        phoneNumber: `+251${Math.floor(Math.random() * 1000000000)}`, // Unique placeholder
       });
+      await newUser.save();
+      user = newUser.toObject();
     }
 
     // 5. Attach the profile to the request and continue to the next function

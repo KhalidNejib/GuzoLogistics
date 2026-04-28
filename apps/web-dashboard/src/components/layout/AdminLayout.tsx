@@ -1,5 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
-import { LayoutDashboard, Package, Truck, Settings, Map, LogOut, ChevronRight } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Package,
+  Truck,
+  Settings,
+  Map,
+  LogOut,
+  ChevronRight,
+  User,
+} from 'lucide-react';
+import { UserButton, useUser, useClerk } from '@clerk/clerk-react';
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +24,7 @@ import {
   SidebarInset,
   SidebarRail,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage, Button } from '@/components/ui';
 
 const navItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -24,7 +35,17 @@ const navItems = [
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
-  // 1. Temporarily bypassed Clerk checks for development
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
+  const userInitials = user?.fullName
+    ? user.fullName
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : '??';
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-slate-50/50 dark:bg-zinc-950/50 overflow-hidden">
@@ -62,6 +83,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <SidebarFooter className="border-t border-border/40 p-3">
             <Button
               variant="ghost"
+              onClick={() => signOut()}
               className="w-full justify-start gap-4 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-0"
             >
               <LogOut className="h-5 w-5" />
@@ -79,22 +101,28 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               </div>
               <div className="h-6 w-px bg-border/50" />
               <div className="flex flex-col justify-center">
-                <h1 className="text-sm font-bold text-foreground leading-tight">
-                  Merchant Hub (Dev Mode)
-                </h1>
+                <h1 className="text-sm font-bold text-foreground leading-tight">Merchant Hub</h1>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
               <div className="text-right mr-1 hidden md:block">
-                <p className="text-sm font-bold text-foreground leading-none">Development User</p>
-                <p className="text-[11px] text-primary/80 font-bold mt-1">
-                  Status: Unauthenticated
+                <p className="text-sm font-bold text-foreground leading-none">
+                  {user?.fullName || 'User'}
+                </p>
+                <p className="text-[11px] text-primary/80 font-bold mt-1 uppercase tracking-tighter">
+                  Status: Verified
                 </p>
               </div>
-              <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center font-bold text-slate-500">
-                DU
-              </div>
+              <UserButton
+                afterSignOutUrl="/sign-in"
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox:
+                      'h-10 w-10 border-2 border-white shadow-sm ring-1 ring-border/40',
+                  },
+                }}
+              />
             </div>
           </header>
 
