@@ -1,79 +1,85 @@
-import { useState, useEffect, useCallback } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 
 export function useFetchOrders() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const retryCount = useRef(0);
+  const maxRetries = 3;
 
   const fetchOrders = useCallback(async () => {
-    if (!isLoaded || !isSignedIn) {
+    // If Clerk isn't loaded yet, don't even try.
+    if (!isLoaded) return;
+
+    // If user is not signed in, we can stop loading.
+    if (!isSignedIn) {
       setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
+    // We only set isLoading to true if it's the first time or a refetch.
+    // If we already have orders, we can fetch in the background.
+    if (orders.length === 0) setIsLoading(true);
 
     try {
-      // 1. Give Clerk a tiny moment to stabilize session on refresh
-      await new Promise((r) => setTimeout(r, 100));
-
       const token = await getToken();
 
       if (!token) {
-        console.warn('⚠️ [useFetchOrders] No token available yet.');
+        // If no token, wait 500ms and try again (up to maxRetries)
+        if (retryCount.current < maxRetries) {
+          retryCount.current++;
+          setTimeout(fetchOrders, 500);
+          return;
+        }
         setIsLoading(false);
         return;
       }
 
-      console.debug('📡 [useFetchOrders] Fetching orders...', {
-        url: 'http://localhost:5000/api/orders',
-        tokenPrefix: token.slice(0, 10),
-      });
-
-      let response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch('http://localhost:5000/api/orders', {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
 
-      // 2. RETRY LOGIC: If we get a 401, wait a bit and try one more time.
-      // This helps with race conditions where the session is transitioning.
-      if (response.status === 401) {
-        console.warn('⚠️ [useFetchOrders] Got 401, retrying in 800ms...');
-        await new Promise((r) => setTimeout(r, 800));
-        const newToken = await getToken();
-        response = await fetch('http://localhost:5000/api/orders', {
-          headers: {
-            Authorization: `Bearer ${newToken}`,
-          },
-        });
+      // Handle session expiration or race conditions
+      if (response.status === 401 && retryCount.current < maxRetries) {
+        retryCount.current++;
+        await new Promise((r) => setTimeout(r, 1000));
+        return fetchOrders();
       }
 
       if (!response.ok) {
-        const result = await response.json();
-        console.error('❌ [useFetchOrders] API Error:', response.status, result);
-        throw new Error(result.error || 'Failed to fetch orders');
+        throw new Error('Failed to fetch orders');
       }
 
-      const result = await response.json();
-      setOrders(result.orders || []);
-    } catch (err) {
-      console.error('❌ [useFetchOrders] Fetch Error:', err);
-      setError((err as Error).message);
+      const data = await response.json();
+      setOrders(data.orders || []);
+      setError(null);
+      retryCount.current = 0; // Reset on success
+    } catch (err: any) {
+      console.error('Fetch Orders Error:', err);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
-  }, [getToken, isLoaded, isSignedIn]);
+  }, [getToken, isLoaded, isSignedIn, orders.length]);
 
   useEffect(() => {
-    if (isSignedIn && isLoaded) {
+    if (isLoaded && isSignedIn) {
       fetchOrders();
+    } else if (isLoaded && !isSignedIn) {
+      setIsLoading(false);
     }
-  }, [isSignedIn, isLoaded]); // Simplified dependency array to prevent loops
+  }, [isLoaded, isSignedIn]);
 
-  return { orders, isLoading, error, refetch: fetchOrders };
+  return {
+    orders,
+    isLoading,
+    error,
+    refetch: fetchOrders,
+  };
 }
