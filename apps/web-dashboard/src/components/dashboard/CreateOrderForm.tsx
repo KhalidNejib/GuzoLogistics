@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createOrderFormSchema, type CreateOrderInput } from '@/lib/orderSchema';
 import { useCreateOrder } from '@/hooks/useCreateOrder';
 import MapPicker from './MapPicker';
+import { reverseGeocode, searchAddress, type GeocodeResult } from '@/lib/geocoding';
 import {
   Button,
   Input,
@@ -24,18 +25,44 @@ import {
   Loader2,
   CheckCircle2,
   ArrowRight,
+  Search,
+  LocateFixed,
+  Copy,
 } from 'lucide-react';
+import { toast } from 'sonner';
+
+const MERCHANT_HUB_COORDS: [number, number] = [38.7525, 9.0192];
+const MERCHANT_HUB_ADDRESS = 'Ethio Logistics Hub, Sunshine Building, Addis Ababa';
 
 export default function CreateOrderForm({ onSuccess }: { onSuccess: (id: string) => void }) {
   const { createOrder, isLoading, error } = useCreateOrder();
   const [isSuccess, setIsSuccess] = useState(false);
   const [newOrderId, setNewOrderId] = useState<string | null>(null);
+  const [trackingToken, setTrackingToken] = useState<string | null>(null);
+
+  // Geocoding States
+  const [isGeocoding, setIsGeocoding] = useState<Record<string, boolean>>({
+    pickup: false,
+    delivery: false,
+  });
+  const [suggestions, setSuggestions] = useState<Record<string, GeocodeResult[]>>({
+    pickup: [],
+    delivery: [],
+  });
+  const [showSuggestions, setShowSuggestions] = useState<Record<string, boolean>>({
+    pickup: false,
+    delivery: false,
+  });
+  const searchTimeout = useRef<any>(null);
 
   const form = useForm<CreateOrderInput>({
     resolver: zodResolver(createOrderFormSchema) as any,
     defaultValues: {
-      pickupAddress: { addressText: '', coordinates: [38.7525, 9.0192] },
-      deliveryAddress: { addressText: '', coordinates: [38.7525, 9.0192] },
+      pickupAddress: {
+        addressText: MERCHANT_HUB_ADDRESS,
+        coordinates: MERCHANT_HUB_COORDS,
+      },
+      deliveryAddress: { addressText: '', coordinates: MERCHANT_HUB_COORDS },
       itemDetails: { description: '', weightKg: 1, dimensions: '' },
       priceInfo: { amount: 0, currency: 'ETB' },
     },
@@ -46,11 +73,78 @@ export default function CreateOrderForm({ onSuccess }: { onSuccess: (id: string)
       const result = await createOrder(data);
       if (result.orderId) {
         setNewOrderId(result.orderId);
+        setTrackingToken(result.trackingToken);
         setIsSuccess(true);
       }
     } catch (err) {
       console.error('Dispatch Error:', err);
     }
+  };
+
+  // Handle Map Selection (Reverse Geocode)
+  const handleMapSelect = async (type: 'pickup' | 'delivery', coords: [number, number]) => {
+    form.setValue(
+      type === 'pickup' ? 'pickupAddress.coordinates' : 'deliveryAddress.coordinates',
+      coords
+    );
+
+    setIsGeocoding((prev) => ({ ...prev, [type]: true }));
+    const address = await reverseGeocode(coords[0], coords[1]);
+    form.setValue(
+      type === 'pickup' ? 'pickupAddress.addressText' : 'deliveryAddress.addressText',
+      address
+    );
+    setIsGeocoding((prev) => ({ ...prev, [type]: false }));
+  };
+
+  // Handle Address Input (Forward Geocode / Search)
+  const handleAddressInput = (type: 'pickup' | 'delivery', value: string) => {
+    form.setValue(
+      type === 'pickup' ? 'pickupAddress.addressText' : 'deliveryAddress.addressText',
+      value
+    );
+
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
+    if (value.length < 3) {
+      setSuggestions((prev) => ({ ...prev, [type]: [] }));
+      setShowSuggestions((prev) => ({ ...prev, [type]: false }));
+      return;
+    }
+
+    searchTimeout.current = setTimeout(async () => {
+      const results = await searchAddress(value);
+      setSuggestions((prev) => ({ ...prev, [type]: results }));
+      setShowSuggestions((prev) => ({ ...prev, [type]: true }));
+    }, 500);
+  };
+
+  const selectSuggestion = (type: 'pickup' | 'delivery', suggestion: GeocodeResult) => {
+    form.setValue(
+      type === 'pickup' ? 'pickupAddress.addressText' : 'deliveryAddress.addressText',
+      suggestion.display_name
+    );
+    form.setValue(type === 'pickup' ? 'pickupAddress.coordinates' : 'deliveryAddress.coordinates', [
+      parseFloat(suggestion.lon),
+      parseFloat(suggestion.lat),
+    ]);
+    setShowSuggestions((prev) => ({ ...prev, [type]: false }));
+  };
+
+  // Browser Geolocation
+  const useCurrentLocation = (type: 'pickup' | 'delivery') => {
+    if (!navigator.geolocation) return;
+
+    setIsGeocoding((prev) => ({ ...prev, [type]: true }));
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const coords: [number, number] = [pos.coords.longitude, pos.coords.latitude];
+        handleMapSelect(type, coords);
+      },
+      () => {
+        setIsGeocoding((prev) => ({ ...prev, [type]: false }));
+      }
+    );
   };
 
   // SUCCESS STATE UI
@@ -68,12 +162,27 @@ export default function CreateOrderForm({ onSuccess }: { onSuccess: (id: string)
           </span>{' '}
           is now live. We are looking for a nearby rider.
         </p>
-        <Button
-          onClick={() => onSuccess(newOrderId!)}
-          className="w-full h-12 gap-2 text-md font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
-        >
-          Track Live on Map <ArrowRight className="w-4 h-4" />
-        </Button>
+        <div className="flex gap-3 w-full">
+          <Button
+            onClick={() => onSuccess(newOrderId!)}
+            className="flex-1 h-12 gap-2 text-md font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
+          >
+            Track on Map <ArrowRight className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              const url = `${window.location.origin}/track/${trackingToken}`;
+              navigator.clipboard.writeText(url);
+              toast.success('Public Link Copied!', {
+                description: 'Send this to your customer.',
+              });
+            }}
+            className="h-12 w-12 rounded-xl p-0 hover:bg-primary/5 hover:text-primary transition-all"
+          >
+            <Copy className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
     );
   }
@@ -92,49 +201,105 @@ export default function CreateOrderForm({ onSuccess }: { onSuccess: (id: string)
         <MapPicker
           pickup={form.watch('pickupAddress.coordinates')}
           delivery={form.watch('deliveryAddress.coordinates')}
-          onSelect={(type, coords) => {
-            form.setValue(
-              type === 'pickup' ? 'pickupAddress.coordinates' : 'deliveryAddress.coordinates',
-              coords
-            );
-          }}
+          onSelect={handleMapSelect}
         />
 
         <div className="grid grid-cols-1 gap-3 pt-2">
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold text-muted-foreground ml-1">
-              PICKUP ADDRESS
-            </Label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />
-              <Input
-                {...form.register('pickupAddress.addressText')}
-                placeholder="e.g. Bole Road, Sunshine Bldg"
-                className="pl-9"
-              />
+          {/* PICKUP ADDRESS */}
+          <div className="space-y-1.5 relative">
+            <div className="flex justify-between items-center px-1">
+              <Label className="text-[11px] font-bold text-muted-foreground">PICKUP ADDRESS</Label>
+              <button
+                type="button"
+                onClick={() => useCurrentLocation('pickup')}
+                className="text-[10px] font-bold text-primary flex items-center gap-1 hover:underline"
+              >
+                <LocateFixed className="w-3 h-3" /> Use My Location
+              </button>
             </div>
-            {form.formState.errors.pickupAddress?.addressText && (
-              <p className="text-[10px] text-destructive ml-1">
-                {form.formState.errors.pickupAddress.addressText.message}
-              </p>
+            <div className="relative">
+              <MapPin
+                className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isGeocoding.pickup ? 'text-primary animate-pulse' : 'text-green-500'}`}
+              />
+              <Input
+                value={form.watch('pickupAddress.addressText')}
+                onChange={(e) => handleAddressInput('pickup', e.target.value)}
+                onFocus={() =>
+                  suggestions.pickup.length > 0 &&
+                  setShowSuggestions((p) => ({ ...p, pickup: true }))
+                }
+                placeholder="Search or click map..."
+                className="pl-9 pr-10"
+              />
+              {isGeocoding.pickup && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+
+            {showSuggestions.pickup && (
+              <div className="absolute z-[1001] w-full mt-1 bg-background border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1">
+                {suggestions.pickup.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => selectSuggestion('pickup', s)}
+                    className="w-full text-left px-4 py-3 text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors border-b border-border/40 last:border-0 flex items-start gap-2"
+                  >
+                    <Search className="w-3 h-3 mt-0.5 text-muted-foreground shrink-0" />
+                    <span className="truncate">{s.display_name}</span>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold text-muted-foreground ml-1">
-              DELIVERY ADDRESS
-            </Label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />
-              <Input
-                {...form.register('deliveryAddress.addressText')}
-                placeholder="e.g. Kazanchis, Intercontinental Hotel"
-                className="pl-9"
-              />
+
+          {/* DELIVERY ADDRESS */}
+          <div className="space-y-1.5 relative">
+            <div className="flex justify-between items-center px-1">
+              <Label className="text-[11px] font-bold text-muted-foreground">
+                DELIVERY ADDRESS
+              </Label>
+              <button
+                type="button"
+                onClick={() => useCurrentLocation('delivery')}
+                className="text-[10px] font-bold text-primary flex items-center gap-1 hover:underline"
+              >
+                <LocateFixed className="w-3 h-3" /> Use My Location
+              </button>
             </div>
-            {form.formState.errors.deliveryAddress?.addressText && (
-              <p className="text-[10px] text-destructive ml-1">
-                {form.formState.errors.deliveryAddress.addressText.message}
-              </p>
+            <div className="relative">
+              <MapPin
+                className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isGeocoding.delivery ? 'text-primary animate-pulse' : 'text-red-500'}`}
+              />
+              <Input
+                value={form.watch('deliveryAddress.addressText')}
+                onChange={(e) => handleAddressInput('delivery', e.target.value)}
+                onFocus={() =>
+                  suggestions.delivery.length > 0 &&
+                  setShowSuggestions((p) => ({ ...p, delivery: true }))
+                }
+                placeholder="Search or click map..."
+                className="pl-9 pr-10"
+              />
+              {isGeocoding.delivery && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+
+            {showSuggestions.delivery && (
+              <div className="absolute z-[1001] w-full mt-1 bg-background border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1">
+                {suggestions.delivery.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => selectSuggestion('delivery', s)}
+                    className="w-full text-left px-4 py-3 text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors border-b border-border/40 last:border-0 flex items-start gap-2"
+                  >
+                    <Search className="w-3 h-3 mt-0.5 text-muted-foreground shrink-0" />
+                    <span className="truncate">{s.display_name}</span>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         </div>

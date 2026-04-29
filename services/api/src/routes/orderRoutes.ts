@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { requireUser, requireRole } from '../middleware/auth.js';
-import { createOrder, getMerchantOrders, acceptOrder } from '../controllers/orderController.js';
+import {
+  createOrder,
+  getMerchantOrders,
+  acceptOrder,
+  getOrderByToken,
+} from '../controllers/orderController.js';
 
 const router: Router = Router();
 
@@ -12,5 +17,8 @@ router.get('/', requireUser, requireRole('MERCHANT'), getMerchantOrders);
 
 // Rider accepts a pending order
 router.post('/:id/accept', requireUser, requireRole('RIDER'), acceptOrder);
+
+// Public Tracking
+router.get('/track/:token', getOrderByToken);
 
 export default router;

@@ -10,3 +10,4 @@ export * from './skeleton';
 export * from './textarea';
 export * from './tooltip';
 export * from './avatar';
+export * from './badge';

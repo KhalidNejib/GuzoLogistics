@@ -13,6 +13,7 @@ import { appConfig, clerkConfig } from '@ethio-logistics/env';
 import connectDB from './lib/mongoose.js';
 import webhookRoutes from './routes/webhookRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
+import merchantRoutes from './routes/merchantRoutes.js';
 import { initializeSocket } from './socket.js';
 
 const app = express();
@@ -59,6 +60,7 @@ app.use(
 // 4. REST Routes
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/merchant', merchantRoutes);
 
 // Health Check route
 app.get('/', (req, res) => {

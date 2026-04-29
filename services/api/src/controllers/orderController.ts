@@ -141,3 +141,25 @@ export const acceptOrder = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ error: 'Failed to accept order.' });
   }
 };
+/**
+ * @route   GET /api/orders/track/:token
+ * @desc    Get order details by tracking token (Public)
+ * @access  Public
+ */
+export const getOrderByToken = async (req: AuthRequest, res: Response) => {
+  try {
+    const { token } = req.params;
+    const order = await Order.findOne({ trackingUrlToken: token })
+      .populate('rider', 'fullName phoneNumber vehicleType rating')
+      .lean();
+
+    if (!order) {
+      return res.status(404).json({ error: 'Tracking link invalid or expired.' });
+    }
+
+    return res.status(200).json({ order });
+  } catch (error) {
+    console.error('Error fetching public order:', error);
+    return res.status(500).json({ error: 'Failed to retrieve tracking info.' });
+  }
+};

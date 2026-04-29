@@ -26,6 +26,12 @@ const userSchema = new Schema(
     businessName: {
       type: String,
     },
+    businessAddress: {
+      type: String,
+    },
+    supportEmail: {
+      type: String,
+    },
     phoneNumber: {
       type: String,
       required: true,

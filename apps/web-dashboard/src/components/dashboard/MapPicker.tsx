@@ -1,34 +1,67 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { renderToString } from 'react-dom/server';
-import { MapPin, Target } from 'lucide-react';
+import { MapPin, Target, Store } from 'lucide-react';
 
 const ADDIS_ABABA: [number, number] = [9.0192, 38.7525];
 
-// Modern DivIcon using Lucide
-const createMarkerIcon = (color: string) => {
+// Modern Professional SVG Marker
+const createProfessionalMarker = (color: string, isPickup: boolean) => {
   return L.divIcon({
     html: renderToString(
       <div className="relative flex items-center justify-center">
+        {/* Pulse effect for better visibility */}
         <div
-          className="absolute w-8 h-8 rounded-full animate-ping opacity-20"
+          className="absolute w-10 h-10 rounded-full animate-ping opacity-20"
           style={{ backgroundColor: color }}
         />
-        <div className="relative drop-shadow-xl" style={{ color }}>
-          <MapPin size={36} fill={color} fillOpacity={0.2} strokeWidth={2.5} />
+
+        <div className="relative drop-shadow-2xl scale-110">
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 40 40"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 38C20 38 34 26.3556 34 16C34 8.26801 27.732 2 20 2C12.268 2 6 8.26801 6 16C6 26.3556 20 38 20 38Z"
+              fill="white"
+              stroke={color}
+              strokeWidth="3"
+            />
+            <circle cx="20" cy="16" r="8" fill={color} />
+            {isPickup ? (
+              <path
+                d="M18 13L20 11L22 13M20 11V21"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            ) : (
+              <path
+                d="M18 19L20 21L22 19M20 11V21"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
+          </svg>
         </div>
       </div>
     ),
     className: '',
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
+    iconSize: [40, 40],
+    iconAnchor: [20, 38],
   });
 };
 
-const pickupIcon = createMarkerIcon('#10b981'); // Green
-const deliveryIcon = createMarkerIcon('#ef4444'); // Red
+const pickupIcon = createProfessionalMarker('#10b981', true); // Green Hub Style
+const deliveryIcon = createProfessionalMarker('#ef4444', false); // Red Drop Style
 
 interface MapPickerProps {
   pickup: [number, number] | null;
@@ -42,6 +75,27 @@ function ClickHandler({ onSelect, mode }: { onSelect: any; mode: 'pickup' | 'del
       onSelect(mode, [e.latlng.lng, e.latlng.lat]); // [lng, lat]
     },
   });
+  return null;
+}
+
+/**
+ * Ensures the map centers on the selected points when they change programmatically
+ */
+function AutoCenter({ pickup, delivery }: { pickup: any; delivery: any }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (pickup) {
+      map.panTo([pickup[1], pickup[0]], { animate: true });
+    }
+  }, [pickup, map]);
+
+  useEffect(() => {
+    if (delivery) {
+      map.panTo([delivery[1], delivery[0]], { animate: true });
+    }
+  }, [delivery, map]);
+
   return null;
 }
 
@@ -60,7 +114,7 @@ export default function MapPicker({ pickup, delivery, onSelect }: MapPickerProps
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Target className="w-3.5 h-3.5" /> Pickup Point
+          <Store className="w-3.5 h-3.5" /> Pickup Point
         </button>
         <button
           type="button"
@@ -79,6 +133,7 @@ export default function MapPicker({ pickup, delivery, onSelect }: MapPickerProps
         <MapContainer center={ADDIS_ABABA} zoom={13} className="h-full w-full z-10">
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <ClickHandler mode={mode} onSelect={onSelect} />
+          <AutoCenter pickup={pickup} delivery={delivery} />
 
           {pickup && <Marker position={[pickup[1], pickup[0]]} icon={pickupIcon} />}
           {delivery && <Marker position={[delivery[1], delivery[0]]} icon={deliveryIcon} />}
