@@ -1,12 +1,7 @@
-// metro.config.cjs
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { getDefaultConfig } = require('expo/metro-config');
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { withNativeWind } = require('nativewind/metro');
+const { getDefaultConfig } = require("expo/metro-config");
 
 const config = getDefaultConfig(__dirname);
 
-/** Add this line */
-config.resolver.unstable_enablePackageExports = false;
-
-module.exports = withNativeWind(config, { input: './global.css' });
+// Disabled withNativeWind temporarily to bypass Windows ESM/Binary bugs.
+// We will use the Babel-only path for styling.
+module.exports = config;

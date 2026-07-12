@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { logger } from './logger.js';
 import { mongoConfig, appConfig } from '@ethio-logistics/env';
 
 const mongooseOptions: mongoose.ConnectOptions = {
@@ -13,23 +14,23 @@ const mongooseOptions: mongoose.ConnectOptions = {
 
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2) {
-    console.info(`MongoDB is already connected or connecting. Skipping...`);
+    logger.info(`MongoDB is already connected or connecting. Skipping...`);
     return;
   }
   try {
     const conn = await mongoose.connect(mongoConfig.uri, mongooseOptions);
-    console.info(`MongoDB connected: ${conn.connection.host}`);
+    logger.info(`MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error(`❌ Connection Error: ${(error as Error).message}`);
-    console.info(`Retrying MongoDB connection in 5 seconds...`);
+    logger.error(`❌ Connection Error: ${(error as Error).message}`);
+    logger.info(`Retrying MongoDB connection in 5 seconds...`);
     setTimeout(connectDB, 5000);
   }
 };
 mongoose.connection.on('disconnected', () => {
-  console.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');
+  logger.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');
 });
 mongoose.connection.on('error', (err) => {
-  console.error(`🔴 MongoDB Runtime Error: ${err}`);
+  logger.error(`🔴 MongoDB Runtime Error: ${err}`);
 });
 /**
  * Cleanly closes the database connection when the app is stopped.
@@ -42,10 +43,10 @@ const gracefulExit = async () => {
 
   try {
     await mongoose.connection.close();
-    console.info('📡 MongoDB connection closed cleanly via app termination');
+    logger.info('📡 MongoDB connection closed cleanly via app termination');
     process.exit(0);
   } catch (err) {
-    console.error('⚠️ Error during MongoDB disconnection:', err);
+    logger.error('⚠️ Error during MongoDB disconnection:', err);
     process.exit(1);
   }
 };

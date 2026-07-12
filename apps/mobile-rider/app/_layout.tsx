@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-require-imports */
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -8,9 +9,11 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { ActivityIndicator, View, Text } from 'react-native';
-import { useColorScheme } from '@/components/useColorScheme';
+import { useColorScheme } from '../components/useColorScheme';
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { tokenCache } from '../lib/tokenCache';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { LanguageProvider } from '../services/i18n';
 import '../global.css';
 
 export { ErrorBoundary } from 'expo-router';
@@ -24,21 +27,16 @@ SplashScreen.preventAutoHideAsync();
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 function RootLayoutNav() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded } = useAuth();
   const colorScheme = useColorScheme();
 
   if (!isLoaded) {
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'white',
-        }}
-      >
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}>
         <ActivityIndicator size="large" color="#2563eb" />
-        <Text className="mt-4 text-slate-400 font-bold text-xs uppercase tracking-widest">
+        <Text 
+          style={{ marginTop: 16, color: '#94a3b8', fontWeight: 'bold', fontSize: 10, textTransform: 'uppercase', letterSpacing: 2 }}
+        >
           Securing Terminal...
         </Text>
       </View>
@@ -46,21 +44,13 @@ function RootLayoutNav() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        {isSignedIn ? (
-          <>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="(auth)/login" />
-            <Stack.Screen name="(auth)/register" />
-          </>
-        )}
-      </Stack>
-    </ThemeProvider>
+    <Stack screenOptions={{ headerShown: false }}>
+      {/* We define ALL screens here. Navigation logic is handled by Expo Router's filesystem */}
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(auth)/login" />
+      <Stack.Screen name="(auth)/register" />
+      <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+    </Stack>
   );
 }
 
@@ -80,19 +70,32 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+  try {
+    if (!loaded) return null;
 
-  if (!publishableKey) {
-    throw new Error(
-      'Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env'
+    if (!publishableKey) {
+      return (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Text>Error: Missing Clerk Publishable Key</Text>
+        </View>
+      );
+    }
+
+    return (
+      <SafeAreaProvider>
+        <LanguageProvider>
+          <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+            <RootLayoutNav />
+          </ClerkProvider>
+        </LanguageProvider>
+      </SafeAreaProvider>
+    );
+  } catch (err: any) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <Text style={{ color: 'red', fontWeight: 'bold' }}>Critical Startup Error:</Text>
+        <Text>{err?.message || 'Unknown Error'}</Text>
+      </View>
     );
   }
-
-  return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <RootLayoutNav />
-    </ClerkProvider>
-  );
 }

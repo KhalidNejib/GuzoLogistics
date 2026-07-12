@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
   Alert,
   Keyboard,
+  StyleSheet,
+  Dimensions
 } from 'react-native';
 import { useSignIn, useOAuth, useAuth } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
@@ -18,6 +20,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { StatusBar } from 'expo-status-bar';
+import { settingService, RiderSettings } from '../../services/settingService';
+
+const { width } = Dimensions.get('window');
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -37,39 +42,44 @@ export default function LoginScreen() {
   const { isSignedIn } = useAuth();
   const router = useRouter();
 
-  // Refs for smooth keyboard flow
   const passwordRef = useRef<TextInput>(null);
 
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [preferences, setPreferences] = useState<RiderSettings | null>(null);
 
-  // 1. Guard: If already signed in, don't show login
+  useEffect(() => {
+    return settingService.subscribe(setPreferences);
+  }, []);
+
+  const isDark = preferences?.darkMode || false;
+  const styles = getStyles(isDark);
+
   useEffect(() => {
     if (isLoaded && isSignedIn) {
       router.replace('/');
     }
   }, [isLoaded, isSignedIn]);
 
-  // 2. Optimized Navigation Helper
   const handleSuccess = async (sessionId: string, setFunc: any) => {
     try {
       if (setFunc) {
         await setFunc({ session: sessionId });
-        // Maintain loading until Dashboard mounts
-        router.replace('/');
+        Alert.alert(
+          'Identity Verified', 
+          'Welcome back! Mission parameters synchronized.',
+          [{ text: 'Launch Terminal', onPress: () => router.replace('/(tabs)') }]
+        );
       }
     } catch (err) {
-      console.error('Finalizing session failed', err);
       setLoading(false);
     }
   };
 
-  // 3. Email/Password Login
   const onSignInPress = async () => {
     if (!isLoaded || loading) return;
-
     if (!emailAddress || !password) {
       Alert.alert('Missing Info', 'Please enter your email and password.');
       return;
@@ -87,24 +97,17 @@ export default function LoginScreen() {
       if (result.status === 'complete') {
         await handleSuccess(result.createdSessionId!, setActive);
       } else {
-        console.warn('Sign in incomplete status:', result.status);
         setLoading(false);
+        Alert.alert('Incomplete Sign-In', `Status: ${result.status}`);
       }
     } catch (err: any) {
-      // Production Error Parsing
-      const msg =
-        err.errors?.[0]?.longMessage ||
-        err.errors?.[0]?.message ||
-        'Login failed. Please check your credentials.';
-      Alert.alert('Login Error', msg);
+      Alert.alert('Access Denied', 'Invalid credentials or fleet key.');
       setLoading(false);
     }
   };
 
-  // 4. Google OAuth Sign In
   const onGoogleSignInPress = useCallback(async () => {
     if (loading) return;
-
     Keyboard.dismiss();
     setLoading(true);
 
@@ -119,154 +122,166 @@ export default function LoginScreen() {
         setLoading(false);
       }
     } catch (err: any) {
-      console.error('OAuth error', err);
-      if (err.code === 'already_signed_in') {
-        router.replace('/');
-      } else {
-        Alert.alert('Google Login Failed', 'Please try again or use email login.');
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, [startOAuthFlow, loading]);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-slate-50"
-    >
-      <StatusBar style="dark" />
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        className="px-6"
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="flex-1 justify-center py-8">
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
           {/* Brand Identity */}
-          <View className="mb-10 items-center">
-            <View className="w-16 h-16 bg-blue-600 rounded-[22px] items-center justify-center shadow-2xl shadow-blue-400 mb-4">
-              <Ionicons name="flash" size={32} color="white" />
+          <View style={styles.brand}>
+            <View style={styles.logoBox}>
+              <Ionicons name="flash" size={28} color="white" />
             </View>
-            <Text className="text-3xl font-black text-slate-900 tracking-tighter">
-              Rider<Text className="text-blue-600">Terminal</Text>
+            <Text style={styles.brandTitle}>
+              Guzo<Text style={{ color: '#2563eb' }}>Rider</Text>
             </Text>
-            <View className="flex-row items-center mt-2 bg-blue-50 px-3 py-1 rounded-full">
-              <View className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2" />
-              <Text className="text-blue-700 font-bold text-[10px] uppercase tracking-widest">
-                Fleet Active
-              </Text>
+            <View style={styles.badge}>
+              <View style={styles.badgeDot} />
+              <Text style={styles.badgeText}>Fleet Active</Text>
             </View>
           </View>
 
           {/* Login Interface */}
-          <View className="bg-white rounded-[32px] p-7 shadow-xl shadow-slate-200 border border-slate-100">
-            <Text className="text-2xl font-black text-slate-800 mb-1">Welcome Back</Text>
-            <Text className="text-slate-500 text-sm mb-8 font-medium">
-              Sign in to start your shift
-            </Text>
+          <View style={styles.card}>
+            <Text style={styles.welcomeTitle}>Welcome Back</Text>
+            <Text style={styles.welcomeSub}>Sign in to start your shift</Text>
 
-            <View className="space-y-5">
-              {/* Email Input */}
+            <View style={{ gap: 14 }}>
               <View>
-                <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">
-                  Fleet Email
-                </Text>
-                <View className="flex-row items-center bg-slate-50 rounded-2xl pl-6 pr-4 py-4 border border-slate-100 focus:border-blue-500">
-                  <Ionicons name="mail" size={18} color="#3b82f6" />
+                <Text style={styles.inputLabel}>Fleet Email</Text>
+                <View style={styles.inputBox}>
+                  <Ionicons name="mail" size={16} color="#2563eb" />
                   <TextInput
                     autoCapitalize="none"
                     keyboardType="email-address"
                     value={emailAddress}
-                    placeholder="rider@ethio-logistics.com"
-                    placeholderTextColor="#94a3b8"
-                    className="flex-1 ml-3 text-slate-900 font-semibold text-base h-12"
+                    placeholder="rider@guzo.app"
+                    placeholderTextColor={isDark ? "#4b5563" : "#94a3b8"}
+                    style={styles.inputText}
                     onChangeText={setEmailAddress}
                     returnKeyType="next"
                     onSubmitEditing={() => passwordRef.current?.focus()}
-                    blurOnSubmit={false}
                   />
                 </View>
               </View>
 
-              {/* Password Input */}
-              <View className="mt-5">
-                <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">
-                  Fleet Password
-                </Text>
-                <View className="flex-row items-center bg-slate-50 rounded-2xl pl-6 pr-4 py-4 border border-slate-100">
-                  <Ionicons name="lock-closed" size={18} color="#3b82f6" />
+              <View>
+                <Text style={styles.inputLabel}>Fleet Password</Text>
+                <View style={styles.inputBox}>
+                  <Ionicons name="lock-closed" size={16} color="#2563eb" />
                   <TextInput
                     ref={passwordRef}
                     value={password}
                     placeholder="••••••••"
-                    placeholderTextColor="#94a3b8"
+                    placeholderTextColor={isDark ? "#4b5563" : "#94a3b8"}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
-                    className="flex-1 ml-3 text-slate-900 font-semibold text-base h-12"
+                    style={styles.inputText}
                     onChangeText={setPassword}
                     returnKeyType="go"
                     onSubmitEditing={onSignInPress}
                   />
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-2">
-                    <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#64748b" />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 8 }}>
+                    <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={18} color="#64748b" />
                   </TouchableOpacity>
                 </View>
               </View>
             </View>
 
-            {/* Login Action */}
             <TouchableOpacity
               onPress={onSignInPress}
               disabled={loading}
-              className={`rounded-2xl py-5 mt-10 flex-row items-center justify-center shadow-lg ${loading ? 'bg-blue-400' : 'bg-blue-600 shadow-blue-200'}`}
+              style={[styles.primaryBtn, loading && { backgroundColor: isDark ? '#334155' : '#94a3b8' }]}
             >
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <>
-                  <Text className="text-white font-black text-base mr-2 uppercase tracking-widest">
-                    Go Online
-                  </Text>
-                  <Ionicons name="chevron-forward" size={18} color="white" />
-                </>
+              {loading ? <ActivityIndicator color="white" /> : (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={styles.primaryBtnText}>Go Online</Text>
+                  <Ionicons name="chevron-forward" size={16} color="white" />
+                </View>
               )}
             </TouchableOpacity>
 
-            <View className="flex-row items-center my-9">
-              <View className="flex-1 h-[1px] bg-slate-100" />
-              <Text className="px-5 text-slate-400 text-[10px] font-black uppercase tracking-[3px]">
-                Security
-              </Text>
-              <View className="flex-1 h-[1px] bg-slate-100" />
+            <View style={styles.divider}>
+              <View style={styles.line} />
+              <Text style={styles.dividerText}>Security</Text>
+              <View style={styles.line} />
             </View>
 
-            {/* Google OAuth Action */}
             <TouchableOpacity
               onPress={onGoogleSignInPress}
               disabled={loading}
-              className={`flex-row items-center justify-center bg-white border border-slate-200 rounded-2xl py-5 shadow-sm active:bg-slate-50 ${loading ? 'opacity-50' : ''}`}
+              style={styles.googleBtn}
             >
-              {loading ? (
-                <ActivityIndicator color="#64748b" />
-              ) : (
-                <>
-                  <Ionicons name="logo-google" size={18} color="#EA4335" />
-                  <Text className="text-slate-700 font-extrabold ml-3.5 text-sm uppercase tracking-wide">
-                    Google Access
-                  </Text>
-                </>
-              )}
+              <Ionicons name="logo-google" size={16} color="#EA4335" />
+              <Text style={styles.googleBtnText}>Google Access</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Version Footer */}
-          <View className="mt-10 items-center">
-            <Text className="text-slate-400 text-[10px] font-bold tracking-widest uppercase opacity-60">
-              Fleet Systems v1.0.4 • Ethio Logistics Group
-            </Text>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={{ color: isDark ? '#64748b' : '#64748b', fontSize: 13, fontWeight: '600' }}>New rider? </Text>
+              <TouchableOpacity onPress={() => router.push('/(auth)/register' as any)}>
+                <Text style={{ color: '#2563eb', fontWeight: '900' }}>Create Account →</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.versionText}>Guzo Fleet v1.0 • Rider App</Text>
           </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const getStyles = (isDark: boolean) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: isDark ? '#020617' : '#f8fafc' },
+  content: { flex: 1, paddingHorizontal: 24, justifyContent: 'center', paddingVertical: 40 },
+  brand: { alignItems: 'center', marginBottom: 32 },
+  logoBox: { width: 56, height: 56, backgroundColor: '#2563eb', borderRadius: 18, alignItems: 'center', justifyContent: 'center', shadowColor: '#2563eb', shadowOpacity: 0.4, shadowRadius: 15, shadowOffset: { width: 0, height: 10 }, elevation: 12 },
+  brandTitle: { fontSize: 28, fontWeight: '900', color: isDark ? '#f8fafc' : '#0f172a', letterSpacing: -1, marginTop: 12 },
+  badge: { flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#1e3a8a30' : '#eff6ff', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 100, marginTop: 8, borderWidth: 1, borderColor: isDark ? '#1e40af50' : 'transparent' },
+  badgeDot: { width: 5, height: 5, backgroundColor: '#3b82f6', borderRadius: 3, marginRight: 6 },
+  badgeText: { fontSize: 9, fontWeight: '900', color: '#3b82f6', textTransform: 'uppercase', letterSpacing: 1 },
+  card: { backgroundColor: isDark ? '#0f172a' : 'white', padding: 24, borderRadius: 32, shadowColor: '#000', shadowOpacity: isDark ? 0.4 : 0.05, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 8, borderWidth: 1, borderColor: isDark ? '#1e293b' : '#f1f5f9' },
+  welcomeTitle: { fontSize: 22, fontWeight: '900', color: isDark ? '#f8fafc' : '#0f172a', marginBottom: 2 },
+  welcomeSub: { fontSize: 13, color: '#64748b', marginBottom: 24, fontWeight: '700' },
+  inputLabel: { fontSize: 9, fontWeight: '900', color: isDark ? '#64748b' : '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8, marginLeft: 4 },
+  inputBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#020617' : '#f1f5f9', borderRadius: 16, paddingLeft: 16, paddingRight: 8, height: 52, borderWidth: 1, borderColor: isDark ? '#1e293b' : '#f1f5f9' },
+  inputText: { flex: 1, marginLeft: 10, fontSize: 14, fontWeight: '700', color: isDark ? '#f8fafc' : '#0f172a' },
+  primaryBtn: { height: 56, backgroundColor: '#2563eb', borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 24, shadowColor: '#2563eb', shadowOpacity: 0.35, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
+  primaryBtnText: { color: 'white', fontWeight: '900', fontSize: 15, textTransform: 'uppercase', letterSpacing: 1, marginRight: 6 },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 24 },
+  line: { flex: 1, height: 1, backgroundColor: isDark ? '#1e293b' : '#f1f5f9' },
+  dividerText: { marginHorizontal: 16, fontSize: 9, fontWeight: '900', color: isDark ? '#334155' : '#94a3b8', textTransform: 'uppercase', letterSpacing: 3 },
+  googleBtn: { height: 52, backgroundColor: isDark ? '#020617' : 'white', borderRadius: 16, borderWidth: 1, borderColor: isDark ? '#1e293b' : '#e2e8f0', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  googleBtnText: { marginLeft: 10, fontSize: 13, fontWeight: '900', color: isDark ? '#94a3b8' : '#334155', textTransform: 'uppercase', letterSpacing: 0.5 },
+  footer: { alignItems: 'center', marginTop: 32 },
+  versionText: { fontSize: 9, fontWeight: '900', color: isDark ? '#1e293b' : '#cbd5e1', textTransform: 'uppercase', letterSpacing: 1 }
+});
+
+const styles = StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: 24, justifyContent: 'center', paddingVertical: 40 },
+  brand: { alignItems: 'center', marginBottom: 40 },
+  logoBox: { width: 64, height: 64, backgroundColor: '#2563eb', borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#2563eb', shadowOpacity: 0.4, shadowRadius: 15, shadowOffset: { width: 0, height: 10 }, elevation: 12 },
+  brandTitle: { fontSize: 32, fontWeight: '900', color: '#0f172a', letterSpacing: -1, marginTop: 16 },
+  badge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eff6ff', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 100, marginTop: 8 },
+  badgeDot: { width: 6, height: 6, backgroundColor: '#3b82f6', borderRadius: 3, marginRight: 8 },
+  badgeText: { fontSize: 10, fontWeight: '900', color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: 1 },
+  welcomeTitle: { fontSize: 24, fontWeight: '900', color: '#0f172a', marginBottom: 4 },
+  welcomeSub: { fontSize: 14, color: '#64748b', marginBottom: 32, fontWeight: '600' },
+  inputBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', borderRadius: 16, paddingLeft: 16, paddingRight: 8, height: 60, borderWidth: 1, borderColor: '#f1f5f9' },
+  inputText: { flex: 1, marginLeft: 12, fontSize: 16, fontWeight: '600', color: '#0f172a' },
+  primaryBtn: { height: 64, backgroundColor: '#2563eb', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginTop: 40, shadowColor: '#2563eb', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 10 }, elevation: 8 },
+  primaryBtnText: { color: 'white', fontWeight: '900', fontSize: 16, textTransform: 'uppercase', letterSpacing: 1, marginRight: 8 },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 32 },
+  line: { flex: 1, height: 1, backgroundColor: '#f1f5f9' },
+  dividerText: { marginHorizontal: 16, fontSize: 10, fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 3 },
+  googleBtn: { height: 60, backgroundColor: 'white', borderRadius: 20, borderWidth: 1, borderColor: '#e2e8f0', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  googleBtnText: { marginLeft: 12, fontSize: 14, fontWeight: '900', color: '#334155', textTransform: 'uppercase', letterSpacing: 0.5 },
+  footer: { alignItems: 'center', marginTop: 40 },
+  versionText: { fontSize: 9, fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, opacity: 0.6 }
+});

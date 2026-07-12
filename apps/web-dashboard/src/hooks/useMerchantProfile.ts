@@ -2,6 +2,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 
+// Force dynamic resolution to bypass cached .env values during HMR
+const API_URL = `http://${window.location.hostname}:5000`;
+
 export function useMerchantProfile() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const [profile, setProfile] = useState<any>(null);
@@ -14,7 +17,7 @@ export function useMerchantProfile() {
 
     try {
       const token = await getToken();
-      const response = await fetch('http://localhost:5000/api/merchant/profile', {
+      const response = await fetch(`${API_URL}/api/merchant/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -32,7 +35,7 @@ export function useMerchantProfile() {
     setIsUpdating(true);
     try {
       const token = await getToken();
-      const response = await fetch('http://localhost:5000/api/merchant/profile', {
+      const response = await fetch(`${API_URL}/api/merchant/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

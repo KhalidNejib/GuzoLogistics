@@ -1,82 +1,128 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, NextFunction } from 'express';
-import { getAuth } from '@clerk/express';
+import { getAuth, verifyToken, createClerkClient } from '@clerk/express';
+import { clerkConfig } from '@ethio-logistics/env';
 import User from '../models/User.js';
 
 /**
  * We extend the default Express Request to include our MongoDB User.
- * Any route that uses this middleware will have access to `req.user`.
  */
 export interface AuthRequest extends Request {
-  user?: any; // We use 'any' here temporarily since it's a Lean Document
+  user?: any;
 }
 
 /**
  * 🔒 Middleware: requireUser
- * Extracts the Clerk Token, verifies it, and attaches the MongoDB User Profile.
  */
 export const requireUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    // 1. Get the authenticated external ID from Clerk
-    const { userId } = getAuth(req);
+    let { userId } = getAuth(req);
     const authHeader = req.headers.authorization;
 
-    // 2. Block if no token is provided
+    // FALLBACK: Manual Bearer token verification (for mobile clients)
+    if (!userId && authHeader?.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = await verifyToken(token, {
+          secretKey: clerkConfig.secretKey,
+          clockSkewInMs: 300000, 
+        });
+        userId = decoded.sub;
+      } catch (e: any) {
+        console.warn(`🔒 [Auth] Manual verification failed: ${e.message}`);
+      }
+    }
+
     if (!userId) {
-      console.warn(
-        `🔒 [Auth] Unauthorized access attempt. Header: ${authHeader ? 'Present' : 'Missing'}`
-      );
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'No valid authentication session found.',
-      });
+      return res.status(401).json({ error: 'Unauthorized', message: 'No valid authentication session found.' });
     }
 
-    console.info(`🔓 [Auth] User verified: ${userId}`);
+    let user = await User.findOne({ clerkId: userId });
 
-    // 3. Find the user in our Database.
-    // .lean() is crucial here: it forces mongoose to return a raw JSON object
+    // AUTO-SYNC: Create or refresh user from Clerk if missing/stale
+    if (!user || ['New User', 'Rider', 'Awaiting Name'].includes(user.fullName)) {
+      try {
+        const clerk = createClerkClient({ secretKey: clerkConfig.secretKey });
+        const clerkUser = await clerk.users.getUser(userId);
+        const fullName = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'Rider';
+        const email = clerkUser.emailAddresses?.[0]?.emailAddress || `${userId}@ethio-logistics.com`;
+        const phoneNumber = clerkUser.phoneNumbers?.[0]?.phoneNumber || '+251900000000';
+        const rawRole = (clerkUser.publicMetadata?.role as string)?.toUpperCase();
+        // hasExplicitRoleHint distinguishes "Clerk told us the role" from "we
+        // fell back to a default" — see the role-assignment note below for
+        // why that distinction matters.
+        const hasExplicitRoleHint = ['MERCHANT', 'RIDER', 'ADMIN'].includes(rawRole);
+        // Default to RIDER — merchants are created via the web dashboard only
+        const role = hasExplicitRoleHint ? rawRole : 'RIDER';
 
-    let user = await User.findOne({ clerkId: userId }).lean();
+        // SMARTER SYNC: First try to find by clerkId, then by email
+        user = await User.findOne({ $or: [{ clerkId: userId }, { email }] });
 
-    // 4. DEVELOPMENT AUTO-SYNC: If user exists in Clerk but not our DB, create them on the fly.
-    // In production, this is handled by Webhooks, but for localhost, this ensures a smooth experience.
-    if (!user) {
-      console.info(`🔄 [Auth] User ${userId} not found in DB. Creating on-the-fly...`);
-      const newUser = new User({
-        clerkId: userId,
-        email: `${userId}@ethio-logistics.com`, // Unique per user
-        fullName: 'New Merchant',
-        role: 'MERCHANT',
-        phoneNumber: `+251${Math.floor(Math.random() * 1000000000)}`, // Unique placeholder
-      });
-      await newUser.save();
-      user = newUser.toObject();
+        if (user) {
+          // Update existing account with latest Clerk info
+          user.clerkId = userId;
+          user.fullName = fullName;
+          user.email = email;
+          user.phoneNumber = phoneNumber;
+          // Role changes here must come from an explicit, trusted Clerk
+          // publicMetadata hint — never from the RIDER default above. This
+          // used to run unconditionally whenever the *default* resolved to
+          // RIDER (i.e. `user.role === 'MERCHANT' && role === 'RIDER'`),
+          // which silently demoted real merchants back to RIDER on their
+          // next login any time their Clerk profile had no publicMetadata
+          // role set — which is the normal case, since merchants are
+          // promoted via direct DB writes, not through Clerk. Only trust
+          // an explicit hint now, and never use it to downgrade silently.
+          if (hasExplicitRoleHint) {
+            user.role = role;
+          }
+          await user.save();
+        } else {
+          // Create brand new account
+          user = await User.create({ clerkId: userId, email, fullName, role, phoneNumber });
+        }
+      } catch (clerkErr: any) {
+        console.warn(`⚠️ [Auth] Clerk lookup failed for ${userId}: ${clerkErr.message}`);
+        if (!user) {
+          user = await User.create({
+            clerkId: userId,
+            email: `${userId}@ethio-logistics.com`,
+            fullName: 'Rider',
+            role: 'RIDER', // Default fallback — merchants come from the web dashboard
+            phoneNumber: '+251900000000',
+          });
+        }
+      }
     }
 
-    // 5. Attach the profile to the request and continue to the next function
-    req.user = user;
+    if (user.deletedAt || user.disabled) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Your account is deactivated or disabled.' });
+    }
+
+    req.user = user!.toObject();
     next();
-  } catch (error) {
-    console.error('CRITICAL: Auth Middleware Failure:', error);
+  } catch (error: any) {
+    console.error('CRITICAL: Auth Middleware Failure:', error.message);
     res.status(500).json({ error: 'Internal server error during authentication.' });
   }
 };
 
 /**
  * 🔒 Middleware Factory: requireRole
- * A supplementary check to ensure the user has the correct permission level.
- * Example usage: router.post('/orders', requireUser, requireRole('MERCHANT'), ...)
  */
 export const requireRole = (allowedRole: 'MERCHANT' | 'RIDER' | 'ADMIN') => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
-    // If they aren't the required role AND they aren't an ADMIN, block them.
-    if (req.user?.role !== allowedRole && req.user?.role !== 'ADMIN') {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: `This action requires ${allowedRole} privileges. You are registered as a ${req.user?.role}.`,
-      });
-    }
-    next();
+    const userRole = req.user?.role;
+    console.info(`🔐 [Auth] Role Check: User=${req.user?._id}, Role=${userRole}, Required=${allowedRole}`);
+
+    if (userRole === 'ADMIN') return next();
+    if (userRole === allowedRole) return next();
+
+
+
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: `This action requires ${allowedRole} privileges. You are registered as a ${userRole}.`,
+    });
   };
 };

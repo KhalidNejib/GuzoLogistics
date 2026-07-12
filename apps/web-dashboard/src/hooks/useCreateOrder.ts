@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { CreateOrderInput } from '@/lib/orderSchema';
 
+// Force dynamic resolution to bypass cached .env values during HMR
+const API_URL = `http://${window.location.hostname}:5000`;
+
 export function useCreateOrder() {
   const { getToken } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -14,7 +17,7 @@ export function useCreateOrder() {
     try {
       const token = await getToken();
 
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

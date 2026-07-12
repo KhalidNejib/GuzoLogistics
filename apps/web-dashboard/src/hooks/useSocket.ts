@@ -3,7 +3,11 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '@clerk/clerk-react';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const getApiUrl = () => {
+  // Force dynamic resolution to bypass cached .env values during HMR
+  return `http://${window.location.hostname}:5000`;
+};
+const SOCKET_URL = getApiUrl();
 
 // Added connection status for better UI control
 type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -38,14 +42,16 @@ export const useSocket = (): UseSocketReturn => {
     const socketInstance = io(SOCKET_URL, {
       auth: async (cb) => {
         try {
-          const token = await getToken();
+          // Use getToken from the latest render via a ref if needed, or just call it directly
+          // Since we are in a closure, we can just use the getToken from the scope
+          const token = await getToken({ skipCache: true });
           cb({ token });
         } catch (err) {
           console.error('❌ Failed to get auth token', err);
-          cb({ token: null }); // Explicitly handle auth failure
+          cb({ token: null });
         }
       },
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'],
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,
       timeout: 10000,
@@ -57,7 +63,10 @@ export const useSocket = (): UseSocketReturn => {
       isConnecting.current = false;
       console.info('🟢 Socket connected:', socketInstance.id);
 
-      // Re-sync rooms
+      socketInstance.onAny((eventName, ...args) => {
+        console.info(`🔥 [Socket Signal] Event: ${eventName}`, args);
+      });
+
       joinedOrders.current.forEach((orderId) => {
         socketInstance.emit('join_order', orderId);
       });
@@ -68,7 +77,19 @@ export const useSocket = (): UseSocketReturn => {
       console.warn('🔌 Socket disconnected:', reason);
     });
 
-    socketInstance.on('connect_error', (err) => {
+    socketInstance.on('connect_error', async (err) => {
+      if (err.message.includes('Authentication error')) {
+        console.warn('🔑 [Socket] Auth failed, refreshing token and retrying...');
+        try {
+          const newToken = await getToken({ skipCache: true });
+          socketInstance.auth = { token: newToken };
+          socketInstance.connect();
+          return;
+        } catch (refreshErr) {
+          console.error('❌ [Socket] Token refresh failed:', refreshErr);
+        }
+      }
+      
       setStatus('error');
       setError((prev) => prev ?? `Connection Error: ${err.message}`);
       isConnecting.current = false;
@@ -80,23 +101,52 @@ export const useSocket = (): UseSocketReturn => {
 
     socketRef.current = socketInstance;
     setSocket(socketInstance);
-  }, [getToken, isLoaded, isSignedIn]);
+  }, [isLoaded, isSignedIn]); // Removed getToken
+
+  const { userId } = useAuth();
 
   useEffect(() => {
-    connectSocket();
+    if (isLoaded && isSignedIn && userId) {
+      connectSocket();
+    }
+    
     return () => {
       if (socketRef.current) {
-        socketRef.current.removeAllListeners();
-        socketRef.current.disconnect();
-        socketRef.current = null;
+        const currentSocket = socketRef.current;
+        setTimeout(() => {
+          if (socketRef.current !== currentSocket) {
+            currentSocket.removeAllListeners();
+            currentSocket.disconnect();
+          }
+        }, 100);
       }
     };
-  }, [connectSocket]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, isSignedIn, userId]); // Removed connectSocket
 
   const joinOrder = useCallback((orderId: string) => {
-    joinedOrders.current.add(orderId);
+    if (!orderId) return;
+    const cleanId = orderId.trim();
+    
+    // Global room bypass
+    if (cleanId === 'global') {
+      joinedOrders.current.add(cleanId);
+      if (socketRef.current?.connected) {
+        socketRef.current.emit('join_order', cleanId);
+      }
+      return;
+    }
+    
+    // 🛡️ SANITY CHECK: MongoDB IDs are exactly 24 chars
+    if (cleanId.length !== 24) {
+      console.warn(`⚠️ [Socket] Fixing corrupted Order ID: ${cleanId} -> ${cleanId.slice(0, 24)}`);
+    }
+    
+    const targetId = cleanId.slice(0, 24);
+    joinedOrders.current.add(targetId);
+    
     if (socketRef.current?.connected) {
-      socketRef.current.emit('join_order', orderId);
+      socketRef.current.emit('join_order', targetId);
     }
   }, []);
 

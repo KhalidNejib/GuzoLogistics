@@ -39,6 +39,7 @@ const navItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
   { name: 'Orders', icon: Package, path: '/orders' },
   { name: 'Live Tracking', icon: Map, path: '/tracking' },
+  { name: 'Fleet', icon: Truck, path: '/fleet' },
   { name: 'Settings', icon: Settings, path: '/settings' },
 ];
 
@@ -77,9 +78,50 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       toast.info(newNotif.title, { description: newNotif.description });
     };
 
+    const handleSOS = (data: { incidentId: string, riderId: string, riderName: string, type: string, description: string, location: any, timestamp: string }) => {
+      const isSOS = data.type === 'SOS';
+      const newNotif = {
+        id: Date.now(),
+        title: isSOS ? `🚨 CRITICAL: SOS ALERT` : `⚠️ INCIDENT REPORT: ${data.type.toUpperCase()}`,
+        description: `Pilot ${data.riderName || 'Unknown'}: ${data.description}`,
+        time: 'IMMEDIATE',
+        type: isSOS ? 'critical' : 'info',
+      };
+      setNotifications((prev) => [newNotif, ...prev].slice(0, 10));
+      
+      if (isSOS) {
+        toast.error(`SOS ACTIVATED: ${data.riderName}`, { 
+          description: data.description,
+          duration: 20000,
+        });
+      } else {
+        toast.warning(`New Incident: ${data.type}`, {
+          description: `Report from ${data.riderName}: ${data.description}`,
+          duration: 8000,
+        });
+      }
+    };
+
+    const handleNotification = (data: { title: string; body: string }) => {
+      const newNotif = {
+        id: Date.now(),
+        title: data.title,
+        description: data.body,
+        time: 'Just now',
+        type: 'info',
+      };
+      setNotifications((prev) => [newNotif, ...prev].slice(0, 5));
+      toast.info(data.title, { description: data.body });
+    };
+
     socket.on('order_status_changed', handleStatusChange);
+    socket.on('emergency_sos', handleSOS);
+    socket.on('notification', handleNotification);
+    
     return () => {
       socket.off('order_status_changed', handleStatusChange);
+      socket.off('emergency_sos', handleSOS);
+      socket.off('notification', handleNotification);
     };
   }, [socket]);
 
@@ -93,7 +135,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 <Truck size={20} />
               </div>
               <span className="truncate group-data-[state=collapsed]:hidden font-bold">
-                Ethio Logistics
+                Guzo
               </span>
             </div>
           </SidebarHeader>
@@ -145,10 +187,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-16 flex items-center justify-between px-6 border-b border-border/40 bg-background/80 backdrop-blur-xl sticky top-0 z-20 shadow-sm/5">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               <SidebarTrigger className="h-8 w-8 hover:bg-primary/10 text-primary transition-colors" />
-              <div className="h-6 w-px bg-border/50" />
-              <h1 className="text-sm font-bold text-foreground">Merchant Hub</h1>
+              <div className="h-6 w-px bg-border/50 hidden md:block" />
+              <h1 className="text-sm font-bold text-foreground hidden md:block">Merchant Hub</h1>
             </div>
 
             <div className="flex items-center gap-4">
@@ -201,12 +243,16 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                             <div
                               className={`mt-1 h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
                                 n.type === 'success'
-                                  ? 'bg-green-100 text-green-600'
-                                  : 'bg-blue-100 text-blue-600'
+                                  ? 'bg-green-100 text-green-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                  : n.type === 'critical'
+                                  ? 'bg-red-100 text-red-600 dark:bg-rose-500/20 dark:text-rose-400'
+                                  : 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
                               }`}
                             >
                               {n.type === 'success' ? (
                                 <CheckCircle2 size={16} />
+                              ) : n.type === 'critical' ? (
+                                <Bell size={16} />
                               ) : (
                                 <Clock size={16} />
                               )}
@@ -252,7 +298,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <main className="flex-1 overflow-y-auto bg-slate-50/40 dark:bg-zinc-950/40 p-6">
+          <main className="flex-1 overflow-y-auto bg-slate-50/40 dark:bg-zinc-950/40 p-3 md:p-6">
             <div className="mx-auto max-w-7xl">{children}</div>
           </main>
         </div>

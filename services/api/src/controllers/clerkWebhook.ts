@@ -1,15 +1,11 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
-import { Webhook } from 'svix';
 import { clerkConfig } from '@ethio-logistics/env';
 import User from '../models/User.js';
 import type { WebhookEvent } from '@clerk/express';
 
 /**
  * PRODUCTION-HARDENED Clerk Webhook Handler
- *
- * This controller ensures that our MongoDB stays perfectly in sync with Clerk,
- * while maintaining the highest level of security and data reliability.
  */
 export const handleClerkWebhook = async (req: Request, res: Response) => {
   const WEBHOOK_SECRET = clerkConfig.webhookSecret;
@@ -19,105 +15,109 @@ export const handleClerkWebhook = async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  // 1. EXTRACT SVIX SECURITY HEADERS
   const svix_id = req.headers['svix-id'] as string;
   const svix_timestamp = req.headers['svix-timestamp'] as string;
   const svix_signature = req.headers['svix-signature'] as string;
 
-  // If any headers are missing, the request is definitely NOT from Clerk.
   if (!svix_id || !svix_timestamp || !svix_signature) {
     return res.status(400).json({ error: 'Missing security headers' });
   }
 
-  // 2. RETRIEVE THE RAW BODY BUFFER
-  // We use req.rawBody which was captured in index.ts for perfect signature matching.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawBody = (req as any).rawBody;
-
   if (!rawBody) {
-    console.error('❌ FAILED: rawBody buffer not detected. Check middleware order in index.ts.');
+    console.error('❌ FAILED: rawBody buffer not detected.');
     return res.status(500).json({ error: 'Failed to process request correctly' });
   }
 
-  let evt: WebhookEvent;
-
-  // 3. MANUAL CRYPTOGRAPHIC SIGNATURE VERIFICATION
   try {
-    // Bypassing Svix library's internal timestamp check to resolve local clock desync.
     const secret = WEBHOOK_SECRET.replace('whsec_', '');
     const secretBytes = Buffer.from(secret, 'base64');
     const toSign = `${svix_id}.${svix_timestamp}.${rawBody}`;
 
     const hmac = crypto.createHmac('sha256', secretBytes).update(toSign).digest('base64');
-
-    // Headers can contain multiple signatures separated by space (v1,sig1 v1,sig2)
+    const hmacBuffer = Buffer.from(hmac);
     const passedSignatures = svix_signature.split(' ');
     const isVerified = passedSignatures.some((s) => {
       const [version, signature] = s.split(',');
-      return version === 'v1' && signature === hmac;
+      if (version !== 'v1' || !signature) return false;
+      const sigBuffer = Buffer.from(signature);
+      // Lengths must match before timingSafeEqual is called (it throws otherwise);
+      // this length check leaks negligible info compared to the prior full string compare.
+      if (sigBuffer.length !== hmacBuffer.length) return false;
+      return crypto.timingSafeEqual(sigBuffer, hmacBuffer);
     });
 
     if (!isVerified) {
       throw new Error('No matching signature found');
     }
 
-    // Assign the event type for later use (manually parsed for simplicity)
-    evt = JSON.parse(rawBody.toString()) as WebhookEvent;
-  } catch (err) {
-    console.error('❌ Webhook verification failed:', (err as Error).message);
-    return res.status(400).json({ error: 'Invalid signature. Request rejected.' });
-  }
+    const evt = JSON.parse(rawBody.toString()) as WebhookEvent;
+    const { id: clerkId } = evt.data as any;
+    const eventType = evt.type;
 
-  // 4. DATA SYNCHRONIZATION LOGIC
-  const { id: clerkId } = evt.data;
-  const eventType = evt.type;
+    console.info(`📡 Clerk Webhook: ${eventType} [User: ${clerkId}]`);
 
-  console.info(`📡 Clerk Webhook: ${eventType} [User: ${clerkId}]`);
-
-  try {
-    // CASE A: User is created or profile is updated
     if (eventType === 'user.created' || eventType === 'user.updated') {
-      const { email_addresses, first_name, last_name, phone_numbers, public_metadata } = evt.data;
-
-      // GUARD: Ensure we have an email address (fallback for test events)
+      const { email_addresses, first_name, last_name, phone_numbers, public_metadata, unsafe_metadata } =
+        evt.data as any;
       const email = email_addresses?.[0]?.email_address || `test-${clerkId}@clerk.dev`;
-
-      // DATA MAPPING
       const fullName = `${first_name || ''} ${last_name || ''}`.trim() || 'Awaiting Name';
       const phoneNumber = phone_numbers?.[0]?.phone_number || '+251000000000';
 
-      // ROLE SECURITY (Whitelisting)
-      const rawRole = (public_metadata?.role as string)?.toUpperCase();
+      // public_metadata is set by trusted backend/admin code — always honor it if present.
+      // unsafe_metadata is client-writable at signUp.create() time, so it's the only role hint
+      // available for a brand-new rider signup before our backend has ever seen the user.
+      // We only trust it to grant RIDER (the least-privileged role) — never MERCHANT or ADMIN —
+      // so a malicious client can't self-elevate via unsafe_metadata.
+      const publicRole = (public_metadata?.role as string)?.toUpperCase();
+      const unsafeRole = (unsafe_metadata?.role as string)?.toUpperCase();
       const validRoles = ['MERCHANT', 'RIDER', 'ADMIN'];
-      const role = validRoles.includes(rawRole) ? rawRole : 'MERCHANT';
 
-      // ATOMIC UPSERT (Idempotent: prevents duplicate users on retries)
-      await User.findOneAndUpdate(
-        { clerkId },
-        {
+      let resolvedRole: string | undefined;
+      if (validRoles.includes(publicRole)) {
+        resolvedRole = publicRole;
+      } else if (unsafeRole === 'RIDER') {
+        resolvedRole = 'RIDER';
+      }
+
+      const existingUser = await User.findOne({ clerkId });
+
+      if (!existingUser) {
+        // Creation: default to RIDER (the least-privileged role) if no valid hint was given at all.
+        await User.create({
           clerkId,
           email,
           fullName,
           phoneNumber,
-          role,
-        },
-        { upsert: true, new: true, runValidators: true }
-      );
-
-      console.info(`✅ Successfully synced User ${clerkId} (${role})`);
+          role: resolvedRole || 'RIDER',
+        });
+      } else {
+        // Update: never silently overwrite an existing user's role. Only apply a role change
+        // if a trusted public_metadata role hint was explicitly provided.
+        const update: Record<string, unknown> = { email, fullName, phoneNumber };
+        if (validRoles.includes(publicRole)) {
+          update.role = publicRole;
+        }
+        await User.findOneAndUpdate({ clerkId }, update, { new: true, runValidators: true });
+      }
     }
 
-    // CASE B: User is deleted in Clerk
     if (eventType === 'user.deleted') {
-      await User.findOneAndDelete({ clerkId });
-      console.info(`🗑️ User ${clerkId} removed from local database.`);
+      // ✅ SOFT DELETE — stamp the timestamp but preserve the document.
+      // This keeps all order history, revenue records, and audit trails intact.
+      // Orders still have a valid merchant/rider reference and won't break.
+      await User.findOneAndUpdate(
+        { clerkId },
+        { deletedAt: new Date() },
+        { new: true }
+      );
+      console.info(`🗑️ [Webhook] User ${clerkId} soft-deleted. Orders preserved.`);
     }
 
-    // Always respond with 200 within 10 seconds to satisfy Clerk's timeout.
     return res.status(200).json({ success: true });
-  } catch (error) {
-    console.error('❌ Webhook Processing Error:', error);
-    // Returning 500 tells Clerk to try re-sending this message later.
-    return res.status(500).json({ error: 'Internal processing error' });
+  } catch (err: any) {
+    console.error('❌ Webhook verification failed:', err.message);
+    return res.status(400).json({ error: 'Invalid signature. Request rejected.' });
   }
 };

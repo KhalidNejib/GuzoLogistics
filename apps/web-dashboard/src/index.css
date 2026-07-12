@@ -127,3 +127,19 @@
     @apply font-sans;
   }
 }
+
+/* --- LEAFLET PREMIUM POPUP OVERRIDES --- */
+.premium-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  background: transparent;
+}
+.premium-popup .leaflet-popup-content {
+  margin: 0;
+  width: 100% !important;
+}
+.premium-popup .leaflet-popup-tip-container {
+  display: none;
+}

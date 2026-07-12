@@ -11,3 +11,5 @@ export * from './textarea';
 export * from './tooltip';
 export * from './avatar';
 export * from './badge';
+export * from './table';
+export * from './switch';

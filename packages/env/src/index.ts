@@ -12,6 +12,11 @@ const envSchema = z.object({
   CLERK_WEBHOOK_SIGNING_SECRET: z.string().optional(),
   MONGODB_URI: z.string().optional(),
   REDIS_URL: z.string().optional(),
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
+  SMS_ET_KEY: z.string().optional(),
+  SMS_ET_ID: z.string().optional(),
 
   // Shared / Frontend
   VITE_CLERK_PUBLISHABLE_KEY: z
@@ -66,6 +71,7 @@ export const env = validatedData;
 export const appConfig = {
   nodeEnv: env.NODE_ENV,
   isDev: env.NODE_ENV === 'development',
+  port: Number(env.PORT) || 5000,
 };
 
 export const clerkConfig = {
@@ -80,6 +86,17 @@ export const mongoConfig = {
 
 export const redisConfig = {
   url: env.REDIS_URL,
+};
+
+export const cloudinaryConfig = {
+  cloudName: env.CLOUDINARY_CLOUD_NAME,
+  apiKey: env.CLOUDINARY_API_KEY,
+  apiSecret: env.CLOUDINARY_API_SECRET,
+};
+
+export const smsConfig = {
+  key: env.SMS_ET_KEY,
+  id: env.SMS_ET_ID,
 };
 
 export type Env = z.infer<typeof envSchema>;

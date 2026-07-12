@@ -5,7 +5,7 @@ export const tokenCache = {
     try {
       const item = await SecureStore.getItemAsync(key);
       if (item) {
-        console.info(`${key} was used 🔐 \n`);
+        console.info(`${key} was used \n`);
       } else {
         console.info('No values stored under key: ' + key);
       }

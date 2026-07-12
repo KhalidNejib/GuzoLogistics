@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,174 +10,219 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  StyleSheet
 } from 'react-native';
 import { useSignUp } from '@clerk/clerk-expo';
-import { useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { settingService, RiderSettings } from '../../services/settingService';
 
 export default function RegisterScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
 
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [preferences, setPreferences] = useState<RiderSettings | null>(null);
 
-  // Start the sign up process
+  useEffect(() => {
+    return settingService.subscribe(setPreferences);
+  }, []);
+
+  const isDark = preferences?.darkMode || false;
+  const styles = getStyles(isDark);
+
   const onSignUpPress = async () => {
     if (!isLoaded) return;
+    if (!firstName.trim() || !emailAddress.trim() || !password.trim()) {
+      Alert.alert('Missing Info', 'Please fill in all core fields.');
+      return;
+    }
     setLoading(true);
-
     try {
       await signUp.create({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         emailAddress,
         password,
+        unsafeMetadata: { role: 'RIDER' },
       });
-
-      // Send the email verification code
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
-
-      // Change the UI to our verification screen
       setPendingVerification(true);
     } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
       Alert.alert('Registration Failed', err.errors?.[0]?.message || 'Check your details.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Verify the email code
   const onPressVerify = async () => {
     if (!isLoaded) return;
     setLoading(true);
-
     try {
-      const completeSignUp = await signUp.attemptEmailAddressVerification({
-        code,
-      });
-
+      const completeSignUp = await signUp.attemptEmailAddressVerification({ code });
       await setActive({ session: completeSignUp.createdSessionId });
-      router.replace('/(tabs)');
+      Alert.alert('Account Created', 'Welcome to the fleet!', [{ text: 'Continue', onPress: () => router.replace('/(tabs)') }]);
     } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
-      Alert.alert('Verification Failed', err.errors?.[0]?.message || 'Invalid code.');
+      Alert.alert('Verification Failed', 'Invalid code.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
-    >
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        className="px-6 pt-16 pb-8"
-        keyboardShouldPersistTaps="handled"
-      >
-        <View className="mb-10">
-          <TouchableOpacity onPress={() => router.back()} className="mb-6">
-            <Ionicons name="arrow-back" size={28} color="#1e293b" />
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={20} color={isDark ? '#e2e8f0' : '#0f172a'} />
           </TouchableOpacity>
-          <Text className="text-3xl font-bold text-slate-900">Join the Fleet</Text>
-          <Text className="text-slate-500 mt-2 text-lg">
-            Create your rider account to start delivering.
-          </Text>
+          <Text style={styles.title}>Join the Fleet</Text>
+          <Text style={styles.subTitle}>Create your rider account to start delivering.</Text>
         </View>
 
-        {!pendingVerification ? (
-          <View className="space-y-5">
-            <View>
-              <Text className="text-sm font-semibold text-slate-700 mb-2 ml-1">Email Address</Text>
-              <View className="flex-row items-center bg-slate-50 rounded-2xl px-4 py-4 border border-slate-100">
-                <Ionicons name="mail-outline" size={20} color="#64748b" />
-                <TextInput
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  value={emailAddress}
-                  placeholder="rider@ethio-logistics.com"
-                  className="flex-1 ml-3 text-slate-900 text-base"
-                  onChangeText={setEmailAddress}
-                />
+        <View style={styles.content}>
+          {!pendingVerification ? (
+            <View style={{ gap: 14 }}>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.inputLabel}>First Name *</Text>
+                  <View style={styles.inputBox}>
+                    <Ionicons name="person-outline" size={16} color="#64748b" />
+                    <TextInput
+                      autoCapitalize="words"
+                      value={firstName}
+                      placeholder="Abebe"
+                      placeholderTextColor={isDark ? "#4b5563" : "#94a3b8"}
+                      style={styles.inputText}
+                      onChangeText={setFirstName}
+                    />
+                  </View>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.inputLabel}>Last Name</Text>
+                  <View style={styles.inputBox}>
+                    <Ionicons name="person-outline" size={16} color="#64748b" />
+                    <TextInput
+                      autoCapitalize="words"
+                      value={lastName}
+                      placeholder="Kebede"
+                      placeholderTextColor={isDark ? "#4b5563" : "#94a3b8"}
+                      style={styles.inputText}
+                      onChangeText={setLastName}
+                    />
+                  </View>
+                </View>
               </View>
-            </View>
 
-            <View>
-              <Text className="text-sm font-semibold text-slate-700 mb-2 ml-1">
-                Create Password
-              </Text>
-              <View className="flex-row items-center bg-slate-50 rounded-2xl px-4 py-4 border border-slate-100">
-                <Ionicons name="lock-closed-outline" size={20} color="#64748b" />
-                <TextInput
-                  value={password}
-                  placeholder="••••••••"
-                  secureTextEntry
-                  className="flex-1 ml-3 text-slate-900 text-base"
-                  onChangeText={setPassword}
-                />
+              <View>
+                <Text style={styles.inputLabel}>Email Address</Text>
+                <View style={styles.inputBox}>
+                  <Ionicons name="mail-outline" size={16} color="#64748b" />
+                  <TextInput
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    value={emailAddress}
+                    placeholder="rider@ethio-logistics.com"
+                    placeholderTextColor={isDark ? "#4b5563" : "#94a3b8"}
+                    style={styles.inputText}
+                    onChangeText={setEmailAddress}
+                  />
+                </View>
               </View>
-            </View>
 
-            <TouchableOpacity
-              className={`rounded-2xl py-5 mt-6 shadow-lg ${loading ? 'bg-blue-400' : 'bg-blue-600 shadow-blue-200'}`}
-              onPress={onSignUpPress}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text className="text-white text-center font-bold text-lg">Create Account</Text>
-              )}
+              <View>
+                <Text style={styles.inputLabel}>Create Password</Text>
+                <View style={styles.inputBox}>
+                  <Ionicons name="lock-closed-outline" size={16} color="#64748b" />
+                  <TextInput
+                    value={password}
+                    placeholder="••••••••"
+                    placeholderTextColor={isDark ? "#4b5563" : "#94a3b8"}
+                    secureTextEntry
+                    style={styles.inputText}
+                    onChangeText={setPassword}
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={onSignUpPress}
+                disabled={loading}
+                style={[styles.primaryBtn, loading && { backgroundColor: isDark ? '#334155' : '#94a3b8' }]}
+              >
+                {loading ? <ActivityIndicator color="white" /> : <Text style={styles.primaryBtnText}>Create Account</Text>}
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{ gap: 20 }}>
+              <View>
+                <Text style={styles.inputLabel}>Verification Code</Text>
+                <View style={styles.inputBox}>
+                  <Ionicons name="shield-checkmark-outline" size={18} color="#64748b" />
+                  <TextInput
+                    value={code}
+                    placeholder="123456"
+                    keyboardType="number-pad"
+                    placeholderTextColor={isDark ? "#4b5563" : "#94a3b8"}
+                    style={[styles.inputText, { letterSpacing: 8, fontWeight: '900', fontSize: 20 }]}
+                    onChangeText={setCode}
+                  />
+                </View>
+                <Text style={styles.codeHint}>We sent a code to {emailAddress}</Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={onPressVerify}
+                disabled={loading}
+                style={[styles.primaryBtn, { backgroundColor: '#10b981' }, loading && { backgroundColor: '#94a3b8' }]}
+              >
+                {loading ? <ActivityIndicator color="white" /> : <Text style={styles.primaryBtnText}>Verify Email</Text>}
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <View style={styles.footer}>
+            <Text style={{ color: isDark ? '#64748b' : '#64748b', fontSize: 13, fontWeight: '600' }}>Already a rider? </Text>
+            <TouchableOpacity onPress={() => router.push('/(auth)/login' as any)}>
+              <Text style={{ color: '#2563eb', fontWeight: '900', fontSize: 13 }}>Sign In</Text>
             </TouchableOpacity>
           </View>
-        ) : (
-          <View className="space-y-5">
-            <View>
-              <Text className="text-sm font-semibold text-slate-700 mb-2 ml-1">
-                Verification Code
-              </Text>
-              <View className="flex-row items-center bg-slate-50 rounded-2xl px-4 py-4 border border-slate-100">
-                <Ionicons name="shield-checkmark-outline" size={20} color="#64748b" />
-                <TextInput
-                  value={code}
-                  placeholder="123456"
-                  keyboardType="number-pad"
-                  className="flex-1 ml-3 text-slate-900 text-base tracking-[10px] font-bold"
-                  onChangeText={setCode}
-                />
-              </View>
-              <Text className="text-slate-500 mt-4 text-center">
-                We sent a code to {emailAddress}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              className={`rounded-2xl py-5 mt-6 shadow-lg ${loading ? 'bg-blue-400' : 'bg-blue-600 shadow-blue-200'}`}
-              onPress={onPressVerify}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text className="text-white text-center font-bold text-lg">Verify Email</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <View className="flex-row justify-center mt-auto pt-10">
-          <Text className="text-slate-500 text-base">Already a rider? </Text>
-          <Link href={'/login' as any} asChild>
-            <TouchableOpacity>
-              <Text className="text-blue-600 font-bold text-base">Sign In</Text>
-            </TouchableOpacity>
-          </Link>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const getStyles = (isDark: boolean) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: isDark ? '#020617' : '#f8fafc' },
+  header: { paddingHorizontal: 24, paddingTop: 48, marginBottom: 24 },
+  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: isDark ? '#0f172a' : 'white', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 1, borderColor: isDark ? '#1e293b' : '#f1f5f9' },
+  title: { fontSize: 28, fontWeight: '900', color: isDark ? '#f8fafc' : '#0f172a', letterSpacing: -0.5 },
+  subTitle: { fontSize: 14, color: '#64748b', marginTop: 4, fontWeight: '600' },
+  content: { paddingHorizontal: 24 },
+  inputLabel: { fontSize: 9, fontWeight: '900', color: isDark ? '#64748b' : '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 },
+  inputBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#0f172a' : 'white', borderRadius: 14, paddingHorizontal: 12, height: 50, borderWidth: 1, borderColor: isDark ? '#1e293b' : '#f1f5f9' },
+  inputText: { flex: 1, marginLeft: 10, fontSize: 14, fontWeight: '700', color: isDark ? '#f8fafc' : '#0f172a' },
+  primaryBtn: { height: 56, backgroundColor: '#2563eb', borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 12, shadowColor: '#2563eb', shadowOpacity: 0.25, shadowRadius: 15, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
+  primaryBtnText: { color: 'white', fontWeight: '900', fontSize: 16 },
+  codeHint: { fontSize: 11, color: '#94a3b8', textAlign: 'center', marginTop: 12, fontWeight: '600' },
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 40, paddingVertical: 24 }
+});
+
+const styles = StyleSheet.create({
+  backBtn: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center', marginBottom: 24, borderWidth: 1, borderColor: '#f1f5f9' },
+  title: { fontSize: 32, fontWeight: '900', color: '#0f172a', letterSpacing: -0.5 },
+  subTitle: { fontSize: 16, color: '#64748b', marginTop: 8, fontWeight: '500' },
+  inputBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', borderRadius: 16, paddingHorizontal: 16, height: 60, borderWidth: 1, borderColor: '#f1f5f9' },
+  inputText: { flex: 1, marginLeft: 12, fontSize: 16, fontWeight: '600', color: '#0f172a' },
+  primaryBtn: { height: 64, backgroundColor: '#2563eb', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginTop: 12, shadowColor: '#2563eb', shadowOpacity: 0.2, shadowRadius: 15, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
+  primaryBtnText: { color: 'white', fontWeight: '900', fontSize: 18 },
+  codeHint: { fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 12, fontWeight: '600' },
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 'auto', paddingVertical: 40 }
+});

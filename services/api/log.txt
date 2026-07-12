@@ -1,0 +1,44 @@
+
+> @ethio-logistics/api@1.0.0 dev C:\ethio-logistics-v3\ethio-logistics-v1\services\api
+> tsx watch src/index.ts
+
+
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'cloudinary' imported from C:\ethio-logistics-v3\ethio-logistics-v1\services\api\src\controllers\orderController.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:314:9)
+    at packageResolve (node:internal/modules/esm/resolve:768:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:985:11)
+    at nextResolve (node:internal/modules/esm/hooks:748:28)
+    at resolveBase (file:///C:/ethio-logistics-v3/ethio-logistics-v1/node_modules/.pnpm/tsx@4.21.0/node_modules/tsx/dist/esm/index.mjs?1779948694805:2:3744)
+    at resolveDirectory (file:///C:/ethio-logistics-v3/ethio-logistics-v1/node_modules/.pnpm/tsx@4.21.0/node_modules/tsx/dist/esm/index.mjs?1779948694805:2:4243)
+    at resolveTsPaths (file:///C:/ethio-logistics-v3/ethio-logistics-v1/node_modules/.pnpm/tsx@4.21.0/node_modules/tsx/dist/esm/index.mjs?1779948694805:2:4984)
+    at async resolve (file:///C:/ethio-logistics-v3/ethio-logistics-v1/node_modules/.pnpm/tsx@4.21.0/node_modules/tsx/dist/esm/index.mjs?1779948694805:2:5355)
+    at async nextResolve (node:internal/modules/esm/hooks:748:22) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v22.22.2
+9:20:04 AM [tsx] change in ./src\models\RiderProfile.ts Rerunning...
+cnode:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 5000
+}
+
+Node.js v22.22.2

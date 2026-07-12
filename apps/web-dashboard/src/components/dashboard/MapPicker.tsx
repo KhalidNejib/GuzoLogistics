@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import { useState, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import { renderToString } from 'react-dom/server';
 import { MapPin, Target, Store } from 'lucide-react';
@@ -67,6 +67,7 @@ interface MapPickerProps {
   pickup: [number, number] | null;
   delivery: [number, number] | null;
   onSelect: (type: 'pickup' | 'delivery', coords: [number, number]) => void;
+  onRouteCalculated?: (distanceKm: number, durationMinutes: number) => void;
 }
 
 function ClickHandler({ onSelect, mode }: { onSelect: any; mode: 'pickup' | 'delivery' }) {
@@ -99,8 +100,45 @@ function AutoCenter({ pickup, delivery }: { pickup: any; delivery: any }) {
   return null;
 }
 
-export default function MapPicker({ pickup, delivery, onSelect }: MapPickerProps) {
+export default function MapPicker({ pickup, delivery, onSelect, onRouteCalculated }: MapPickerProps) {
   const [mode, setMode] = useState<'pickup' | 'delivery'>('pickup');
+  const [routePath, setRoutePath] = useState<[number, number][] | null>(null);
+  const lastFetched = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!pickup || !delivery) {
+      setRoutePath(null);
+      lastFetched.current = null;
+      return;
+    }
+
+    const coordKey = `${pickup[0].toFixed(5)},${pickup[1].toFixed(5)}|${delivery[0].toFixed(5)},${delivery[1].toFixed(5)}`;
+    if (lastFetched.current === coordKey) return;
+    lastFetched.current = coordKey;
+
+    const fetchRoute = async () => {
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${pickup[0]},${pickup[1]};${delivery[0]},${delivery[1]}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.routes && data.routes[0]) {
+          const path = data.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]] as [number, number]);
+          setRoutePath(path);
+
+          if (onRouteCalculated) {
+            const distanceKm = data.routes[0].distance / 1000;
+            const durationMinutes = data.routes[0].duration / 60;
+            onRouteCalculated(distanceKm, durationMinutes);
+          }
+        }
+      } catch (err) {
+        console.error('OSRM MapPicker Routing Error:', err);
+      }
+    };
+
+    fetchRoute();
+  }, [pickup, delivery, onRouteCalculated]);
 
   return (
     <div className="space-y-4">
@@ -108,22 +146,20 @@ export default function MapPicker({ pickup, delivery, onSelect }: MapPickerProps
         <button
           type="button"
           onClick={() => setMode('pickup')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${
-            mode === 'pickup'
-              ? 'bg-white dark:bg-zinc-800 text-green-600 shadow-sm border border-border/10'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${mode === 'pickup'
+            ? 'bg-white dark:bg-zinc-800 text-green-600 shadow-sm border border-border/10'
+            : 'text-muted-foreground hover:text-foreground'
+            }`}
         >
           <Store className="w-3.5 h-3.5" /> Pickup Point
         </button>
         <button
           type="button"
           onClick={() => setMode('delivery')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${
-            mode === 'delivery'
-              ? 'bg-white dark:bg-zinc-800 text-red-600 shadow-sm border border-border/10'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${mode === 'delivery'
+            ? 'bg-white dark:bg-zinc-800 text-red-600 shadow-sm border border-border/10'
+            : 'text-muted-foreground hover:text-foreground'
+            }`}
         >
           <Target className="w-3.5 h-3.5" /> Delivery Point
         </button>
@@ -137,6 +173,17 @@ export default function MapPicker({ pickup, delivery, onSelect }: MapPickerProps
 
           {pickup && <Marker position={[pickup[1], pickup[0]]} icon={pickupIcon} />}
           {delivery && <Marker position={[delivery[1], delivery[0]]} icon={deliveryIcon} />}
+
+          {routePath ? (
+            <Polyline positions={routePath} color="#2563eb" weight={5} opacity={0.7} />
+          ) : (
+            pickup && delivery && (
+              <Polyline
+                positions={[[pickup[1], pickup[0]], [delivery[1], delivery[0]]]}
+                color="#2563eb" dashArray="10, 8" weight={4} opacity={0.85}
+              />
+            )
+          )}
         </MapContainer>
 
         {/* Overlay Guide */}
