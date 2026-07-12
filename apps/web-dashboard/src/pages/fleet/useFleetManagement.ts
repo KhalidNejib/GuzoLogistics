@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, no-empty, @typescript-eslint/no-unused-vars */
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { useSocket } from '@/hooks/useSocket';
+import { getApiUrl } from '@/lib/utils';
 
-const API_URL = `http://${window.location.hostname}:5000`;
+const API_URL = getApiUrl();
 
 export interface RiderStat {
   riderId: string;
@@ -27,9 +29,9 @@ export interface RiderStat {
     licenseNumber?: string;
     vehiclePhotoUrl?: string;
     emergencyContact?: {
-        name: string;
-        phone: string;
-        relationship: string;
+      name: string;
+      phone: string;
+      relationship: string;
     };
   };
   onboardingStatus?: 'PENDING_DATA' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED';
@@ -38,24 +40,24 @@ export interface RiderStat {
 export function useFleetManagement() {
   const { getToken } = useAuth();
   const { socket } = useSocket();
-  
+
   const [riders, setRiders] = useState<RiderStat[]>([]);
   const [pendingPilots, setPendingPilots] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const fetchRiders = useCallback(async () => {
     try {
       setLoading(true);
       const token = await getToken();
-      
+
       const [ridersRes, pendingRes] = await Promise.all([
         fetch(`${API_URL}/api/v1/merchant/rider-leaderboard`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${API_URL}/api/v1/merchant/pending-pilots`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
 
       if (ridersRes.ok) setRiders(await ridersRes.json());
@@ -76,8 +78,8 @@ export function useFleetManagement() {
 
     // New application submitted by a rider
     const handleNewPilot = (payload: any) => {
-      setPendingPilots(prev => {
-        if (prev.find(p => p.user._id === payload.user._id)) return prev;
+      setPendingPilots((prev) => {
+        if (prev.find((p) => p.user._id === payload.user._id)) return prev;
         return [payload, ...prev];
       });
       setMessage({ text: `New Pilot Application from ${payload.user.fullName}!`, type: 'success' });
@@ -87,14 +89,14 @@ export function useFleetManagement() {
     // Pilot approved → move from pending to active fleet instantly
     const handlePilotApproved = (payload: any) => {
       // Add to riders list
-      setRiders(prev => {
-        if (prev.find(r => r.riderId?.toString() === payload.riderId?.toString())) return prev;
+      setRiders((prev) => {
+        if (prev.find((r) => r.riderId?.toString() === payload.riderId?.toString())) return prev;
         return [payload as RiderStat, ...prev];
       });
       // Remove from pending list
-      setPendingPilots(prev => prev.filter(p => 
-        p.user?._id?.toString() !== payload.riderId?.toString()
-      ));
+      setPendingPilots((prev) =>
+        prev.filter((p) => p.user?._id?.toString() !== payload.riderId?.toString())
+      );
     };
 
     socket.on('new_pilot_application', handleNewPilot);
@@ -106,18 +108,22 @@ export function useFleetManagement() {
     };
   }, [socket]);
 
-  const approvePilot = async (riderId: string, status: 'APPROVED' | 'REJECTED', reason?: string) => {
+  const approvePilot = async (
+    riderId: string,
+    status: 'APPROVED' | 'REJECTED',
+    reason?: string
+  ) => {
     try {
       const token = await getToken();
       const res = await fetch(`${API_URL}/api/v1/merchant/approve-pilot/${riderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status, rejectionReason: reason })
+        body: JSON.stringify({ status, rejectionReason: reason }),
       });
 
       if (res.ok) {
         setMessage({ text: `Pilot ${status.toLowerCase()} Successfully.`, type: 'success' });
-        setPendingPilots(prev => prev.filter(p => p.user._id !== riderId));
+        setPendingPilots((prev) => prev.filter((p) => p.user._id !== riderId));
         fetchRiders();
         setTimeout(() => setMessage(null), 5000);
         return true;
@@ -133,11 +139,11 @@ export function useFleetManagement() {
       const token = await getToken();
       const res = await fetch(`${API_URL}/api/v1/merchant/finance/collect/${riderId}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.ok) {
-        setRiders(prev => prev.map(r => r.riderId === riderId ? { ...r, cashHeld: 0 } : r));
+        setRiders((prev) => prev.map((r) => (r.riderId === riderId ? { ...r, cashHeld: 0 } : r)));
         return true;
       }
     } catch (err) {
@@ -152,10 +158,12 @@ export function useFleetManagement() {
       const res = await fetch(`${API_URL}/api/v1/merchant/riders/${id}/name`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ fullName: name })
+        body: JSON.stringify({ fullName: name }),
       });
       if (res.ok) {
-        setRiders(prev => prev.map(r => r.riderId === id ? { ...r, fullName: name.trim() } : r));
+        setRiders((prev) =>
+          prev.map((r) => (r.riderId === id ? { ...r, fullName: name.trim() } : r))
+        );
         return true;
       }
     } catch (err) {}
@@ -167,12 +175,17 @@ export function useFleetManagement() {
       const token = await getToken();
       const res = await fetch(`${API_URL}/api/v1/merchant/riders/${id}/toggle-active`, {
         method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
-        setRiders(prev => prev.map(r => r.riderId === id ? { ...r, disabled: data.disabled } : r));
-        setMessage({ text: `Pilot successfully ${data.disabled ? 'deactivated' : 'activated'}.`, type: 'success' });
+        setRiders((prev) =>
+          prev.map((r) => (r.riderId === id ? { ...r, disabled: data.disabled } : r))
+        );
+        setMessage({
+          text: `Pilot successfully ${data.disabled ? 'deactivated' : 'activated'}.`,
+          type: 'success',
+        });
         setTimeout(() => setMessage(null), 5000);
         return true;
       }
@@ -185,10 +198,10 @@ export function useFleetManagement() {
       const token = await getToken();
       const res = await fetch(`${API_URL}/api/v1/merchant/riders/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        setRiders(prev => prev.filter(r => r.riderId !== id));
+        setRiders((prev) => prev.filter((r) => r.riderId !== id));
         setMessage({ text: 'Pilot successfully removed from fleet.', type: 'success' });
         setTimeout(() => setMessage(null), 5000);
         return true;
@@ -208,6 +221,6 @@ export function useFleetManagement() {
     settleCash,
     updateRiderName,
     togglePilotActive,
-    deletePilot
+    deletePilot,
   };
 }

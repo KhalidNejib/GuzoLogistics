@@ -2,16 +2,25 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, BarChart, Bar, Legend,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  Legend,
 } from 'recharts';
-import {
-  TrendingUp, Package, CheckCircle2, XCircle, Clock, AlertCircle,
-} from 'lucide-react';
+import { TrendingUp, Package, CheckCircle2, XCircle, Clock, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Skeleton } from '@/components/ui';
-import { useSocket } from '@/hooks/useSocket';
+import { getApiUrl } from '@/lib/utils';
 
-const API_URL = `http://${window.location.hostname}:5000`;
+const API_URL = getApiUrl();
 
 const RANGES = [
   { label: '7D', value: 7 },
@@ -61,12 +70,14 @@ export default function AnalyticsSection() {
     }
   }, [getToken, range]);
 
-  useEffect(() => { fetchAnalytics(); }, [fetchAnalytics]);
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   // ── ⚡ LIVE PULSE ──────────────────────────────────────────────
   useEffect(() => {
     if (!socket) return;
-    
+
     // When an order is delivered or cancelled, refresh analytics
     const handlePulse = () => {
       fetchAnalytics();
@@ -91,54 +102,64 @@ export default function AnalyticsSection() {
   }));
 
   const summary = data?.summary;
-  const pieData = summary ? [
-    { name: 'Delivered', value: summary.delivered },
-    { name: 'Pending/Active', value: Math.max(0, summary.totalOrders - summary.delivered - summary.cancelled) },
-    { name: 'Cancelled', value: summary.cancelled },
-  ].filter(d => d.value > 0) : [];
+  const pieData = summary
+    ? [
+        { name: 'Delivered', value: summary.delivered },
+        {
+          name: 'Pending/Active',
+          value: Math.max(0, summary.totalOrders - summary.delivered - summary.cancelled),
+        },
+        { name: 'Cancelled', value: summary.cancelled },
+      ].filter((d) => d.value > 0)
+    : [];
 
-  const kpis = summary ? [
-    {
-      label: 'Total Orders',
-      value: summary.totalOrders,
-      icon: Package,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50 dark:bg-blue-950/30',
-      change: null,
-    },
-    {
-      label: 'Revenue',
-      value: `ETB ${(summary.totalRevenue || 0).toLocaleString()}`,
-      icon: TrendingUp,
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50 dark:bg-emerald-950/30',
-      change: null,
-    },
-    {
-      label: 'Success Rate',
-      value: `${summary.successRate}%`,
-      icon: CheckCircle2,
-      color: summary.successRate >= 80 ? 'text-emerald-600' : 'text-amber-600',
-      bg: summary.successRate >= 80 ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'bg-amber-50 dark:bg-amber-950/30',
-      change: null,
-    },
-    {
-      label: 'Avg Delivery',
-      value: summary.avgDeliveryMinutes ? `${summary.avgDeliveryMinutes} min` : '—',
-      icon: Clock,
-      color: 'text-violet-600',
-      bg: 'bg-violet-50 dark:bg-violet-950/30',
-      change: null,
-    },
-    {
-      label: 'Cancelled',
-      value: summary.cancelled,
-      icon: XCircle,
-      color: 'text-red-500',
-      bg: 'bg-red-50 dark:bg-red-950/30',
-      change: null,
-    },
-  ] : [];
+  const kpis = summary
+    ? [
+        {
+          label: 'Total Orders',
+          value: summary.totalOrders,
+          icon: Package,
+          color: 'text-blue-600',
+          bg: 'bg-blue-50 dark:bg-blue-950/30',
+          change: null,
+        },
+        {
+          label: 'Revenue',
+          value: `ETB ${(summary.totalRevenue || 0).toLocaleString()}`,
+          icon: TrendingUp,
+          color: 'text-emerald-600',
+          bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+          change: null,
+        },
+        {
+          label: 'Success Rate',
+          value: `${summary.successRate}%`,
+          icon: CheckCircle2,
+          color: summary.successRate >= 80 ? 'text-emerald-600' : 'text-amber-600',
+          bg:
+            summary.successRate >= 80
+              ? 'bg-emerald-50 dark:bg-emerald-950/30'
+              : 'bg-amber-50 dark:bg-amber-950/30',
+          change: null,
+        },
+        {
+          label: 'Avg Delivery',
+          value: summary.avgDeliveryMinutes ? `${summary.avgDeliveryMinutes} min` : '—',
+          icon: Clock,
+          color: 'text-violet-600',
+          bg: 'bg-violet-50 dark:bg-violet-950/30',
+          change: null,
+        },
+        {
+          label: 'Cancelled',
+          value: summary.cancelled,
+          icon: XCircle,
+          color: 'text-red-500',
+          bg: 'bg-red-50 dark:bg-red-950/30',
+          change: null,
+        },
+      ]
+    : [];
 
   return (
     <div className="space-y-6">
@@ -155,7 +176,7 @@ export default function AnalyticsSection() {
         </div>
         {/* Range Selector */}
         <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 p-1 rounded-xl">
-          {RANGES.map(r => (
+          {RANGES.map((r) => (
             <button
               key={r.value}
               onClick={() => setRange(r.value)}
@@ -174,7 +195,9 @@ export default function AnalyticsSection() {
       {error && (
         <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm font-bold">Failed to load analytics. Make sure the server is running.</p>
+          <p className="text-sm font-bold">
+            Failed to load analytics. Make sure the server is running.
+          </p>
         </div>
       )}
 
@@ -182,30 +205,35 @@ export default function AnalyticsSection() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {loading
           ? [...Array(5)].map((_, i) => (
-            <Card key={i} className="border-border/40">
-              <CardContent className="pt-5 pb-4">
-                <Skeleton className="h-4 w-16 mb-2" />
-                <Skeleton className="h-7 w-20" />
-              </CardContent>
-            </Card>
-          ))
-          : kpis.map(kpi => (
-            <Card key={kpi.label} className="border-border/40 shadow-sm hover:shadow-md transition-shadow">
-              <CardContent className="pt-5 pb-4">
-                <div className={`w-8 h-8 rounded-lg ${kpi.bg} flex items-center justify-center mb-3`}>
-                  <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
-                </div>
-                <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">{kpi.label}</p>
-                <p className={`text-2xl font-black mt-1 ${kpi.color}`}>{kpi.value}</p>
-              </CardContent>
-            </Card>
-          ))
-        }
+              <Card key={i} className="border-border/40">
+                <CardContent className="pt-5 pb-4">
+                  <Skeleton className="h-4 w-16 mb-2" />
+                  <Skeleton className="h-7 w-20" />
+                </CardContent>
+              </Card>
+            ))
+          : kpis.map((kpi) => (
+              <Card
+                key={kpi.label}
+                className="border-border/40 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <CardContent className="pt-5 pb-4">
+                  <div
+                    className={`w-8 h-8 rounded-lg ${kpi.bg} flex items-center justify-center mb-3`}
+                  >
+                    <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
+                  </div>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                    {kpi.label}
+                  </p>
+                  <p className={`text-2xl font-black mt-1 ${kpi.color}`}>{kpi.value}</p>
+                </CardContent>
+              </Card>
+            ))}
       </div>
 
       {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-3">
-
         {/* Orders + Revenue Area Chart */}
         <Card className="lg:col-span-2 border-border/40 shadow-sm">
           <CardHeader className="pb-2">
@@ -236,13 +264,43 @@ export default function AnalyticsSection() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={8} />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fontWeight: 700 }}
+                    dy={8}
+                  />
                   <YAxis yAxisId="left" hide />
                   <YAxis yAxisId="right" orientation="right" hide />
                   <Tooltip content={<CustomTooltip />} />
-                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '10px', fontWeight: 700 }} />
-                  <Area yAxisId="right" type="monotone" dataKey="revenue" name="Revenue (ETB)" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRevenue)" dot={false} />
-                  <Area yAxisId="left" type="monotone" dataKey="orders" name="Orders" stroke="#3b82f6" strokeWidth={2.5} fillOpacity={1} fill="url(#colorOrders)" dot={false} />
+                  <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: '10px', fontWeight: 700 }}
+                  />
+                  <Area
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="revenue"
+                    name="Revenue (ETB)"
+                    stroke="#10b981"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#colorRevenue)"
+                    dot={false}
+                  />
+                  <Area
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="orders"
+                    name="Orders"
+                    stroke="#3b82f6"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#colorOrders)"
+                    dot={false}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -269,19 +327,41 @@ export default function AnalyticsSection() {
               <>
                 <ResponsiveContainer width="100%" height={180}>
                   <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={3} dataKey="value">
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={75}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
                       {pieData.map((_: any, index: number) => (
                         <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v: any, n: any) => [v, n]} contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)', fontSize: '11px', fontWeight: 700 }} />
+                    <Tooltip
+                      formatter={(v: any, n: any) => [v, n]}
+                      contentStyle={{
+                        borderRadius: '10px',
+                        border: 'none',
+                        boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex flex-wrap justify-center gap-3 mt-1">
                   {pieData.map((d: any, i: number) => (
                     <div key={d.name} className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i] }} />
-                      <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">{d.name} ({d.value})</span>
+                      <div
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: PIE_COLORS[i] }}
+                      />
+                      <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                        {d.name} ({d.value})
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -303,15 +383,27 @@ export default function AnalyticsSection() {
           {loading ? (
             <Skeleton className="w-full h-full rounded-xl" />
           ) : dailyChart.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-slate-400 text-xs font-bold">No data in this period</div>
+            <div className="flex items-center justify-center h-full text-slate-400 text-xs font-bold">
+              No data in this period
+            </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dailyChart} barCategoryGap="30%">
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={8} />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fontWeight: 700 }}
+                  dy={8}
+                />
                 <YAxis hide />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: '10px', fontWeight: 700 }} />
+                <Legend
+                  iconType="square"
+                  iconSize={8}
+                  wrapperStyle={{ fontSize: '10px', fontWeight: 700 }}
+                />
                 <Bar dataKey="delivered" name="Delivered" fill="#10b981" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="cancelled" name="Cancelled" fill="#ef4444" radius={[4, 4, 0, 0]} />
               </BarChart>

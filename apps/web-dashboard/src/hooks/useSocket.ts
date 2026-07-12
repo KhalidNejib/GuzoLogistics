@@ -3,10 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '@clerk/clerk-react';
 
-const getApiUrl = () => {
-  // Force dynamic resolution to bypass cached .env values during HMR
-  return `http://${window.location.hostname}:5000`;
-};
+import { getApiUrl } from '@/lib/utils';
 const SOCKET_URL = getApiUrl();
 
 // Added connection status for better UI control
@@ -89,7 +86,7 @@ export const useSocket = (): UseSocketReturn => {
           console.error('❌ [Socket] Token refresh failed:', refreshErr);
         }
       }
-      
+
       setStatus('error');
       setError((prev) => prev ?? `Connection Error: ${err.message}`);
       isConnecting.current = false;
@@ -109,7 +106,7 @@ export const useSocket = (): UseSocketReturn => {
     if (isLoaded && isSignedIn && userId) {
       connectSocket();
     }
-    
+
     return () => {
       if (socketRef.current) {
         const currentSocket = socketRef.current;
@@ -121,13 +118,12 @@ export const useSocket = (): UseSocketReturn => {
         }, 100);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, isSignedIn, userId]); // Removed connectSocket
 
   const joinOrder = useCallback((orderId: string) => {
     if (!orderId) return;
     const cleanId = orderId.trim();
-    
+
     // Global room bypass
     if (cleanId === 'global') {
       joinedOrders.current.add(cleanId);
@@ -136,15 +132,15 @@ export const useSocket = (): UseSocketReturn => {
       }
       return;
     }
-    
+
     // 🛡️ SANITY CHECK: MongoDB IDs are exactly 24 chars
     if (cleanId.length !== 24) {
       console.warn(`⚠️ [Socket] Fixing corrupted Order ID: ${cleanId} -> ${cleanId.slice(0, 24)}`);
     }
-    
+
     const targetId = cleanId.slice(0, 24);
     joinedOrders.current.add(targetId);
-    
+
     if (socketRef.current?.connected) {
       socketRef.current.emit('join_order', targetId);
     }

@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-react';
+import { getApiUrl } from '@/lib/utils';
 
 // Force dynamic resolution to bypass cached .env values during HMR
-const API_URL = `http://${window.location.hostname}:5000`;
+const API_URL = getApiUrl();
 
 export function useMerchantProfile() {
   const { getToken, isLoaded, isSignedIn } = useAuth();

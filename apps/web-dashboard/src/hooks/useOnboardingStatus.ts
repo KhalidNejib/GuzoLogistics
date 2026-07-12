@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-react';
+import { getApiUrl } from '@/lib/utils';
 
-const API_URL = `http://${window.location.hostname}:5000`;
+const API_URL = getApiUrl();
 
 export function useOnboardingStatus() {
   const { getToken, isSignedIn } = useAuth();
@@ -9,7 +10,10 @@ export function useOnboardingStatus() {
   const [isChecking, setIsChecking] = useState(true);
 
   const checkStatus = useCallback(async () => {
-    if (!isSignedIn) { setIsChecking(false); return; }
+    if (!isSignedIn) {
+      setIsChecking(false);
+      return;
+    }
     try {
       setIsChecking(true);
       const token = await getToken();
@@ -31,7 +35,9 @@ export function useOnboardingStatus() {
     }
   }, [getToken, isSignedIn]);
 
-  useEffect(() => { checkStatus(); }, [checkStatus]);
+  useEffect(() => {
+    checkStatus();
+  }, [checkStatus]);
 
   const markCompleted = () => setOnboardingCompleted(true);
 

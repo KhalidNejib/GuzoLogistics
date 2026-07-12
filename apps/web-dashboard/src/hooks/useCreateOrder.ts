@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { CreateOrderInput } from '@/lib/orderSchema';
+import { getApiUrl } from '@/lib/utils';
 
 // Force dynamic resolution to bypass cached .env values during HMR
-const API_URL = `http://${window.location.hostname}:5000`;
+const API_URL = getApiUrl();
 
 export function useCreateOrder() {
   const { getToken } = useAuth();

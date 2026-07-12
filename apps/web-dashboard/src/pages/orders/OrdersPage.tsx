@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useFetchOrders } from '@/hooks/useFetchOrders';
 import { useSocket } from '@/hooks/useSocket';
+import { getApiUrl } from '@/lib/utils';
 import {
   Card,
   CardContent,
@@ -70,21 +71,25 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog>(DIALOG_CLOSED);
 
-  const API_URL = `http://${window.location.hostname}:5000`;
+  const API_URL = getApiUrl();
 
   const execSnatch = async (orderId: string) => {
     try {
       const token = await getToken();
       const res = await fetch(`${API_URL}/api/v1/orders/${orderId}/snatch`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const updatedOrder = await res.json();
-        setOrders((prev: any[]) => prev.map(o => o._id === orderId ? { ...o, ...updatedOrder } : o));
+        setOrders((prev: any[]) =>
+          prev.map((o) => (o._id === orderId ? { ...o, ...updatedOrder } : o))
+        );
         toast.success('Order snatched — reverted to Pending pool.');
       } else toast.error('Failed to snatch order.');
-    } catch { toast.error('Internal error trying to snatch order.'); }
+    } catch {
+      toast.error('Internal error trying to snatch order.');
+    }
   };
 
   const execDelete = async (orderId: string) => {
@@ -92,13 +97,15 @@ export default function OrdersPage() {
       const token = await getToken();
       const res = await fetch(`${API_URL}/api/v1/orders/${orderId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        setOrders((prev: any[]) => prev.filter(o => o._id !== orderId));
+        setOrders((prev: any[]) => prev.filter((o) => o._id !== orderId));
         toast.success('Order permanently deleted.');
       } else toast.error('Failed to delete order.');
-    } catch { toast.error('Internal error trying to delete order.'); }
+    } catch {
+      toast.error('Internal error trying to delete order.');
+    }
   };
 
   const handleSnatchOrder = (orderId: string) => {
@@ -106,9 +113,13 @@ export default function OrdersPage() {
       open: true,
       icon: 'snatch',
       title: 'Reassign Order',
-      description: 'This will unassign the order from the rider and push it back to the Pending pool. The rider will receive an immediate cancellation notification.',
+      description:
+        'This will unassign the order from the rider and push it back to the Pending pool. The rider will receive an immediate cancellation notification.',
       confirmLabel: 'Yes, Reassign',
-      onConfirm: () => { setConfirmDialog(DIALOG_CLOSED); execSnatch(orderId); },
+      onConfirm: () => {
+        setConfirmDialog(DIALOG_CLOSED);
+        execSnatch(orderId);
+      },
     });
   };
 
@@ -117,9 +128,13 @@ export default function OrdersPage() {
       open: true,
       icon: 'delete',
       title: 'Delete Order Permanently',
-      description: 'This action is irreversible. The order record, all associated socket events, and any pending financials will be erased from the system.',
+      description:
+        'This action is irreversible. The order record, all associated socket events, and any pending financials will be erased from the system.',
       confirmLabel: 'Delete Forever',
-      onConfirm: () => { setConfirmDialog(DIALOG_CLOSED); execDelete(orderId); },
+      onConfirm: () => {
+        setConfirmDialog(DIALOG_CLOSED);
+        execDelete(orderId);
+      },
     });
   };
 
@@ -129,26 +144,34 @@ export default function OrdersPage() {
 
     // Listen for Status Transitions
     socket.on('order_status_changed', (payload: any) => {
-      setOrders((prev: any[]) => 
-        prev.map(o => o._id === payload.orderId ? { ...o, ...payload.order, status: payload.status } : o)
+      setOrders((prev: any[]) =>
+        prev.map((o) =>
+          o._id === payload.orderId ? { ...o, ...payload.order, status: payload.status } : o
+        )
       );
       toast.info(`Order #${payload.orderId.slice(-6).toUpperCase()} updated to ${payload.status}`);
     });
 
     // Listen for Image Upload Completion (POD)
     socket.on('order_photo_ready', (payload: any) => {
-      setOrders((prev: any[]) => 
-        prev.map(o => o._id === payload.orderId ? { ...o, podImageUrl: payload.podImageUrl } : o)
+      setOrders((prev: any[]) =>
+        prev.map((o) =>
+          o._id === payload.orderId ? { ...o, podImageUrl: payload.podImageUrl } : o
+        )
       );
-      toast.success(`Success! Proof of Delivery uploaded for #${payload.orderId.slice(-6).toUpperCase()}`);
+      toast.success(
+        `Success! Proof of Delivery uploaded for #${payload.orderId.slice(-6).toUpperCase()}`
+      );
     });
 
     // 🌟 Listen for customer ratings
     socket.on('order_rated', (payload: any) => {
       setOrders((prev: any[]) =>
-        prev.map(o => o._id === payload.orderId ? { ...o, customerRating: payload.rating } : o)
+        prev.map((o) => (o._id === payload.orderId ? { ...o, customerRating: payload.rating } : o))
       );
-      toast.info(`⭐ Order #${payload.orderId.slice(-6).toUpperCase()} received a ${payload.rating}-star rating!`);
+      toast.info(
+        `⭐ Order #${payload.orderId.slice(-6).toUpperCase()} received a ${payload.rating}-star rating!`
+      );
     });
 
     return () => {
@@ -162,7 +185,9 @@ export default function OrdersPage() {
     const matchesSearch =
       order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (order.deliveryAddress?.addressText || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (order.recipientName || order.customerName || '').toLowerCase().includes(searchTerm.toLowerCase());
+      (order.recipientName || order.customerName || '')
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'ALL' || order.status === statusFilter;
 
@@ -352,7 +377,9 @@ export default function OrdersPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div>
-                            <p className="font-bold text-foreground">{order.customerName || order.recipientName || 'Customer'}</p>
+                            <p className="font-bold text-foreground">
+                              {order.customerName || order.recipientName || 'Customer'}
+                            </p>
                             <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">
                               {order.deliveryAddress.addressText}
                             </p>
@@ -360,8 +387,17 @@ export default function OrdersPage() {
                         </td>
                         <td className="px-6 py-4 font-black">
                           <div className="flex flex-col">
-                            <span className="text-primary">ETB {((order.priceInfo?.itemPrice || 0) + (order.priceInfo?.amount || 0)).toLocaleString()}</span>
-                            {order.priceInfo?.itemPrice > 0 && <span className="text-[9px] text-muted-foreground uppercase tracking-tighter">Incl. Item Fee</span>}
+                            <span className="text-primary">
+                              ETB{' '}
+                              {(
+                                (order.priceInfo?.itemPrice || 0) + (order.priceInfo?.amount || 0)
+                              ).toLocaleString()}
+                            </span>
+                            {order.priceInfo?.itemPrice > 0 && (
+                              <span className="text-[9px] text-muted-foreground uppercase tracking-tighter">
+                                Incl. Item Fee
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -402,20 +438,20 @@ export default function OrdersPage() {
                                         {order.status}
                                       </Badge>
                                     </div>
-                                      <div className="p-4 rounded-2xl bg-primary/5 dark:bg-primary/10 border border-primary/20">
-                                        <p className="text-[10px] font-black uppercase text-primary dark:text-primary-foreground/80 mb-1 tracking-widest">
-                                          POD Code
-                                        </p>
-                                        <p className="font-mono font-black text-lg text-primary dark:text-white tracking-widest">
-                                          {order.verificationCode}
-                                        </p>
-                                      </div>
-                                      <div className="p-4 rounded-2xl bg-muted/50 border border-border/50">
-                                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest">
-                                          Service Level
-                                        </p>
-                                        <p className="font-bold text-sm">Standard Delivery</p>
-                                      </div>
+                                    <div className="p-4 rounded-2xl bg-primary/5 dark:bg-primary/10 border border-primary/20">
+                                      <p className="text-[10px] font-black uppercase text-primary dark:text-primary-foreground/80 mb-1 tracking-widest">
+                                        POD Code
+                                      </p>
+                                      <p className="font-mono font-black text-lg text-primary dark:text-white tracking-widest">
+                                        {order.verificationCode}
+                                      </p>
+                                    </div>
+                                    <div className="p-4 rounded-2xl bg-muted/50 border border-border/50">
+                                      <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest">
+                                        Service Level
+                                      </p>
+                                      <p className="font-bold text-sm">Standard Delivery</p>
+                                    </div>
                                   </div>
 
                                   <div className="space-y-4">
@@ -447,14 +483,17 @@ export default function OrdersPage() {
                                   {order.rider && (
                                     <div className="p-4 rounded-2xl bg-indigo-50/20 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/20 space-y-2">
                                       <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
-                                        <Truck className="w-3.5 h-3.5" /> Assigned Patrol Pilot / Rider
+                                        <Truck className="w-3.5 h-3.5" /> Assigned Patrol Pilot /
+                                        Rider
                                       </h4>
                                       <div className="flex items-center justify-between">
                                         <div>
                                           <p className="font-black text-slate-800 dark:text-slate-200">
                                             {order.rider.fullName || 'Active Rider'}
                                           </p>
-                                          <p className="text-[10px] text-muted-foreground">Operating live transport dispatch</p>
+                                          <p className="text-[10px] text-muted-foreground">
+                                            Operating live transport dispatch
+                                          </p>
                                         </div>
                                         {order.rider.phoneNumber && (
                                           <a
@@ -480,7 +519,8 @@ export default function OrdersPage() {
                                           {order.customerName || order.recipientName || 'Customer'}
                                         </p>
                                         <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
-                                          <Phone className="w-3 h-3" /> {order.customerPhone || order.recipientPhone || 'N/A'}
+                                          <Phone className="w-3 h-3" />{' '}
+                                          {order.customerPhone || order.recipientPhone || 'N/A'}
                                         </p>
                                       </div>
                                     </div>
@@ -503,21 +543,33 @@ export default function OrdersPage() {
                                   {order.podImageUrl && (
                                     <div className="space-y-4">
                                       <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 flex items-center gap-2">
-                                        <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Proof of Delivery (POD)
+                                        <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Proof
+                                        of Delivery (POD)
                                       </h4>
                                       <div className="relative group/pod">
                                         <div className="absolute inset-0 bg-emerald-500/10 rounded-2xl blur-xl group-hover/pod:blur-2xl transition-all opacity-20" />
                                         <div className="relative overflow-hidden rounded-2xl border-2 border-emerald-500/20 bg-muted">
-                                          <img 
-                                            src={order.podImageUrl} 
+                                          <img
+                                            src={order.podImageUrl}
                                             alt="Proof of Delivery"
                                             className="w-full h-auto aspect-[4/3] object-cover hover:scale-105 transition-transform duration-500"
                                           />
                                           <div className="absolute top-2 right-2 flex gap-1">
-                                            <Badge variant="secondary" className="bg-emerald-500 text-white border-none shadow-lg font-black tracking-tighter">Verified POD</Badge>
+                                            <Badge
+                                              variant="secondary"
+                                              className="bg-emerald-500 text-white border-none shadow-lg font-black tracking-tighter"
+                                            >
+                                              Verified POD
+                                            </Badge>
                                             {order.updatedAt && (
-                                              <Badge variant="outline" className="bg-white/10 backdrop-blur-md text-white border-white/20 text-[9px] font-black uppercase tracking-widest">
-                                                {new Date(order.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                              <Badge
+                                                variant="outline"
+                                                className="bg-white/10 backdrop-blur-md text-white border-white/20 text-[9px] font-black uppercase tracking-widest"
+                                              >
+                                                {new Date(order.updatedAt).toLocaleTimeString([], {
+                                                  hour: '2-digit',
+                                                  minute: '2-digit',
+                                                })}
                                               </Badge>
                                             )}
                                           </div>
@@ -526,62 +578,94 @@ export default function OrdersPage() {
                                     </div>
                                   )}
 
-                                  {order.status === 'DELIVERED' && (() => {
-                                    const deliveryFee = order.priceInfo?.amount || 0;
-                                    const itemPrice = order.priceInfo?.itemPrice || 0;
-                                    const riderShare = 0.8;
-                                    const computedRiderEarning = Math.floor(deliveryFee * riderShare);
-                                    const computedMerchantProfit = Math.ceil(deliveryFee * (1 - riderShare)) + itemPrice;
+                                  {order.status === 'DELIVERED' &&
+                                    (() => {
+                                      const deliveryFee = order.priceInfo?.amount || 0;
+                                      const itemPrice = order.priceInfo?.itemPrice || 0;
+                                      const riderShare = 0.8;
+                                      const computedRiderEarning = Math.floor(
+                                        deliveryFee * riderShare
+                                      );
+                                      const computedMerchantProfit =
+                                        Math.ceil(deliveryFee * (1 - riderShare)) + itemPrice;
 
-                                    const merchantProfit = order.financeSnapshot?.merchantProfit ?? computedMerchantProfit;
-                                    const riderEarning = order.financeSnapshot?.riderEarning ?? computedRiderEarning;
-                                    const rawMethod = order.financeSnapshot?.settlementMethod || (order.paymentMethod === 'DIGITAL' ? 'DIGITAL_PAYMENT_DIRECT' : 'PHYSICAL_CASH_DEBT');
-                                    const settlementMethod = String(rawMethod || 'UNKNOWN');
+                                      const merchantProfit =
+                                        order.financeSnapshot?.merchantProfit ??
+                                        computedMerchantProfit;
+                                      const riderEarning =
+                                        order.financeSnapshot?.riderEarning ?? computedRiderEarning;
+                                      const rawMethod =
+                                        order.financeSnapshot?.settlementMethod ||
+                                        (order.paymentMethod === 'DIGITAL'
+                                          ? 'DIGITAL_PAYMENT_DIRECT'
+                                          : 'PHYSICAL_CASH_DEBT');
+                                      const settlementMethod = String(rawMethod || 'UNKNOWN');
 
-                                    return (
-                                      <div className="p-6 rounded-2xl bg-card border border-border shadow-md overflow-hidden relative group/finance">
-                                        {/* Decorative Background Element */}
-                                        <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-3xl transition-all duration-500 group-hover/finance:scale-150 group-hover/finance:bg-primary/20" />
-                                        
-                                        <div className="relative">
-                                          <div className="flex items-center justify-between mb-6">
-                                            <div>
-                                              <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Digital Clearing House</h4>
-                                              <p className="text-xs text-muted-foreground mt-0.5">Settlement Snapshot</p>
-                                            </div>
-                                            <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${
-                                              settlementMethod === 'AUTO_DIGITAL_REBALANCE' ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-                                              : settlementMethod === 'DIGITAL_PAYMENT_DIRECT' ? 'bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400'
-                                              : 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
-                                            }`}>
-                                              {settlementMethod.replace(/_/g, ' ')}
-                                            </div>
-                                          </div>
+                                      return (
+                                        <div className="p-6 rounded-2xl bg-card border border-border shadow-md overflow-hidden relative group/finance">
+                                          {/* Decorative Background Element */}
+                                          <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-3xl transition-all duration-500 group-hover/finance:scale-150 group-hover/finance:bg-primary/20" />
 
-                                          <div className="grid grid-cols-2 gap-4">
-                                            <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                                              <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">Merchant Profit</p>
-                                              <p className="text-lg font-black text-foreground">ETB {merchantProfit.toLocaleString()}</p>
+                                          <div className="relative">
+                                            <div className="flex items-center justify-between mb-6">
+                                              <div>
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">
+                                                  Digital Clearing House
+                                                </h4>
+                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                  Settlement Snapshot
+                                                </p>
+                                              </div>
+                                              <div
+                                                className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${
+                                                  settlementMethod === 'AUTO_DIGITAL_REBALANCE'
+                                                    ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
+                                                    : settlementMethod === 'DIGITAL_PAYMENT_DIRECT'
+                                                      ? 'bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400'
+                                                      : 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
+                                                }`}
+                                              >
+                                                {settlementMethod.replace(/_/g, ' ')}
+                                              </div>
                                             </div>
-                                            <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                                              <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">Rider Share</p>
-                                              <p className="text-lg font-black text-foreground">ETB {riderEarning.toLocaleString()}</p>
-                                            </div>
-                                          </div>
 
-                                          <div className="mt-4 flex items-center gap-2 p-2 px-3 rounded-lg bg-muted/40 border border-border">
-                                            <Info className="w-3.5 h-3.5 text-muted-foreground" />
-                                            <p className="text-[9px] text-muted-foreground font-medium">Funds successfully distributed and ledger synchronized.</p>
+                                            <div className="grid grid-cols-2 gap-4">
+                                              <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                                                <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">
+                                                  Merchant Profit
+                                                </p>
+                                                <p className="text-lg font-black text-foreground">
+                                                  ETB {merchantProfit.toLocaleString()}
+                                                </p>
+                                              </div>
+                                              <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                                                <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">
+                                                  Rider Share
+                                                </p>
+                                                <p className="text-lg font-black text-foreground">
+                                                  ETB {riderEarning.toLocaleString()}
+                                                </p>
+                                              </div>
+                                            </div>
+
+                                            <div className="mt-4 flex items-center gap-2 p-2 px-3 rounded-lg bg-muted/40 border border-border">
+                                              <Info className="w-3.5 h-3.5 text-muted-foreground" />
+                                              <p className="text-[9px] text-muted-foreground font-medium">
+                                                Funds successfully distributed and ledger
+                                                synchronized.
+                                              </p>
+                                            </div>
                                           </div>
                                         </div>
-                                      </div>
-                                    );
-                                  })()}
+                                      );
+                                    })()}
 
                                   {order.status === 'DELIVERED' && (
                                     <div className="p-4 rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 flex items-center justify-between">
                                       <div>
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-1">Customer Rating</p>
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-1">
+                                          Customer Rating
+                                        </p>
                                         {order.customerRating ? (
                                           <div className="flex items-center gap-1.5">
                                             <div className="flex items-center gap-0.5">
@@ -597,7 +681,9 @@ export default function OrdersPage() {
                                             </span>
                                           </div>
                                         ) : (
-                                          <p className="text-xs text-muted-foreground font-medium">Not yet rated</p>
+                                          <p className="text-xs text-muted-foreground font-medium">
+                                            Not yet rated
+                                          </p>
                                         )}
                                       </div>
                                       <Star className="w-6 h-6 text-amber-300 dark:text-amber-500/40" />
@@ -620,11 +706,16 @@ export default function OrdersPage() {
                                     </div>
                                     <div className="text-right">
                                       <span className="text-2xl font-black text-primary block">
-                                        ETB {((order.priceInfo?.itemPrice || 0) + (order.priceInfo?.amount || 0)).toLocaleString()}
+                                        ETB{' '}
+                                        {(
+                                          (order.priceInfo?.itemPrice || 0) +
+                                          (order.priceInfo?.amount || 0)
+                                        ).toLocaleString()}
                                       </span>
                                       {order.priceInfo?.itemPrice > 0 && (
                                         <span className="text-[9px] text-muted-foreground font-bold italic">
-                                          Item: {order.priceInfo.itemPrice} | Fee: {order.priceInfo.amount}
+                                          Item: {order.priceInfo.itemPrice} | Fee:{' '}
+                                          {order.priceInfo.amount}
                                         </span>
                                       )}
                                     </div>
@@ -727,7 +818,9 @@ export default function OrdersPage() {
           {/* Card */}
           <div className="relative z-10 w-full max-w-md mx-4 bg-background border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
             {/* Header stripe */}
-            <div className={`h-1.5 w-full ${confirmDialog.icon === 'delete' ? 'bg-gradient-to-r from-red-500 to-rose-600' : 'bg-gradient-to-r from-amber-400 to-orange-500'}`} />
+            <div
+              className={`h-1.5 w-full ${confirmDialog.icon === 'delete' ? 'bg-gradient-to-r from-red-500 to-rose-600' : 'bg-gradient-to-r from-amber-400 to-orange-500'}`}
+            />
 
             <div className="p-6">
               {/* Close button */}
@@ -740,33 +833,41 @@ export default function OrdersPage() {
 
               {/* Icon + Title */}
               <div className="flex items-start gap-4 mb-4">
-                <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
-                  confirmDialog.icon === 'delete'
-                    ? 'bg-red-100 dark:bg-red-900/30'
-                    : 'bg-amber-100 dark:bg-amber-900/30'
-                }`}>
-                  {confirmDialog.icon === 'delete'
-                    ? <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
-                    : <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                  }
+                <div
+                  className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
+                    confirmDialog.icon === 'delete'
+                      ? 'bg-red-100 dark:bg-red-900/30'
+                      : 'bg-amber-100 dark:bg-amber-900/30'
+                  }`}
+                >
+                  {confirmDialog.icon === 'delete' ? (
+                    <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+                  ) : (
+                    <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                  )}
                 </div>
                 <div className="pt-0.5">
-                  <h3 className="text-base font-black text-foreground tracking-tight">{confirmDialog.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{confirmDialog.description}</p>
+                  <h3 className="text-base font-black text-foreground tracking-tight">
+                    {confirmDialog.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    {confirmDialog.description}
+                  </p>
                 </div>
               </div>
 
               {/* Warning chip */}
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold mb-5 ${
-                confirmDialog.icon === 'delete'
-                  ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
-                  : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
-              }`}>
+              <div
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold mb-5 ${
+                  confirmDialog.icon === 'delete'
+                    ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+                    : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                }`}
+              >
                 <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
                 {confirmDialog.icon === 'delete'
                   ? 'This action cannot be undone.'
-                  : 'The rider will be notified immediately.'
-                }
+                  : 'The rider will be notified immediately.'}
               </div>
 
               {/* Actions */}
@@ -785,10 +886,11 @@ export default function OrdersPage() {
                       : 'bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-400/20 hover:shadow-amber-400/30'
                   }`}
                 >
-                  {confirmDialog.icon === 'delete'
-                    ? <Trash2 className="w-3.5 h-3.5" />
-                    : <ShieldAlert className="w-3.5 h-3.5" />
-                  }
+                  {confirmDialog.icon === 'delete' ? (
+                    <Trash2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                  )}
                   {confirmDialog.confirmLabel}
                 </button>
               </div>
