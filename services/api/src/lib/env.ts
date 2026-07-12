@@ -1,3 +1,9 @@
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load .env from the services/api directory (no-op in production where env vars are injected directly)
+config({ path: resolve(process.cwd(), '.env') });
+
 /**
  * Backend-only environment configuration.
  * Reads directly from process.env — no shared package dependency needed.
