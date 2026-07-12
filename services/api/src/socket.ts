@@ -141,7 +141,7 @@ export const initializeSocket = (io: Server) => {
 
         if (orderId === 'global') {
           // 🛡️ Security Check: Only Riders can join the global tracking fleet
-          const user = await User.findById(mongoId).select('role').lean();
+          const user = await User.findById(mongoId).select('role').lean() as any;
           if (user?.role !== 'RIDER') {
              console.warn(`[Security] Blocked global join: ${mongoId} is not a rider`);
              return;

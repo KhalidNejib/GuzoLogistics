@@ -3,7 +3,7 @@ import { AuthRequest, requireUser } from '../middleware/auth.js';
 import User from '../models/User.js';
 import RiderProfile from '../models/RiderProfile.js';
 
-const router = Router();
+const router: Router = Router();
 
 /**
  * @route   PATCH /api/user/rider-onboarding
@@ -144,7 +144,7 @@ router.get('/me', requireUser, async (req: AuthRequest, res: Response) => {
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     // Populate rider profile if the user is a rider
-    const user = await User.findById(userId).select('-clerkId').lean();
+    const user = await User.findById(userId).select('-clerkId').lean() as any;
     
     if (user?.role === 'RIDER') {
       const riderProfile = await RiderProfile.findOne({ user: userId }).lean();

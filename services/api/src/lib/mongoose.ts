@@ -46,7 +46,7 @@ const gracefulExit = async () => {
     logger.info('📡 MongoDB connection closed cleanly via app termination');
     process.exit(0);
   } catch (err) {
-    logger.error('⚠️ Error during MongoDB disconnection:', err);
+    logger.error({ err }, '⚠️ Error during MongoDB disconnection');
     process.exit(1);
   }
 };

@@ -58,7 +58,7 @@ export const createIncident = async (req: AuthRequest, res: Response) => {
 
       // 1. Notify the Merchant "Owner" (Parent Fleet)
       import('../models/RiderProfile.js').then(async ({ default: RiderProfile }) => {
-        const profile = await RiderProfile.findOne({ user: riderId }).select('merchant').lean();
+        const profile = await RiderProfile.findOne({ user: riderId }).select('merchant').lean() as any;
         if (profile?.merchant) {
           io.to(`merchant:${profile.merchant.toString()}`).emit('emergency_sos', incidentPayload);
         }

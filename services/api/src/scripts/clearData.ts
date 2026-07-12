@@ -21,7 +21,7 @@ async function clearData() {
     console.log('Connected effectively to host:', mongoose.connection.host);
     console.log('Database Name:', mongoose.connection.name);
 
-    const collections = await mongoose.connection.db.listCollections().toArray();
+    const collections = await mongoose.connection.db!.listCollections().toArray();
     console.log('Available collections:', collections.map(c => c.name));
 
     const targets = ['orders', 'transactions', 'incidents', 'payouts'];
@@ -29,7 +29,7 @@ async function clearData() {
     for (const target of targets) {
       if (collections.find(c => c.name === target)) {
         console.log(`Clearing collection: ${target}...`);
-        const result = await mongoose.connection.db.collection(target).deleteMany({});
+        const result = await mongoose.connection.db!.collection(target).deleteMany({});
         console.log(`Deleted ${result.deletedCount} from ${target}.`);
       } else {
         console.log(`Collection ${target} not found.`);
@@ -38,7 +38,7 @@ async function clearData() {
 
     if (collections.find(c => c.name === 'riderprofiles')) {
       console.log('Resetting riderprofiles...');
-      const result = await mongoose.connection.db.collection('riderprofiles').updateMany({}, {
+      const result = await mongoose.connection.db!.collection('riderprofiles').updateMany({}, {
         $set: { 
           totalEarnings: 0, 
           currentBalance: 0,

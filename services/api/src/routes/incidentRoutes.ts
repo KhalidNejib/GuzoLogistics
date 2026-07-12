@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { requireUser, requireRole } from '../middleware/auth.js';
 import { createIncident, getIncidents, resolveIncident } from '../controllers/incidentController.js';
 
-const router = Router();
+const router: Router = Router();
 
 router.post('/', requireUser, createIncident);
 router.get('/', requireUser, getIncidents);

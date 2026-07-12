@@ -303,7 +303,7 @@ export const getMyOrders = async (req: AuthRequest, res: Response) => {
   try {
     const riderId = req.user?._id;
     if (!riderId) return res.status(401).json({ error: 'Unauthorized' });
-    const profile = await RiderProfile.findOne({ user: riderId }).lean();
+    const profile = await RiderProfile.findOne({ user: riderId }).lean() as any;
     const orders = await Order.find({ $or: [{ rider: riderId }, { merchant: profile?.merchant, status: 'PENDING' }] }).sort({ createdAt: -1 }).limit(50).lean();
     return res.json(orders);
   } catch (e) { return res.status(500).json({ error: 'Failed' }); }
@@ -322,7 +322,7 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
   // could view any order in the system by ID — including delivered orders
   // with another merchant's customer name, phone number, and addresses.
   if (req.user?.role !== 'ADMIN') {
-    const profile = await RiderProfile.findOne({ user: riderId }).lean();
+    const profile = await RiderProfile.findOne({ user: riderId }).lean() as any;
     query = { _id: orderId, $or: [{ rider: riderId }, { merchant: profile?.merchant, status: 'PENDING' }] };
   }
 
