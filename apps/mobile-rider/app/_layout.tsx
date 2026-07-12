@@ -19,7 +19,7 @@ import '../global.css';
 export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
-  initialRouteName: '(tabs)',
+  initialRouteName: '(auth)/login',
 };
 
 SplashScreen.preventAutoHideAsync();
@@ -27,15 +27,30 @@ SplashScreen.preventAutoHideAsync();
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 function RootLayoutNav() {
-  const { isLoaded } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
   const colorScheme = useColorScheme();
 
+  // Show loading spinner while Clerk initialises
   if (!isLoaded) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}>
-        <ActivityIndicator size="large" color="#2563eb" />
-        <Text 
-          style={{ marginTop: 16, color: '#94a3b8', fontWeight: 'bold', fontSize: 10, textTransform: 'uppercase', letterSpacing: 2 }}
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#0f172a',
+        }}
+      >
+        <ActivityIndicator size="large" color="#4F46E5" />
+        <Text
+          style={{
+            marginTop: 16,
+            color: '#94a3b8',
+            fontWeight: 'bold',
+            fontSize: 10,
+            textTransform: 'uppercase',
+            letterSpacing: 2,
+          }}
         >
           Securing Terminal...
         </Text>
@@ -45,11 +60,19 @@ function RootLayoutNav() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {/* We define ALL screens here. Navigation logic is handled by Expo Router's filesystem */}
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="(auth)/login" />
-      <Stack.Screen name="(auth)/register" />
-      <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+      {isSignedIn ? (
+        // Authenticated: show the full app
+        <>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        </>
+      ) : (
+        // Not authenticated: only allow auth screens
+        <>
+          <Stack.Screen name="(auth)/login" />
+          <Stack.Screen name="(auth)/register" />
+        </>
+      )}
     </Stack>
   );
 }
