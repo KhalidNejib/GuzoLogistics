@@ -3,9 +3,8 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "outDir": "dist",
-    "composite": true,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -17,7 +16,6 @@
       "@ethio-logistics/types": ["../../packages/types/src/index.ts"]
     }
   },
-  "references": [{ "path": "../../packages/env" }],
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
