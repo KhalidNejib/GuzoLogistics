@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { mongoConfig } from '@ethio-logistics/env';
+import { mongoConfig } from '../lib/env.js';
 import Order from '../models/Order.js';
 
 async function clearOrders() {

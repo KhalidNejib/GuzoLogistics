@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import mongoose from 'mongoose';
 import { v2 as cloudinary } from 'cloudinary';
-import { cloudinaryConfig } from '@ethio-logistics/env';
+import { cloudinaryConfig } from '../lib/env.js';
 import User from '../models/User.js';
 import RiderProfile from '../models/RiderProfile.js';
 import Payout from '../models/Payout.js';

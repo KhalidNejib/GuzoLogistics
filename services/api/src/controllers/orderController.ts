@@ -8,7 +8,7 @@ import { createOrderSchema } from '../validators/orderValidator.js';
 import { redis } from '../lib/redis.js';
 import { broadcastNotificationToRiders, notifyOrderUpdate } from '../lib/notifications.js';
 import { v2 as cloudinary } from 'cloudinary';
-import { cloudinaryConfig } from '@ethio-logistics/env';
+import { cloudinaryConfig } from '../lib/env.js';
 import { logger } from '../lib/logger.js';
 import mongoose from 'mongoose';
 import RiderProfile from '../models/RiderProfile.js';

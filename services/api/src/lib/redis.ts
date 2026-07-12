@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { redisConfig } from '@ethio-logistics/env';
+import { redisConfig } from './env.js';
 
 const REDIS_URL = redisConfig.url;
 

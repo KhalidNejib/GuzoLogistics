@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { redis } from '../lib/redis.js';
 import Order from '../models/Order.js';
 import { logger } from '../lib/logger.js';
-import { mongoConfig } from '@ethio-logistics/env';
+import { mongoConfig } from '../lib/env.js';
 
 /**
  * Syncs location history from Redis lists to MongoDB Order documents.

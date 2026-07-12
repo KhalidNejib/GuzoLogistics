@@ -2,7 +2,7 @@
 import { redis } from './lib/redis.js';
 import { Server, Socket } from 'socket.io';
 import { verifyToken } from '@clerk/express';
-import { clerkConfig } from '@ethio-logistics/env';
+import { clerkConfig } from './lib/env.js';
 import Order from './models/Order.js';
 import User from './models/User.js';
 import { logger } from './lib/logger.js';

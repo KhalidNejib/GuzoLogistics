@@ -27,7 +27,7 @@ import './models/User.js';
 import './models/RiderProfile.js';
 import './models/Order.js';
 
-import { appConfig, clerkConfig } from '@ethio-logistics/env';
+import { appConfig, clerkConfig } from './lib/env.js';
 import connectDB from './lib/mongoose.js';
 import webhookRoutes from './routes/webhookRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';

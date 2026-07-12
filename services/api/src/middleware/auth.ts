@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, NextFunction } from 'express';
 import { getAuth, verifyToken, createClerkClient } from '@clerk/express';
-import { clerkConfig } from '@ethio-logistics/env';
+import { clerkConfig } from '../lib/env.js';
 import User from '../models/User.js';
 
 /**

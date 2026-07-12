@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { logger } from './logger.js';
-import { mongoConfig, appConfig } from '@ethio-logistics/env';
+import { mongoConfig, appConfig } from './env.js';
 
 const mongooseOptions: mongoose.ConnectOptions = {
   connectTimeoutMS: 10000,

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
-import { clerkConfig } from '@ethio-logistics/env';
+import { clerkConfig } from '../lib/env.js';
 import User from '../models/User.js';
 import type { WebhookEvent } from '@clerk/express';
 
