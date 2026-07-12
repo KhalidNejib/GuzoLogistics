@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "cleanup-rider": "tsx ../../apps/mobile-rider/scratch/remove_rider.ts",
-    "build": "tsc",
+    "build": "tsc --build",
     "start": "node dist/index.js",
     "sync:history": "tsx src/scripts/syncRouteHistory.ts"
   },
