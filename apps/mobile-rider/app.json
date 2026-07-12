@@ -2,6 +2,7 @@
   "expo": {
     "name": "Guzo Rider",
     "slug": "guzo-rider",
+    "owner": "khamalcom",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -40,7 +41,9 @@
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_LOCATION",
         "VIBRATE",
-        "RECEIVE_BOOT_COMPLETED"
+        "RECEIVE_BOOT_COMPLETED",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -71,7 +74,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "03c33a16-cf96-45ed-90cb-8aa58c738b65"
+        "projectId": "4170b3ad-8e2e-470e-893b-4f139b49e76a"
       }
     }
   }
