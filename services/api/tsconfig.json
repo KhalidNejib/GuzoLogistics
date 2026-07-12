@@ -11,7 +11,11 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@ethio-logistics/env": ["../../packages/env/src/index.ts"],
+      "@ethio-logistics/types": ["../../packages/types/src/index.ts"]
+    }
   },
   "references": [{ "path": "../../packages/env" }],
   "include": ["src/**/*"],
