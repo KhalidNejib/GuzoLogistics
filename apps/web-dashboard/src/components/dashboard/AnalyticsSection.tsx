@@ -19,6 +19,7 @@ import {
 import { TrendingUp, Package, CheckCircle2, XCircle, Clock, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Skeleton } from '@/components/ui';
 import { getApiUrl } from '@/lib/utils';
+import { useSocket } from '@/hooks/useSocket';
 
 const API_URL = getApiUrl();
 
