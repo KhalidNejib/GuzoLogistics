@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "548592378866",
-    "project_id": "guzo-rider",
-    "storage_bucket": "guzo-rider.firebasestorage.app"
+    "project_number": "299936017192",
+    "project_id": "guzo-rider-9186f",
+    "storage_bucket": "guzo-rider-9186f.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:548592378866:android:4e38bca9e953b122f5c16b",
+        "mobilesdk_app_id": "1:299936017192:android:61770951f0ee5f6511be1d",
         "android_client_info": {
           "package_name": "com.guzo.rider"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAwxGhhk-zmO3b7HwqAksv8CS7ydJ175Ks"
+          "current_key": "AIzaSyCXpCsv28WSlbBxVgsO_dH7rKyWMVmV8cg"
         }
       ],
       "services": {
