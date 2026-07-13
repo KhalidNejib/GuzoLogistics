@@ -117,14 +117,30 @@ export const LiveRiderMap: React.FC<LiveRiderMapProps> = ({
         
         L.tileLayer('${tileUrl}', { maxZoom: 20, attribution: '${ATTRIBUTION}' }).addTo(map);
 
+        // Track if user has manually interacted so we don't snap the map back
+        let userInteracting = false;
+        let userInteractTimer = null;
+        map.on('dragstart zoomstart', () => {
+          userInteracting = true;
+          clearTimeout(userInteractTimer);
+          // Re-enable auto-pan after 8 seconds of no interaction
+          userInteractTimer = setTimeout(() => { userInteracting = false; }, 8000);
+        });
+
         // Layers
         const routeLayer = L.polyline([], { color: '${accentColor}', weight: 6, opacity: 0.8, lineCap: 'round' }).addTo(map);
-        const pickupMarker = L.marker([0,0], { 
-          icon: L.divIcon({ className: '', html: '<div class="waypoint"><div class="waypoint-icon" style="background:#f59e0b">A</div><div class="waypoint-tip"></div></div>', iconSize:[24,32], iconAnchor:[12,32] }) 
+
+        // 📍 Waypoint pin factory: teardrop shape with A/B label, tip anchored to exact coordinate
+        const createPin = (color, label) => L.divIcon({
+          className: '',
+          html: '<div style="display:flex;flex-direction:column;align-items:center;"><div style="width:32px;height:32px;background:' + color + ';border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 4px 14px ' + color + '88;display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);color:white;font-size:12px;font-weight:900;font-family:system-ui,sans-serif;line-height:1;">' + label + '</span></div></div>',
+          iconSize: [32, 40],
+          iconAnchor: [16, 40],
+          popupAnchor: [0, -40]
         });
-        const deliveryMarker = L.marker([0,0], { 
-          icon: L.divIcon({ className: '', html: '<div class="waypoint"><div class="waypoint-icon" style="background:#10b981">B</div><div class="waypoint-tip"></div></div>', iconSize:[24,32], iconAnchor:[12,32] }) 
-        });
+
+        const pickupMarker = L.marker([0,0], { icon: createPin('#f59e0b', 'A') });
+        const deliveryMarker = L.marker([0,0], { icon: createPin('#10b981', 'B') });
 
         // Rider
         let riderMarker = L.marker([${initLat}, ${initLng}], {
@@ -140,7 +156,10 @@ export const LiveRiderMap: React.FC<LiveRiderMapProps> = ({
           const pos = [lat, lng];
           riderMarker.setLatLng(pos);
           document.getElementById('rider').style.transform = 'rotate(' + bearing + 'deg)';
-          map.panTo(pos, { animate: true, duration: 1.2 });
+          // Only pan if user hasn\'t manually zoomed/dragged in the last 8 seconds
+          if (!userInteracting) {
+            map.panTo(pos, { animate: true, duration: 0.8 });
+          }
         };
 
         window.updateWaypoints = (pLat, pLng, dLat, dLng, showP) => {

@@ -57,12 +57,17 @@ function AnimatedRiderMarker({ position, icon, children }: {
 
 const ADDIS_ABABA: [number, number] = [9.0192, 38.7525];
 
-// ── AUTO-FOLLOW CONTROLLER ────────────────────────────────────────────────────
-function MapController({ center }: { center: [number, number] | null }) {
+// ── AUTO-FOLLOW CONTROLLER (pan only — never resets zoom) ────────────────────
+// We deliberately only use panTo() here, not setView(). setView() at zoom:18
+// would override the user's manual zoom every 2 s when a rider is moving,
+// which is the root cause of the "map keeps snapping back" bug.
+function MapController({ center, following }: { center: [number, number] | null; following: boolean }) {
   const map = useMap();
   useEffect(() => {
-    if (center) map.setView(center, 18, { animate: true, duration: 0.8 });
-  }, [center, map]);
+    if (center && following) {
+      map.panTo(center, { animate: true, duration: 0.6, easeLinearity: 0.3 });
+    }
+  }, [center, following, map]);
   return null;
 }
 
@@ -176,12 +181,32 @@ const createMarker = (color: string, svgInner: string, isRider = false, speed = 
 };
 
 const scooterSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M19 7c0-1.1-.9-2-2-2h-3v2h3v2.65L13.52 14H10V9H6c-2.21 0-4 1.79-4 4v3h2c0 1.66 1.34 3 3 3s3-1.34 3-3h4.48L19 10.35V7zM7 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/><path d="M5 6h5v2H5z"/><path d="M19 13c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm0 4c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>`;
-const pinSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`;
-const flagSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg>`;
 
-const riderIcon = createMarker('#2563eb', scooterSvg, true);
-const pickupIcon = createMarker('#f59e0b', pinSvg);
-const deliveryIcon = createMarker('#10b981', flagSvg);
+// Pickup pin: amber teardrop with "A" label
+const createPinIcon = (color: string, label: string) => L.divIcon({
+  html: `
+    <div style="position:relative; display:flex; flex-direction:column; align-items:center;">
+      <div style="
+        width:36px; height:36px;
+        background:${color};
+        border:3px solid white;
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+        box-shadow:0 4px 16px ${color}88;
+        display:flex; align-items:center; justify-content:center;
+      ">
+        <span style="transform:rotate(45deg); color:white; font-size:13px; font-weight:900; font-family:system-ui,sans-serif; line-height:1;">${label}</span>
+      </div>
+    </div>
+  `,
+  className: '',
+  iconSize: [36, 44],
+  iconAnchor: [18, 44],   // tip of the pin points to the exact coordinate
+  popupAnchor: [0, -44],
+});
+
+const pickupIcon  = createPinIcon('#f59e0b', 'A');
+const deliveryIcon = createPinIcon('#10b981', 'B');
 
 interface MapProps {
   activeOrder?: any;
@@ -275,19 +300,21 @@ export default function LogisticsMap({
 
   const handleFitAll = useCallback(() => setFitTrigger(n => n + 1), []);
 
-  // ── Auto-Follow & Drag detection ────────────────────────────────
+  // ── Auto-Follow (pan only, never resets user zoom) ──────────────
   useEffect(() => {
     if (isFollowingRider && liveRider && mapRef.current) {
-      mapRef.current.setView(liveRider, 19, { animate: true, duration: 0.8 });
+      mapRef.current.panTo(liveRider, { animate: true, duration: 0.6 });
     }
   }, [liveRider, isFollowingRider]);
 
+  // Zoom/drag by user disables follow
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const handleDrag = () => setIsFollowingRider(false);
-    map.on('dragstart', handleDrag);
-    return () => { map.off('dragstart', handleDrag); };
+    const disable = () => setIsFollowingRider(false);
+    map.on('dragstart', disable);
+    map.on('zoomstart', disable); // also disable on manual zoom
+    return () => { map.off('dragstart', disable); map.off('zoomstart', disable); };
   }, [mapRef.current]);
 
   // ── Global Focus Listener (Street-Level Sniper Zoom) ──────────────────────
@@ -402,7 +429,7 @@ export default function LogisticsMap({
         attributionControl={true}
         ref={(map) => { if (map) mapRef.current = map; }}
       >
-        <MapController center={liveRider} />
+        <MapController center={liveRider} following={isFollowingRider} />
         <FitBoundsController positions={allPositions} trigger={fitTrigger} />
         <HeatmapLayer points={heatPoints} visible={showHeatmap} />
         <TileLayer
