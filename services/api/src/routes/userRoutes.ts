@@ -1,7 +1,8 @@
-import { Router, Response } from 'express';
+import { Router, Response, Request } from 'express';
 import { AuthRequest, requireUser } from '../middleware/auth.js';
 import User from '../models/User.js';
 import RiderProfile from '../models/RiderProfile.js';
+import { redis } from '../lib/redis.js';
 
 const router: Router = Router();
 
@@ -154,6 +155,74 @@ router.get('/me', requireUser, async (req: AuthRequest, res: Response) => {
     return res.json(user);
   } catch (_error) {
     return res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+/**
+ * @route   POST /api/v1/user/location
+ * @desc    HTTP fallback for background location — used when the socket is dead (Android kills WS in background).
+ *          Writes to Redis cache and fans out rider_moved + fleet_radar_update via socket.io so the
+ *          merchant dashboard and public tracking page stay live even when the rider app is backgrounded.
+ * @access  Private (Rider Only)
+ */
+router.post('/location', requireUser, async (req: AuthRequest, res: Response) => {
+  try {
+    const mongoId = req.user?._id?.toString();
+    const userId  = req.user;
+    if (!mongoId) return res.status(401).json({ error: 'Unauthorized' });
+    if (userId?.role !== 'RIDER') return res.status(403).json({ error: 'Riders only' });
+
+    const { orderId, lat, lng, speed, battery, riderName } = req.body;
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+      return res.status(400).json({ error: 'lat and lng are required numbers' });
+    }
+
+    const safeOrderId = orderId && /^[0-9a-fA-F]{24}$/.test(orderId) ? orderId : null;
+    const isGlobal   = !safeOrderId;
+    const city       = (req.user as any)?.serviceCity || 'Default';
+
+    // ── 1. Fan out via socket.io (if server has io instance) ────────────
+    const io = req.app.get('socketio');
+    if (io) {
+      const verifiedName = req.user?.fullName || riderName || 'Rider';
+      const payload = { orderId: safeOrderId || 'IDLE', lat, lng, speed, battery, riderName: verifiedName };
+
+      if (isGlobal) {
+        io.to('riders:global').emit('rider_moved', { orderId: 'global', lat, lng, speed, riderName: verifiedName });
+        io.to(`city:fleet:${city}`).emit('fleet_radar_update', {
+          riderId: mongoId, orderId: 'IDLE', lat, lng, speed, riderName: verifiedName
+        });
+      } else {
+        // Security: only the assigned rider may broadcast
+        const order = await (await import('../models/Order.js')).default
+          .findById(safeOrderId).select('merchant rider').lean() as any;
+        if (order && order.rider?.toString() === mongoId) {
+          io.to(`order:${safeOrderId}`).emit('rider_moved', payload);
+          if (order.merchant) {
+            io.to(`merchant:${order.merchant.toString()}`).emit('fleet_radar_update', {
+              riderId: mongoId, orderId: safeOrderId, lat, lng, speed, riderName: verifiedName
+            });
+          }
+        }
+      }
+    }
+
+    // ── 2. Update Redis cache ────────────────────────────────────────────
+    const telemetry = JSON.stringify({ lat, lng, battery, speed, riderName, lastSeen: Date.now() });
+    await redis.set(`order:location:${safeOrderId || 'global'}`, telemetry, 'EX', 60);
+    await redis.set(`rider_location:${mongoId}`, JSON.stringify([lat, lng]), 'EX', 120);
+
+    if (safeOrderId) {
+      const historyKey = `order:history:points:${safeOrderId}`;
+      await redis.lpush(historyKey, telemetry);
+      await redis.ltrim(historyKey, 0, 49);
+      await redis.expire(historyKey, 3600);
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (error: any) {
+    console.error('[BG Location HTTP] Error:', error.message);
+    return res.status(500).json({ error: 'Failed to process location update' });
   }
 });
 

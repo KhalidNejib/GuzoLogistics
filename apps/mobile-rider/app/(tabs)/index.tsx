@@ -52,17 +52,49 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
     const { locations } = data;
     if (locations && locations.length > 0) {
       const location = locations[0];
-      // Read persisted rider name — SecureStore is accessible in background isolates
+
+      // SecureStore IS accessible from background isolates
       let bgRiderName = 'Rider';
       let bgOrderId = 'global';
+      let bgToken: string | null = null;
+
       try {
         const storedName = await SecureStore.getItemAsync('rider_name');
         if (storedName) bgRiderName = storedName;
 
         const storedOrderId = await SecureStore.getItemAsync('active_order_id');
         if (storedOrderId) bgOrderId = storedOrderId;
+
+        // Auth token we explicitly cache under this key (set on toggle-online + foreground resume)
+        bgToken = await SecureStore.getItemAsync('bg_auth_token');
       } catch (_) { /* ignore */ }
 
+      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+      const payload = {
+        orderId: bgOrderId === 'global' ? undefined : bgOrderId,
+        lat: location.coords.latitude,
+        lng: location.coords.longitude,
+        speed: Math.round((location.coords.speed || 0) * 3.6),
+        battery: 100,
+        riderName: bgRiderName,
+      };
+
+      // ── Strategy 1: HTTP (always works in background) ──────────────
+      if (bgToken) {
+        try {
+          await fetch(`${API_URL}/api/v1/user/location`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${bgToken}`,
+            },
+            body: JSON.stringify(payload),
+          });
+          return; // HTTP succeeded — skip socket fallback
+        } catch (_) { /* fall through to socket */ }
+      }
+
+      // ── Strategy 2: Socket (works in foreground / if HTTP failed) ──
       socketService.sendLocation({
         orderId: bgOrderId,
         lat: location.coords.latitude,
@@ -694,6 +726,8 @@ export default function RiderDashboard() {
     const sub = AppState.addEventListener('change', (next) => {
       if (next === 'active') {
         fetchData();
+        // Refresh cached bg token whenever app comes to foreground
+        getToken().then(t => { if (t) SecureStore.setItemAsync('bg_auth_token', t); }).catch(() => {});
         if (currentPosition && mapRef.current) {
           setHeadingLocked(true);
           mapRef.current.animateCamera({ center: { latitude: currentPosition.lat, longitude: currentPosition.lng }, pitch: 70, heading: bearing, zoom: 19.0 }, { duration: 1000 });
@@ -709,6 +743,13 @@ export default function RiderDashboard() {
     
     if (v) {
       console.info('🛰️ [Tracking] Activating Live Feed...');
+
+      // Cache a fresh JWT so background TaskManager isolate can do HTTP POSTs
+      try {
+        const freshToken = await getToken();
+        if (freshToken) await SecureStore.setItemAsync('bg_auth_token', freshToken);
+      } catch (_) { /* non-fatal */ }
+
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         startLocationTracking(handleLocationUpdate);
