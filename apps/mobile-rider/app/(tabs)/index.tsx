@@ -54,12 +54,17 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
       const location = locations[0];
       // Read persisted rider name — SecureStore is accessible in background isolates
       let bgRiderName = 'Rider';
+      let bgOrderId = 'global';
       try {
-        const stored = await SecureStore.getItemAsync('rider_name');
-        if (stored) bgRiderName = stored;
+        const storedName = await SecureStore.getItemAsync('rider_name');
+        if (storedName) bgRiderName = storedName;
+
+        const storedOrderId = await SecureStore.getItemAsync('active_order_id');
+        if (storedOrderId) bgOrderId = storedOrderId;
       } catch (_) { /* ignore */ }
+
       socketService.sendLocation({
-        orderId: 'global',
+        orderId: bgOrderId,
         lat: location.coords.latitude,
         lng: location.coords.longitude,
         speed: Math.round((location.coords.speed || 0) * 3.6),
@@ -195,6 +200,14 @@ export default function RiderDashboard() {
       ['IN_TRANSIT', 'PICKED_UP'].includes(focusedOrder?.status ?? ''),
     [focusedOrder]
   );
+
+  useEffect(() => {
+    if (focusedOrder?._id) {
+      SecureStore.setItemAsync('active_order_id', focusedOrder._id).catch(() => {});
+    } else {
+      SecureStore.deleteItemAsync('active_order_id').catch(() => {});
+    }
+  }, [focusedOrder?._id]);
 
   // ── Bottom sheet gestures ────────────────────────────────────
   const sheetTranslateY = useRef(new Animated.Value(0)).current;
