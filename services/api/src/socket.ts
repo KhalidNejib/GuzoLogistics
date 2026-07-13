@@ -40,7 +40,7 @@ export const initializeSocket = (io: Server) => {
     try {
       // 🔓 Public Tracking Bypass
       if (socket.handshake.auth?.trackingToken) {
-        const trkOrder = await Order.findOne({ trackingToken: socket.handshake.auth.trackingToken });
+        const trkOrder = await Order.findOne({ trackingUrlToken: socket.handshake.auth.trackingToken });
         if (trkOrder) {
           (socket.data as SocketData).userId = 'tracker';
           (socket.data as SocketData).mongoId = 'tracker';
