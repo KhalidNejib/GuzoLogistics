@@ -56,7 +56,7 @@ export const startLocationTracking = async (
     heading: number | null
   ) => void,
   geofenceTargets?: { orderId: string; lat: number; lng: number; isPickup: boolean } | null,
-  intervalMs: number = 5000
+  intervalMs: number = 2000
 ): Promise<void> => {
   stopLocationTracking();
 
@@ -70,7 +70,7 @@ export const startLocationTracking = async (
     {
       accuracy: Location.Accuracy.High,
       timeInterval: intervalMs,
-      distanceInterval: 5,
+      distanceInterval: 2,
     },
     (location) => {
       const speedKmH = location.coords.speed !== null ? location.coords.speed * 3.6 : 0;
