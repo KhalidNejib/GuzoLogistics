@@ -666,11 +666,12 @@ export default function RiderDashboard() {
             }).catch(() => {});
           }
           
-          if (data.title.includes('Success') || data.title.includes('Delivered')) {
+          if (data.type === 'MISSION_SUCCESS' || data.title?.includes('Mission Complete') || data.title?.includes('Success') || data.title?.includes('Delivered')) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert(
-              "🏆 Mission Accomplished!",
-              `Exceptional work! ${data.body}\n\nYour earnings have been updated in your wallet.`,
-              [{ text: "Awesome!", onPress: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success) }]
+              "🏆 Mission Complete!",
+              data.body || "Exceptional work! Your earnings have been updated.",
+              [{ text: "View Wallet", onPress: () => router.push('/profile/earnings') }, { text: "Got it!" }]
             );
           }
         }),

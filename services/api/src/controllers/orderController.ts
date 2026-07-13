@@ -272,12 +272,26 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
           try {
             const u = await User.findById(riderId).select('finance');
             if (u?.finance) {
+              const balance = u.finance.balance || 0;
+              const cashHeld = u.finance.cashHeld || 0;
+              const totalEarned = u.finance.totalEarned || 0;
+              const orderEarning = updated.priceInfo?.riderEarning || updated.priceInfo?.amount || 0;
+
               io.to(`rider:${riderId}`).emit('finance_update', {
-                balance: u.finance.balance || 0,
-                cashHeld: u.finance.cashHeld || 0,
+                balance,
+                cashHeld,
                 todayEarnings: (u.finance as any).todayEarnings || 0,
-                totalEarned: u.finance.totalEarned || 0,
+                totalEarned,
               });
+
+              // Push notification with earning summary
+              const cashLine = cashHeld > 0 ? ` | Cash Held: ETB ${cashHeld}` : '';
+              sendPushNotification(
+                riderId.toString(),
+                '✅ Mission Complete!',
+                `+ETB ${orderEarning} earned · Balance: ETB ${balance}${cashLine}`,
+                { type: 'MISSION_SUCCESS', orderId }
+              ).catch(() => {});
             }
           } catch (err) {
             logger.error({ err, riderId }, '❌ Failed to push finance_update to rider socket');
