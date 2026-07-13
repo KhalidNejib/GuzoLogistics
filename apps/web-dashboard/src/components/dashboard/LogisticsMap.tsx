@@ -4,6 +4,57 @@ import L from 'leaflet';
 import 'leaflet.heat';
 import { useEffect, useRef, useState, useCallback } from 'react';
 
+// ── UBER-STYLE SMOOTH RIDER MARKER ───────────────────────────────────────────
+// Interpolates the Leaflet marker position between GPS pings using rAF lerp.
+// This gives the same fluid glide as the Uber driver app, regardless of the
+// network round-trip delay between the rider phone and the server.
+function AnimatedRiderMarker({ position, icon, children }: {
+  position: [number, number];
+  icon: L.DivIcon;
+  children?: React.ReactNode;
+}) {
+  const markerRef = useRef<L.Marker | null>(null);
+  const animRef   = useRef<number | null>(null);
+  const fromRef   = useRef<[number, number]>(position);
+  const toRef     = useRef<[number, number]>(position);
+  const startRef  = useRef<number>(0);
+  const DURATION  = 900; // ms — slightly longer than the 2s interval so motion is always smooth
+
+  // When a new position arrives, kick off a fresh lerp animation
+  useEffect(() => {
+    if (!markerRef.current) return;
+    const current = markerRef.current.getLatLng();
+    fromRef.current = [current.lat, current.lng];
+    toRef.current   = position;
+    startRef.current = performance.now();
+
+    if (animRef.current !== null) cancelAnimationFrame(animRef.current);
+
+    const step = (now: number) => {
+      const t = Math.min((now - startRef.current) / DURATION, 1);
+      // Ease-out cubic for natural deceleration
+      const ease = 1 - Math.pow(1 - t, 3);
+      const lat = fromRef.current[0] + (toRef.current[0] - fromRef.current[0]) * ease;
+      const lng = fromRef.current[1] + (toRef.current[1] - fromRef.current[1]) * ease;
+      markerRef.current?.setLatLng([lat, lng]);
+      if (t < 1) animRef.current = requestAnimationFrame(step);
+    };
+    animRef.current = requestAnimationFrame(step);
+
+    return () => { if (animRef.current !== null) cancelAnimationFrame(animRef.current); };
+  }, [position[0], position[1]]);
+
+  return (
+    <Marker
+      position={position}
+      icon={icon}
+      ref={(m) => { if (m) markerRef.current = m; }}
+    >
+      {children}
+    </Marker>
+  );
+}
+
 const ADDIS_ABABA: [number, number] = [9.0192, 38.7525];
 
 // ── AUTO-FOLLOW CONTROLLER ────────────────────────────────────────────────────
@@ -365,7 +416,7 @@ export default function LogisticsMap({
         {Object.entries(fleet).map(([id, pos]) => {
           const speed = telemetry[id]?.speed || 0;
           return (
-            <Marker key={id} position={pos} icon={createMarker('#2563eb', scooterSvg, true, speed)}>
+            <AnimatedRiderMarker key={id} position={pos} icon={createMarker('#2563eb', scooterSvg, true, speed)}>
               <Popup closeButton={false} minWidth={220} maxWidth={240}>
                 <div className="rounded-xl overflow-hidden -m-2">
                   <div className="bg-blue-600 p-3 flex items-center gap-2.5">
@@ -395,7 +446,7 @@ export default function LogisticsMap({
                   )}
                 </div>
               </Popup>
-            </Marker>
+            </AnimatedRiderMarker>
           );
         })}
 
@@ -412,7 +463,7 @@ export default function LogisticsMap({
               />
             )}
 
-            <Marker position={liveRider} icon={createMarker('#2563eb', scooterSvg, true, 0)}>
+            <AnimatedRiderMarker position={liveRider} icon={createMarker('#2563eb', scooterSvg, true, 0)}>
               <Popup closeButton={false} minWidth={200}>
                 <div className="rounded-xl overflow-hidden -m-2">
                   <div className="bg-blue-600 p-3 flex items-center gap-2.5">
@@ -430,7 +481,7 @@ export default function LogisticsMap({
                   </div>
                 </div>
               </Popup>
-            </Marker>
+            </AnimatedRiderMarker>
           </>
         )}
 
