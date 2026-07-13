@@ -35,6 +35,14 @@ export const LiveRiderMap: React.FC<LiveRiderMapProps> = ({
 }) => {
   const webRef = useRef<WebView>(null);
 
+  // Capture initial coordinate on mount so mapHtml remains static and doesn't trigger WebView reloads on movement
+  const initialLocRef = useRef<{ lat: number; lng: number } | null>(null);
+  if (!initialLocRef.current && currentPosition) {
+    initialLocRef.current = currentPosition;
+  }
+  const initLat = initialLocRef.current?.lat ?? currentPosition.lat;
+  const initLng = initialLocRef.current?.lng ?? currentPosition.lng;
+
   const mapHtml = useMemo(() => {
     // MapTiler bakes basemap + labels into a single raster tile (unlike CARTO,
     // which split them so we could layer/dim labels separately) — so this is
@@ -105,7 +113,7 @@ export const LiveRiderMap: React.FC<LiveRiderMapProps> = ({
       <div id="map"></div>
       <script>
         const map = L.map('map', { zoomControl: false, attributionControl: false })
-          .setView([${currentPosition.lat}, ${currentPosition.lng}], 18);
+          .setView([${initLat}, ${initLng}], 18);
         
         L.tileLayer('${tileUrl}', { maxZoom: 20, attribution: '${ATTRIBUTION}' }).addTo(map);
 
@@ -119,7 +127,7 @@ export const LiveRiderMap: React.FC<LiveRiderMapProps> = ({
         });
 
         // Rider
-        let riderMarker = L.marker([${currentPosition.lat}, ${currentPosition.lng}], {
+        let riderMarker = L.marker([${initLat}, ${initLng}], {
           icon: L.divIcon({
             className: '',
             html: '<div id="rider" class="rider-marker-container"><div class="rider-pulse"></div><div class="rider-core"><div class="rider-arrow"></div></div></div>',
@@ -154,7 +162,7 @@ export const LiveRiderMap: React.FC<LiveRiderMapProps> = ({
     </body>
     </html>
     `;
-  }, [isDark, currentPosition.lat, currentPosition.lng, bearing]);
+  }, [isDark]);
 
   useEffect(() => {
     if (webRef.current) {
