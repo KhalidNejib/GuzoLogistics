@@ -680,6 +680,24 @@ export default function RiderDashboard() {
             setRiderProfile((prev: any) => prev ? { ...prev, rating: data.rating } : prev);
           }
         }),
+        socketService.onOrderDeleted(({ orderId: deletedId }) => {
+          // Refresh list so the deleted order disappears from every tab
+          fetchData();
+
+          // If the rider was actively focused on this order, notify them
+          setFocusedOrderId((currentFocusedId: string | null) => {
+            if (currentFocusedId === deletedId) {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              Alert.alert(
+                '🗑️ Order Removed',
+                `Order #${deletedId.slice(-6).toUpperCase()} was deleted by the merchant. It has been removed from your queue.`,
+                [{ text: 'Got it' }]
+              );
+              return null; // Clear focused order — do NOT auto-switch
+            }
+            return currentFocusedId; // Leave untouched if a different order was focused
+          });
+        }),
       ];
 
       registerForPushNotificationsAsync().then(t => {

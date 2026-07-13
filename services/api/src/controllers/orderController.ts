@@ -6,7 +6,7 @@ import User from '../models/User.js';
 import { AuthRequest } from '../middleware/auth.js';
 import { createOrderSchema } from '../validators/orderValidator.js';
 import { redis } from '../lib/redis.js';
-import { broadcastNotificationToRiders, notifyOrderUpdate } from '../lib/notifications.js';
+import { broadcastNotificationToRiders, notifyOrderUpdate, sendPushNotification } from '../lib/notifications.js';
 import { v2 as cloudinary } from 'cloudinary';
 import { cloudinaryConfig } from '../lib/env.js';
 import { logger } from '../lib/logger.js';
@@ -620,7 +620,15 @@ export const deleteOrder = async (req: AuthRequest, res: Response) => {
       io.to('riders:fleet').emit('order_deleted', { orderId });
       // If the order was assigned to a specific rider, notify them directly too
       if (order.rider) {
-        io.to(`rider:${order.rider.toString()}`).emit('order_deleted', { orderId });
+        const riderIdStr = order.rider.toString();
+        io.to(`rider:${riderIdStr}`).emit('order_deleted', { orderId });
+        // Also send a push notification so rider knows even if app is backgrounded
+        sendPushNotification(
+          riderIdStr,
+          '🗑️ Order Removed',
+          `Order #${orderId.slice(-6).toUpperCase()} was deleted by the merchant. Please return to base.`,
+          { type: 'ORDER_DELETED', orderId }
+        ).catch(() => {});
       }
     }
 
