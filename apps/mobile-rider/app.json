@@ -2,7 +2,7 @@
   "expo": {
     "name": "Guzo Rider",
     "slug": "guzo-rider",
-    "owner": "khamalcom",
+    "owner": "khalid123456",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -25,7 +25,7 @@
       "package": "com.guzo.rider",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#4F46E5"
+        "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -74,7 +74,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "4170b3ad-8e2e-470e-893b-4f139b49e76a"
+        "projectId": "8c17a3a6-60d0-4d92-a368-ffd9d6b445ef"
       }
     }
   }
