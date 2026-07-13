@@ -310,8 +310,8 @@ export default function RiderProfile() {
 
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <View>
-                  <Text style={{ fontSize: 20, fontWeight: '950', color: isDark ? 'white' : '#0f172a', letterSpacing: -0.5 }}>Debt Settlement</Text>
-                  <Text style={{ fontSize: 11, color: '#64748b', fontWeight: '750', marginTop: 2 }}>Repay cash debt via Telebirr</Text>
+                  <Text style={{ fontSize: 20, fontWeight: '900', color: isDark ? 'white' : '#0f172a', letterSpacing: -0.5 }}>Debt Settlement</Text>
+                  <Text style={{ fontSize: 11, color: '#64748b', fontWeight: '700', marginTop: 2 }}>Repay cash debt via Telebirr</Text>
                 </View>
                 <TouchableOpacity 
                   onPress={() => setShowSettleModal(false)}
