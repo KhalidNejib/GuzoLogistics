@@ -258,7 +258,11 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
               transformation: [{ quality: 'auto', fetch_format: 'auto' }]
             });
             await Order.updateOne({ _id: orderId }, { $set: { podImageUrl: uploadRes.secure_url } });
-            if (io) io.to(`merchant:${updated.merchant}`).emit('order_photo_ready', { orderId, podImageUrl: uploadRes.secure_url });
+            if (io) {
+              io.to(`merchant:${updated.merchant}`).emit('order_photo_ready', { orderId, podImageUrl: uploadRes.secure_url });
+              const freshOrder = await Order.findById(orderId).populate('rider').lean();
+              io.to(`order:${orderId}`).emit('order_status_changed', { orderId, status: 'DELIVERED', order: freshOrder });
+            }
           } catch (err) {
             logger.error({ err, orderId }, '❌ [POD Upload] Failed to upload proof-of-delivery photo');
           }
@@ -289,7 +293,10 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
         }
         const riderName = (finalUpdated.rider as any)?.fullName || 'Rider';
         notifyOrderUpdate(finalUpdated.merchant.toString(), status, { rider: riderName, orderId: orderId.slice(-6) }, { orderId, status }, io, finalUpdated.customerPhone);
-        if (io) io.to(`merchant:${finalUpdated.merchant}`).emit('order_status_changed', { orderId, status, order: finalUpdated });
+        if (io) {
+          io.to(`merchant:${finalUpdated.merchant}`).emit('order_status_changed', { orderId, status, order: finalUpdated });
+          io.to(`order:${orderId}`).emit('order_status_changed', { orderId, status, order: finalUpdated });
+        }
       } catch (err) {
         logger.error({ err, orderId, status }, '❌ Failed to send order status notifications');
       }

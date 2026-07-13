@@ -124,7 +124,10 @@ router.patch('/push-token', requireUser, async (req: AuthRequest, res: Response)
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     if (!token) return res.status(400).json({ error: 'Token is required' });
 
-    await User.findByIdAndUpdate(userId, { expoPushToken: token });
+    await User.findByIdAndUpdate(userId, { 
+      expoPushToken: token,
+      $addToSet: { expoPushTokens: token }
+    });
     
     console.info(`📲 [Push] Saved token for user ${userId}`);
     return res.status(200).json({ message: 'Push token saved successfully' });

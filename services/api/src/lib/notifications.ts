@@ -53,32 +53,44 @@ type MessageKey = keyof typeof STRINGS;
 
 export const sendPushNotification = async (userId: string, title: string, body: string, data?: any) => {
   try {
-    const user = await User.findById(userId).select('expoPushToken language').lean() as any;
-    if (!user || !user.expoPushToken) {
-      logger.info({ userId }, '[Push] Skipping: No token found');
+    const user = await User.findById(userId).select('expoPushToken expoPushTokens language').lean() as any;
+    if (!user) {
+      logger.info({ userId }, '[Push] Skipping: User not found');
       return;
     }
 
-    if (!Expo.isExpoPushToken(user.expoPushToken)) {
-      logger.error({ token: user.expoPushToken }, '[Push] Invalid Expo token');
+    const tokens: string[] = [];
+    if (user.expoPushToken && Expo.isExpoPushToken(user.expoPushToken)) {
+      tokens.push(user.expoPushToken);
+    }
+    if (Array.isArray(user.expoPushTokens)) {
+      user.expoPushTokens.forEach((t: string) => {
+        if (t && Expo.isExpoPushToken(t) && !tokens.includes(t)) {
+          tokens.push(t);
+        }
+      });
+    }
+
+    if (tokens.length === 0) {
+      logger.info({ userId }, '[Push] Skipping: No tokens found');
       return;
     }
 
-    const messages: ExpoPushMessage[] = [{
-      to: user.expoPushToken,
+    const messages: ExpoPushMessage[] = tokens.map(token => ({
+      to: token,
       sound: 'default',
       title,
       body,
       data: data || {},
       priority: 'high',
       channelId: 'default', // For Android notification channels
-    }];
+    }));
 
     const chunks = expo.chunkPushNotifications(messages);
     for (const chunk of chunks) {
       try {
-        const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-        logger.info({ userId, status: ticketChunk[0].status }, '📲 [Push] Notification dispatched');
+        await expo.sendPushNotificationsAsync(chunk);
+        logger.info({ userId, count: chunk.length }, '📲 [Push] Notifications dispatched');
       } catch (error: any) {
         logger.error({ err: error.message }, '[Push] Chunk Error');
       }
@@ -215,13 +227,26 @@ export const notifyOrderUpdate = async (
 
 export const broadcastNotificationToRiders = async (title: string, body: string, data?: any) => {
   try {
-    const riders = await User.find({ role: 'RIDER', expoPushToken: { $ne: null } }).select('expoPushToken').lean();
-    const tokens = riders.map(r => r.expoPushToken).filter(t => Expo.isExpoPushToken(t));
+    const riders = await User.find({ role: 'RIDER' }).select('expoPushToken expoPushTokens').lean();
+    
+    const tokens: string[] = [];
+    riders.forEach((r: any) => {
+      if (r.expoPushToken && Expo.isExpoPushToken(r.expoPushToken) && !tokens.includes(r.expoPushToken)) {
+        tokens.push(r.expoPushToken);
+      }
+      if (Array.isArray(r.expoPushTokens)) {
+        r.expoPushTokens.forEach((t: string) => {
+          if (t && Expo.isExpoPushToken(t) && !tokens.includes(t)) {
+            tokens.push(t);
+          }
+        });
+      }
+    });
 
     if (tokens.length === 0) return;
 
     const messages: ExpoPushMessage[] = tokens.map(token => ({
-      to: token!,
+      to: token,
       sound: 'default', // TODO: Use a custom mission alert sound
       title,
       body,

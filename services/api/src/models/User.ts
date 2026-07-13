@@ -62,6 +62,10 @@ const userSchema = new Schema(
       type: String,
       default: null,
     },
+    expoPushTokens: {
+      type: [String],
+      default: [],
+    },
     onboardingCompleted: {
       type: Boolean,
       default: false,
