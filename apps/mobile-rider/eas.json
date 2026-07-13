@@ -15,7 +15,8 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://guzo-api.onrender.com",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c2FmZS1nb29zZS0zOC5jbGVyay5hY2NvdW50cy5kZXYk"
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c2FmZS1nb29zZS0zOC5jbGVyay5hY2NvdW50cy5kZXYk",
+        "EXPO_PUBLIC_MAPTILER_API_KEY": "4ru8MR6SRMv3o0icmzFm"
       }
     },
     "production": {
@@ -25,7 +26,8 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://guzo-api.onrender.com",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c2FmZS1nb29zZS0zOC5jbGVyay5hY2NvdW50cy5kZXYk"
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c2FmZS1nb29zZS0zOC5jbGVyay5hY2NvdW50cy5kZXYk",
+        "EXPO_PUBLIC_MAPTILER_API_KEY": "4ru8MR6SRMv3o0icmzFm"
       }
     }
   },
