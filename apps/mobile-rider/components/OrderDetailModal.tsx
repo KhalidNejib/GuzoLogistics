@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, TouchableOpacity, ScrollView, Linking, TextInput, Alert, Image, ActivityIndicator, StyleSheet, Dimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
@@ -149,6 +150,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ visible, ord
   const cName = order.customerName || 'Customer';
   const cInit = cName.trim().charAt(0).toUpperCase();
   const s = getStyles(isDark);
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -279,7 +281,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ visible, ord
 
           {/* Action Button */}
           {order.status !== 'DELIVERED' && action && (
-            <View style={s.actionArea}>
+            <View style={[s.actionArea, { bottom: Math.max(insets.bottom + 12, 28) }]}>
                 <TouchableOpacity 
                    onPress={handleAction} 
                    disabled={isProcessing} 
@@ -305,7 +307,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ visible, ord
 
 const getStyles = (isDark: boolean) => StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end' },
-  sheet: { backgroundColor: isDark ? '#0f172a' : 'white', borderTopLeftRadius: 32, borderTopRightRadius: 32, height: height * 0.85, paddingBottom: 24, overflow: 'hidden' },
+  sheet: { backgroundColor: isDark ? '#0f172a' : 'white', borderTopLeftRadius: 32, borderTopRightRadius: 32, maxHeight: height * 0.92, minHeight: height * 0.75, paddingBottom: 100, overflow: 'hidden' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: isDark ? '#1e293b' : '#f1f5f9' },
   headerBtn: { width: 40, height: 40, borderRadius: 14, backgroundColor: isDark ? '#1e293b' : '#f8fafc', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: isDark ? '#334155' : '#f1f5f9' },
   idBadge: { backgroundColor: isDark ? '#1e293b' : '#f8fafc', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: isDark ? '#334155' : '#f1f5f9', flexDirection: 'row', alignItems: 'center', gap: 6 },

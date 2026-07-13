@@ -864,7 +864,7 @@ export default function RiderDashboard() {
   }, [getToken, currentPosition]);
 
   const snapSheet = useCallback((t: 'middle' | 'bottom') => {
-    const val = t === 'bottom' ? height * 0.22 : 0;
+    const val = t === 'bottom' ? height * 0.26 : 0;
     lastGestureY.current = val;
     Animated.spring(sheetTranslateY, { toValue: val, useNativeDriver: true, tension: 40, friction: 8 }).start();
   }, [sheetTranslateY]);
@@ -1043,7 +1043,7 @@ export default function RiderDashboard() {
 
           {focusedOrder && (
             <Animated.View style={[styles.compactCard, { 
-              bottom: (height * 0.22) + (insets.bottom > 20 ? insets.bottom + 58 : 118),
+              bottom: (height * 0.26) + (insets.bottom > 20 ? insets.bottom + 48 : 108),
               transform: [{ translateY: sheetTranslateY }],
               height: 64, // Sleek, small height
               paddingHorizontal: 16,

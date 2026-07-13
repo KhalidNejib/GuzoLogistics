@@ -12,24 +12,24 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   // Header (Premium Glass)
   headerContainer: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, paddingHorizontal: 16 },
   glassHeader: {
-    borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: isDark ? 'rgba(79, 70, 229, 0.3)' : 'rgba(255, 255, 255, 0.9)',
     backgroundColor: isDark ? 'rgba(15, 23, 42, 0.96)' : 'rgba(255, 255, 255, 0.98)',
     overflow: 'hidden',
-    height: 42,
+    minHeight: 58,
     justifyContent: 'center',
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pilotInfo: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   avatar: {
-    width: 26, height: 26, backgroundColor: isDark ? '#1e293b' : '#f1f5f9', borderRadius: 13,
-    borderWidth: 1, borderColor: isDark ? '#334155' : 'white', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+    width: 36, height: 36, backgroundColor: isDark ? '#1e293b' : '#f1f5f9', borderRadius: 18,
+    borderWidth: 1.5, borderColor: isDark ? '#4f46e5' : '#e0e7ff', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   avatarImage: { width: '100%', height: '100%' },
-  pilotName: { fontSize: 11, fontWeight: '900', color: isDark ? '#f8fafc' : '#0f172a' },
+  pilotName: { fontSize: 13, fontWeight: '900', color: isDark ? '#f8fafc' : '#0f172a', maxWidth: 140 },
   
   headerRightCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   iconButtonMicro: {
@@ -97,7 +97,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   noGpsText: { marginTop: 16, color: isDark ? '#94a3b8' : '#64748b', fontWeight: '800', letterSpacing: 1, fontSize: 12 },
 
   bottomSheet: {
-    position: 'absolute', bottom: 0, left: 0, right: 0, height: height * 0.36,
+    position: 'absolute', bottom: 0, left: 0, right: 0, height: height * 0.42,
     backgroundColor: isDark ? '#0f172a' : 'white', borderTopLeftRadius: 36, borderTopRightRadius: 36,
     shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: isDark ? 0.3 : 0.07, shadowRadius: 24,
     elevation: 32, zIndex: 10,
