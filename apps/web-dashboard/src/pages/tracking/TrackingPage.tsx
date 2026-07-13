@@ -154,7 +154,7 @@ export default function TrackingPage() {
       {/* 🚀 SPLIT VIEW LAYOUT */}
       <div className="flex-1 flex flex-col lg:grid lg:grid-cols-12 gap-6 min-h-0">
         {!isFocusedView && (
-          <Card className="lg:col-span-4 h-[300px] lg:h-full border-border/40 shadow-sm flex flex-col overflow-hidden bg-slate-50/50 dark:bg-zinc-900/50 shrink-0">
+          <Card className="lg:col-span-4 h-[260px] lg:h-full border-border/40 shadow-sm flex flex-col overflow-hidden bg-slate-50/50 dark:bg-zinc-900/50 shrink-0">
             <CardHeader className="py-3 border-b border-border/40 shrink-0 space-y-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -198,7 +198,7 @@ export default function TrackingPage() {
           </Card>
         )}
 
-        <Card className={cn("lg:h-full border-border/40 shadow-sm overflow-hidden relative flex flex-col", isFocusedView ? "lg:col-span-12" : "lg:col-span-8")}>
+        <Card className={cn("min-h-[480px] h-[550px] lg:h-full border-border/40 shadow-sm overflow-hidden relative flex flex-col", isFocusedView ? "lg:col-span-12" : "lg:col-span-8")}>
           {activeOrderObj && (
              <div className="w-full bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800 p-4 shadow-sm z-10 shrink-0">
                <div className="max-w-3xl mx-auto flex items-center justify-between relative">
