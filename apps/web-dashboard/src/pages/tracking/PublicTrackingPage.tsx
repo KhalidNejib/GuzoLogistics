@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import LogisticsMap from '@/components/dashboard/LogisticsMap';
 import JourneyTimeline from '@/components/tracking/JourneyTimeline';
-import { useSocket } from '@/hooks/useSocket';
+import { io, Socket } from 'socket.io-client';
 import { Badge } from '@/components/ui';
 import { toast } from 'sonner';
 import { getApiUrl, formatStatus } from '@/lib/utils';
@@ -143,7 +143,28 @@ function StarRating({
 
 export default function PublicTrackingPage() {
   const { token } = useParams();
-  const { socket, status: socketStatus } = useSocket();
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [socketStatus, setSocketStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+
+  useEffect(() => {
+    if (!token) return;
+    const newSocket = io(API_URL, {
+      auth: { trackingToken: token },
+      transports: ['polling', 'websocket'],
+    });
+
+    newSocket.on('connect', () => {
+      console.info('🟢 [Tracking] Live Socket Connected');
+      setSocketStatus('connected');
+    });
+    newSocket.on('disconnect', () => setSocketStatus('disconnected'));
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [token]);
 
   const [order, setOrder] = useState<any>(null);
   const [riderLocation, setRiderLocation] = useState<[number, number] | null>(null);

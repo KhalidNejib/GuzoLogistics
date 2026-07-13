@@ -752,9 +752,14 @@ export default function RiderDashboard() {
   const handleUpdateStatus = useCallback(async (status: string, verificationCode?: string, photoBase64?: string, targetOrderId?: string) => {
     const id = targetOrderId || selectedOrder?._id;
     if (!id) return;
+
+    if (status === 'ACCEPTED') {
+      return handleAcceptOrder(id);
+    }
+
     try {
       const t = await getToken();
-      const res = await fetch(`${API_URL}/api/orders/${id}/status`, {
+      const res = await fetch(`${API_URL}/api/v1/orders/${id}/status`, {
         method: 'PATCH',
         headers: { 
         'Content-Type': 'application/json', 

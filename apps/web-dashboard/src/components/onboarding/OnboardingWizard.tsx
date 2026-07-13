@@ -229,7 +229,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                     value={data.businessName}
                     onChange={(e) => update('businessName', e.target.value)}
                     placeholder="e.g. Habesha Express Delivery"
-                    className="w-full h-12 px-4 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+                    className="w-full h-12 px-4 rounded-xl border bg-transparent dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -242,7 +242,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                       value={data.supportEmail}
                       onChange={(e) => update('supportEmail', e.target.value)}
                       placeholder="support@business.com"
-                      className="w-full h-12 px-4 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+                      className="w-full h-12 px-4 rounded-xl border bg-transparent dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                     />
                   </div>
                   <div>
@@ -254,7 +254,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                       value={data.phoneNumber}
                       onChange={(e) => update('phoneNumber', e.target.value)}
                       placeholder="+251 9XX XXX XXX"
-                      className="w-full h-12 px-4 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+                      className="w-full h-12 px-4 rounded-xl border bg-transparent dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                     />
                   </div>
                 </div>
@@ -266,7 +266,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                     value={data.businessAddress}
                     onChange={(e) => update('businessAddress', e.target.value)}
                     placeholder="e.g. Bole Rd, Addis Ababa"
-                    className="w-full h-12 px-4 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+                    className="w-full h-12 px-4 rounded-xl border bg-transparent dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                   />
                 </div>
               </div>
@@ -327,7 +327,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         min={0}
                         value={data.baseFare}
                         onChange={(e) => update('baseFare', Number(e.target.value))}
-                        className="w-full h-12 pl-14 pr-4 rounded-xl border border-slate-200 text-sm font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+                        className="w-full h-12 pl-14 pr-4 rounded-xl border bg-transparent dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 text-sm font-black text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                       />
                     </div>
                     <p className="text-[10px] text-slate-400 font-medium mt-1.5">
@@ -347,7 +347,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                         min={0}
                         value={data.perKmRate}
                         onChange={(e) => update('perKmRate', Number(e.target.value))}
-                        className="w-full h-12 pl-14 pr-4 rounded-xl border border-slate-200 text-sm font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+                        className="w-full h-12 pl-14 pr-4 rounded-xl border bg-transparent dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 text-sm font-black text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                       />
                     </div>
                     <p className="text-[10px] text-slate-400 font-medium mt-1.5">

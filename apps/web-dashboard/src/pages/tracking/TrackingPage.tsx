@@ -54,6 +54,14 @@ export default function TrackingPage() {
     };
   }, [socket, activeOrder, joinOrder, refetch]);
 
+  // Separately join all active order rooms when orders list loads — without causing socket reconnections
+  useEffect(() => {
+    if (!socket?.connected || !orders?.length) return;
+    orders
+      .filter((o: any) => !['DELIVERED', 'CANCELLED', 'PENDING'].includes(o.status))
+      .forEach((o: any) => joinOrder(o._id));
+  }, [socket, orders, joinOrder]);
+
   // Sync Focus Mode
   useEffect(() => {
     if (!activeOrder) setIsFocusedView(false);

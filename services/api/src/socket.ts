@@ -38,6 +38,17 @@ export const initializeSocket = (io: Server) => {
   // 1. Authentication Middleware
   io.use(async (socket: Socket, next) => {
     try {
+      // 🔓 Public Tracking Bypass
+      if (socket.handshake.auth?.trackingToken) {
+        const trkOrder = await Order.findOne({ trackingToken: socket.handshake.auth.trackingToken });
+        if (trkOrder) {
+          (socket.data as SocketData).userId = 'tracker';
+          (socket.data as SocketData).mongoId = 'tracker';
+          socket.join(`order:${trkOrder._id.toString()}`);
+          return next();
+        }
+      }
+
       const token =
         socket.handshake.auth?.token || socket.handshake.headers.authorization?.split(' ')[1];
 
@@ -158,8 +169,9 @@ export const initializeSocket = (io: Server) => {
         // 🛡️ Security Check (Compare with MongoDB ID)
         const isMerchant = order.merchant?.toString() === mongoId;
         const isRider = order.rider?.toString() === mongoId;
+        const isTracker = mongoId === 'tracker';
 
-        if (!isMerchant && !isRider) {
+        if (!isMerchant && !isRider && !isTracker) {
           console.warn(`[Security] Blocked join: ${mongoId} -> Order ${orderId}`);
           return;
         }
