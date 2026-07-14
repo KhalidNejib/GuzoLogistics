@@ -7,6 +7,7 @@ import { AuthRequest } from '../middleware/auth.js';
 import { createOrderSchema } from '../validators/orderValidator.js';
 import { redis } from '../lib/redis.js';
 import { broadcastNotificationToRiders, notifyOrderUpdate, sendPushNotification } from '../lib/notifications.js';
+import { sendSMS } from '../lib/sms.js';
 import { v2 as cloudinary } from 'cloudinary';
 import { cloudinaryConfig } from '../lib/env.js';
 import { logger } from '../lib/logger.js';
@@ -716,6 +717,19 @@ export const getRouteGeometry = async (req: Request, res: Response) => {
     return res.json(data);
   } catch (err: any) {
     return res.status(500).json({ error: 'Routing failed', message: err.message });
+  }
+};
+
+export const debugSendSMS = async (req: AuthRequest, res: Response) => {
+  try {
+    const { to, message } = req.body;
+    if (!to || !message) {
+      return res.status(400).json({ error: 'Phone number (to) and message are required' });
+    }
+    const result = await sendSMS(to, message);
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to send debug SMS', message: err.message });
   }
 };
 

@@ -11,6 +11,7 @@ import {
   Mail,
   Smartphone,
   Globe,
+  Wrench,
 } from 'lucide-react';
 import {
   Card,
@@ -37,9 +38,14 @@ export default function SettingsPage() {
   const { profile, isLoading, isUpdating, updateProfile } = useMerchantProfile();
   const { user: clerkUser } = useUser();
   const { getToken } = useAuth();
-  const [activeTab, setActiveTab] = useState<'profile' | 'fleet' | 'notifications' | 'security'>(
+  const [activeTab, setActiveTab] = useState<'profile' | 'fleet' | 'notifications' | 'security' | 'diagnostics'>(
     'profile'
   );
+
+  const [testSmsPhone, setTestSmsPhone] = useState('');
+  const [testSmsMessage, setTestSmsMessage] = useState('EthioLogistics SMS Gateway test message.');
+  const [isSendingTestSms, setIsSendingTestSms] = useState(false);
+  const [testSmsResponse, setTestSmsResponse] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     businessName: '',
@@ -93,6 +99,38 @@ export default function SettingsPage() {
       });
     } catch (error) {
       toast.error('Failed to save settings');
+    }
+  };
+
+  const handleSendTestSms = async () => {
+    if (!testSmsPhone.trim()) {
+      toast.error('Please enter a valid phone number');
+      return;
+    }
+    setIsSendingTestSms(true);
+    setTestSmsResponse(null);
+    try {
+      const res = await fetch(`${getApiUrl()}/api/v1/orders/debug/send-sms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getToken()}`,
+        },
+        body: JSON.stringify({ to: testSmsPhone, message: testSmsMessage }),
+      });
+      const data = await res.json();
+      setTestSmsResponse(data);
+      if (res.ok && data?.success) {
+        toast.success('Test SMS dispatched successfully!');
+      } else {
+        toast.error('SMS Dispatch Failed', {
+          description: data?.error ? JSON.stringify(data.error) : 'Check gateway credentials/balance.'
+        });
+      }
+    } catch (err: any) {
+      toast.error('Failed to contact diagnostic endpoint');
+    } finally {
+      setIsSendingTestSms(false);
     }
   };
 
@@ -521,6 +559,79 @@ export default function SettingsPage() {
           </Card>
         );
 
+      case 'diagnostics':
+        return (
+          <Card className="border-border/40 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-400">
+            <CardHeader className="border-b border-border/40 bg-slate-50/50 dark:bg-zinc-900/50">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Wrench className="w-5 h-5 text-indigo-500" /> AfroMessage SMS Diagnostics
+              </CardTitle>
+              <CardDescription>
+                Test your SMS gateway configuration directly with AfroMessage.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-8 space-y-6">
+              <div className="p-6 rounded-2xl border border-indigo-100 bg-indigo-50/20 space-y-4">
+                <h4 className="font-bold text-sm text-indigo-900">How to test SMS delivery correctly:</h4>
+                <p className="text-xs text-indigo-700 leading-relaxed">
+                  1. Put in your real Ethiopian mobile number (e.g. <code>+2519XXXXXXXX</code> or <code>09XXXXXXXX</code>).<br />
+                  2. Make sure you set the <code>AFRO_SMS_TOKEN</code> on your Render backend environment variables.<br />
+                  3. Send a test message. You will see the live diagnostic API response from the AfroMessage gateway immediately.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="test-phone" className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Recipient Phone Number
+                  </Label>
+                  <Input
+                    id="test-phone"
+                    placeholder="e.g. 0912345678"
+                    value={testSmsPhone}
+                    onChange={(e) => setTestSmsPhone(e.target.value)}
+                    className="h-11 rounded-lg"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="test-msg" className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    SMS Message Body
+                  </Label>
+                  <Input
+                    id="test-msg"
+                    value={testSmsMessage}
+                    onChange={(e) => setTestSmsMessage(e.target.value)}
+                    className="h-11 rounded-lg"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <Button
+                    onClick={handleSendTestSms}
+                    disabled={isSendingTestSms}
+                    className="font-bold h-11 px-8 shadow-lg shadow-indigo-600/20 bg-indigo-600 hover:bg-indigo-700 text-white"
+                  >
+                    {isSendingTestSms && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                    Send Test SMS via Gateway
+                  </Button>
+                </div>
+              </div>
+
+              {testSmsResponse && (
+                <div className="mt-6 border-t border-slate-100 pt-6 space-y-3">
+                  <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Live Gateway Diagnostic Response
+                  </Label>
+                  <pre className="p-4 bg-slate-900 rounded-xl text-teal-400 font-mono text-xs overflow-x-auto whitespace-pre-wrap">
+                    {JSON.stringify(testSmsResponse, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+
       default:
         return null;
     }
@@ -548,6 +659,7 @@ export default function SettingsPage() {
             { id: 'fleet', name: 'Operational', icon: Settings, desc: 'Pricing & logic' },
             { id: 'notifications', name: 'Intelligence', icon: Bell, desc: 'Alert channels' },
             { id: 'security', name: 'Account Auth', icon: Shield, desc: 'Credentials' },
+            { id: 'diagnostics', name: 'SMS Diagnostics', icon: Wrench, desc: 'Gateway tests' },
             { id: 'billing', name: 'Revenue', icon: CreditCard, desc: 'Payouts & history' },
           ].map((item) => (
             <button
