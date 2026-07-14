@@ -353,7 +353,13 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
 };
 
 export const getOrderByToken = async (req: Request, res: Response) => {
-  const raw = await Order.findOne({ trackingUrlToken: req.params.token })
+  const token = req.params.token;
+  let query: any = { trackingUrlToken: token };
+  if (mongoose.Types.ObjectId.isValid(token)) {
+    query = { $or: [{ trackingUrlToken: token }, { _id: token }] };
+  }
+
+  const raw = await Order.findOne(query)
     .populate('rider', 'fullName phoneNumber')
     .lean();
   if (!raw) return res.status(404).json({ error: 'Invalid tracking token.' });
@@ -386,7 +392,12 @@ export const rateOrder = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Rating must be a number between 1 and 5.' });
     }
 
-    const order = await Order.findOne({ trackingUrlToken: token });
+    let query: any = { trackingUrlToken: token };
+    if (mongoose.Types.ObjectId.isValid(token)) {
+      query = { $or: [{ trackingUrlToken: token }, { _id: token }] };
+    }
+
+    const order = await Order.findOne(query);
     if (!order) {
       return res.status(404).json({ error: 'Order not found.' });
     }
