@@ -123,6 +123,13 @@ if (!process.env.CLERK_JWT_LEEWAY) {
   process.env.CLERK_JWT_LEEWAY = '60';
 }
 
+// ─── PUBLIC ENDPOINTS (registered BEFORE clerkMiddleware) ────────────────────
+// These routes do not require authentication and must bypass Clerk's dev-browser
+// check which would otherwise 403 requests from Vercel/browser with no session cookie.
+import { getRouteGeometry } from './controllers/orderController.js';
+app.post('/api/v1/orders/route-geom', getRouteGeometry);
+app.post('/api/orders/route-geom', getRouteGeometry); // legacy alias
+
 app.use(
   clerkMiddleware({
     publishableKey: clerkConfig.publishableKey,
