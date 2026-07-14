@@ -3,7 +3,9 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import * as Notifications from 'expo-notifications';
 import * as Haptics from 'expo-haptics';
+import * as SecureStore from 'expo-secure-store';
 import { socketService } from './socketService';
+
 
 const LOCATION_TASK_NAME = 'background-location-task';
 
@@ -119,8 +121,7 @@ export const stopLocationTracking = async (): Promise<void> => {
 
 // --- BACKGROUND TASK DEFINITION ---
 // ⚠️  NOTE: This task runs in a SEPARATE JS isolate — socketService is NOT connected here.
-// This task is ONLY used for OS-level geofence notifications when the app is in the background/killed.
-// All socket communication happens in the foreground watchPositionAsync callback above.
+// It executes BOTH background location reporting via HTTP status POST and device-level geofencing notifications.
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
   if (error) {
     console.error('[Background Task] Error:', error);
@@ -132,8 +133,47 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
     if (location) {
       const lat = location.coords.latitude;
       const lng = location.coords.longitude;
+      const speed = Math.round((location.coords.speed || 0) * 3.6);
 
-      // 🏁 GEOFENCE: Proximity-based notifications ONLY (no socket calls)
+      // ── 1. HTTP Telemetry Reporting to backend API ──
+      try {
+        let bgRiderName = 'Rider';
+        let bgOrderId = 'global';
+        let bgToken: string | null = null;
+
+        const storedName = await SecureStore.getItemAsync('rider_name');
+        if (storedName) bgRiderName = storedName;
+
+        const storedOrderId = await SecureStore.getItemAsync('active_order_id');
+        if (storedOrderId) bgOrderId = storedOrderId;
+
+        bgToken = await SecureStore.getItemAsync('bg_auth_token');
+
+        if (bgToken) {
+          const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://guzo-api.onrender.com';
+          const payload = {
+            orderId: bgOrderId === 'global' ? undefined : bgOrderId,
+            lat,
+            lng,
+            speed,
+            battery: 100,
+            riderName: bgRiderName,
+          };
+
+          await fetch(`${API_URL}/api/v1/user/location`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${bgToken}`,
+            },
+            body: JSON.stringify(payload),
+          });
+        }
+      } catch (postErr) {
+        console.error('[Background Task] Failed API location POST:', postErr);
+      }
+
+      // ── 2. Local OS-level Geofence Checks ──
       const geofence = (global as any).activeGeofence;
       if (geofence) {
         const dLat = (geofence.lat - lat) * Math.PI / 180;
@@ -149,16 +189,20 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
           (global as any).hasNotifiedArrived = true;
           console.info(`🎯 [Bg Geofence] ARRIVED at ${geofence.isPickup ? 'Pickup' : 'Delivery'}`);
           
-          Notifications.scheduleNotificationAsync({
-            content: {
-              title: "📍 Destination Reached!",
-              body: `You are at the ${geofence.isPickup ? 'pickup' : 'delivery'} point. Open the app to complete the mission.`,
-              data: { orderId: geofence.orderId, type: 'ARRIVED' },
-              sound: true,
-              priority: Notifications.AndroidNotificationPriority.MAX,
-            },
-            trigger: null,
-          });
+          try {
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: "📍 Destination Reached!",
+                body: `You are at the ${geofence.isPickup ? 'pickup' : 'delivery'} point. Open the app to complete the mission.`,
+                data: { orderId: geofence.orderId, type: 'ARRIVED' },
+                sound: true,
+                priority: Notifications.AndroidNotificationPriority.MAX,
+              },
+              trigger: null,
+            });
+          } catch (notifErr) {
+            console.error('[Background Task] Notification schedule failed:', notifErr);
+          }
         }
       }
     }
