@@ -252,51 +252,63 @@ export default function LogisticsMap({
     : (focusId ? fleet[focusId] : (fleet['global'] || propLocation || null));
 
   useEffect(() => {
-    if (!delivery) { setRoutePath(null); return; }
+    if (!delivery) { setRoutePath(null); setRouteDistance(null); return; }
+
+    // ── Build waypoint coordinate arrays ──────────────────────────────────────
+    // ORS expects [lng, lat] pairs.
+    const orsCoords: [number, number][] = [];
+    if (liveRider) orsCoords.push([liveRider[1], liveRider[0]]); // liveRider is [lat,lng]
+    if (!customerMode) {
+      const hasPickedUp = ['PICKED_UP', 'IN_TRANSIT', 'ARRIVED', 'DELIVERED'].includes(activeOrder?.status);
+      if (!hasPickedUp && pickup) orsCoords.push([pickup[0], pickup[1]]); // pickup is [lng,lat]
+    }
+    orsCoords.push([delivery[0], delivery[1]]); // delivery is [lng,lat]
+    if (orsCoords.length < 2) return;
+
+    // ── 1. Instant straight-line fallback so map always shows something ────────
+    const straightLine: [number, number][] = orsCoords.map(([lng, lat]) => [lat, lng]);
+    setRoutePath(straightLine);
+
+    // ── 2. Fetch real routed geometry from our backend proxy ──────────────────
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15s — handles Render cold-start
 
     const fetchRoute = async () => {
       try {
-        const coords: string[] = [];
-        if (liveRider) coords.push(`${liveRider[1]},${liveRider[0]}`);
-        if (!customerMode) {
-          const hasPickedUp = ['PICKED_UP', 'IN_TRANSIT', 'ARRIVED', 'DELIVERED'].includes(activeOrder?.status);
-          if (!hasPickedUp && pickup) coords.push(`${pickup[0]},${pickup[1]}`);
-        }
-        coords.push(`${delivery[0]},${delivery[1]}`);
-        if (coords.length < 2) return;
-
         let baseUrl = getApiUrl();
-        if (baseUrl.endsWith('/api/v1')) {
-          baseUrl = baseUrl.substring(0, baseUrl.length - 7);
-        } else if (baseUrl.endsWith('/api')) {
-          baseUrl = baseUrl.substring(0, baseUrl.length - 4);
-        }
+        if (baseUrl.endsWith('/api/v1')) baseUrl = baseUrl.slice(0, -7);
+        else if (baseUrl.endsWith('/api')) baseUrl = baseUrl.slice(0, -4);
         const proxyUrl = `${baseUrl.replace(/\/$/, '')}/api/v1/orders/route-geom`;
 
         const res = await fetch(proxyUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            coordinates: coords.map(c => {
-              const parts = c.split(',');
-              return [parseFloat(parts[0]), parseFloat(parts[1])];
-            })
-          })
+          body: JSON.stringify({ coordinates: orsCoords }),
+          signal: controller.signal,
         });
+
+        if (!res.ok) { console.warn('🛰️ [ORS Proxy] Non-OK status:', res.status); return; }
 
         const data = await res.json();
         if (data.features?.[0]) {
           const feature = data.features[0];
+          // ORS returns [lng, lat] — flip to Leaflet [lat, lng]
           setRoutePath(feature.geometry.coordinates.map((c: any) => [c[1], c[0]]));
           setRouteDistance(+(feature.properties.summary.distance / 1000).toFixed(1));
           onRouteMetrics?.(feature.properties.summary.distance / 1000, feature.properties.summary.duration / 60);
         }
-      } catch (err) {
-        console.error('🛰️ [ORS Routing] Failed:', err);
+      } catch (err: any) {
+        if (err.name !== 'AbortError') console.error('🛰️ [ORS Routing] Failed:', err);
+        // straight-line fallback is already visible — do nothing
+      } finally {
+        clearTimeout(timeout);
       }
     };
     fetchRoute();
+
+    return () => { controller.abort(); clearTimeout(timeout); };
   }, [liveRider?.[0], liveRider?.[1], pickup?.toString(), delivery?.toString(), customerMode, activeOrder?.status]);
+
 
   const allPositions: [number, number][] = [
     ...Object.values(fleet),
