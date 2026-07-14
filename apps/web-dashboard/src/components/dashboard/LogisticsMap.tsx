@@ -3,6 +3,8 @@ import { Bike, Maximize2, Navigation } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet.heat';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { getApiUrl } from '@/lib/utils';
+
 
 // ── UBER-STYLE SMOOTH RIDER MARKER ───────────────────────────────────────────
 // Interpolates the Leaflet marker position between GPS pings using rAF lerp.
@@ -263,12 +265,17 @@ export default function LogisticsMap({
         coords.push(`${delivery[0]},${delivery[1]}`);
         if (coords.length < 2) return;
 
-        const orsKey = import.meta.env.VITE_ORS_API_KEY || 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImU2MDYyYWJmMWU5NjRlNjViMDc2ZmI1YjhjODc3YzcwIiwiaCI6Im11cm11cjY0In0=';
-        const orsUrl = `https://api.openrouteservice.org/v2/directions/driving-car/geojson`;
+        let baseUrl = getApiUrl();
+        if (baseUrl.endsWith('/api/v1')) {
+          baseUrl = baseUrl.substring(0, baseUrl.length - 7);
+        } else if (baseUrl.endsWith('/api')) {
+          baseUrl = baseUrl.substring(0, baseUrl.length - 4);
+        }
+        const proxyUrl = `${baseUrl.replace(/\/$/, '')}/api/v1/orders/route-geom`;
 
-        const res = await fetch(orsUrl, {
+        const res = await fetch(proxyUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': orsKey },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             coordinates: coords.map(c => {
               const parts = c.split(',');

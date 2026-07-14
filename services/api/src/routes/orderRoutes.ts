@@ -14,6 +14,7 @@ import {
   debugClearAllOrders,
   deleteOrder,
   snatchOrder,
+  getRouteGeometry,
 } from '../controllers/orderController.js';
 import { rateLimit } from 'express-rate-limit';
 
@@ -24,6 +25,9 @@ const acceptOrderLimiter = rateLimit({
 });
 
 const router: Router = Router();
+
+router.post('/route-geom', getRouteGeometry);
+
 
 // Merchant creates a new delivery order
 router.post('/', requireUser, requireRole('MERCHANT'), createOrder);

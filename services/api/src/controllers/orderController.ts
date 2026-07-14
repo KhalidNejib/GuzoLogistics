@@ -687,3 +687,35 @@ export const snatchOrder = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ error: 'Failed to snatch order from rider.' });
   }
 };
+
+export const getRouteGeometry = async (req: Request, res: Response) => {
+  try {
+    const { coordinates } = req.body;
+    if (!coordinates || !Array.isArray(coordinates) || coordinates.length < 2) {
+      return res.status(400).json({ error: 'At least two coordinates are required' });
+    }
+
+    const orsKey = process.env.ORS_API_KEY || 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImU2MDYyYWJmMWU5NjRlNjViMDc2ZmI1YjhjODc3YzcwIiwiaCI6Im11cm11cjY0In0=';
+    const orsUrl = `https://api.openrouteservice.org/v2/directions/driving-car/geojson`;
+
+    const response = await fetch(orsUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': orsKey,
+      },
+      body: JSON.stringify({ coordinates }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(response.status).json({ error: 'ORS API Error', details: errText });
+    }
+
+    const data = await response.json();
+    return res.json(data);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Routing failed', message: err.message });
+  }
+};
+
