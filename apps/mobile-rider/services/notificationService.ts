@@ -49,7 +49,7 @@ export async function registerForPushNotificationsAsync() {
     // Wrap the token fetch in an extra try-catch for Expo Go environments
     try {
       const token = (await Notifications.getExpoPushTokenAsync({
-        projectId: '03c33a16-cf96-45ed-90cb-8aa58c738b65', // Must match app.json eas.projectId
+        projectId: '8c17a3a6-60d0-4d92-a368-ffd9d6b445ef', // Must match app.json eas.projectId
       })).data;
       return token;
     } catch (tokenError) {
