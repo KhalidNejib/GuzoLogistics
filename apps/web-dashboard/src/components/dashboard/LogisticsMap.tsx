@@ -440,10 +440,8 @@ export default function LogisticsMap({
         <FitBoundsController positions={allPositions} trigger={fitTrigger} />
         <HeatmapLayer points={heatPoints} visible={showHeatmap} />
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a>'
-          url={`https://api.maptiler.com/maps/${
-            document.documentElement.classList.contains('dark') ? 'streets-v4-dark' : 'streets-v4'
-          }/256/{z}/{x}/{y}.png?key=${import.meta.env.VITE_MAPTILER_API_KEY}`}
+          attribution='&copy; Google Maps'
+          url="https://mt1.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}"
           maxZoom={20}
         />
 
