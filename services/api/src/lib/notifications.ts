@@ -115,16 +115,19 @@ export const notifyOrderUpdate = async (
   const user = await User.findById(userId).select('language').lean() as any;
   const lang = (user?.language === 'am' ? 'am' : 'en') as 'en' | 'am';
 
+  // Map incoming order status updates to their matching notification template keys
+  const lookupEvent = ((event as string) === 'PICKED_UP' ? 'ORDER_COLLECTED' : ((event as string) === 'DELIVERED' ? 'MISSION_SUCCESS' : event)) as MessageKey;
+
   // ── Safety Guard: Prevent crash if event key is missing ───────────────────
-  if (!STRINGS[event]) {
-    logger.warn({ event }, '⚠️ [Notify] Undefined event key. Falling back to generic alert.');
+  if (!STRINGS[lookupEvent]) {
+    logger.warn({ event, lookupEvent }, '⚠️ [Notify] Undefined event key. Falling back to generic alert.');
     const title = 'System Alert';
     const body = `Order status updated: ${event}`;
     await sendPushNotification(userId, title, body, data);
     return;
   }
 
-  let { title, body } = STRINGS[event][lang];
+  let { title, body } = STRINGS[lookupEvent][lang];
   
   // Replace placeholders
   Object.entries(params).forEach(([key, val]) => {
@@ -138,11 +141,20 @@ export const notifyOrderUpdate = async (
   if (io) {
     const room = `merchant:${userId}`;
     io.to(room).emit('notification', { title, body, ...data });
-    logger.info({ room, event }, '📡 [Socket] In-app notification sent');
+    logger.info({ room, event: lookupEvent }, '📡 [Socket] In-app notification sent');
   }
 
   // 3. Send SMS to Customer (if phone provided and mission status changes)
-  const isSmsEvent = ['MISSION_ACCEPTED', 'ORDER_COLLECTED', 'MISSION_SUCCESS', 'RIDER_ARRIVED'].includes(event);
+  const isSmsEvent = [
+    'MISSION_ACCEPTED',
+    'ORDER_COLLECTED',
+    'MISSION_SUCCESS',
+    'RIDER_ARRIVED',
+    'ARRIVED_PICKUP',
+    'ARRIVED_DELIVERY',
+    'PICKED_UP',
+    'DELIVERED'
+  ].includes(event as string);
   console.log(`[NOTIFY] Tracing Alert | Event: ${event} | Should SMS: ${isSmsEvent} | Phone: ${customerPhone}`);
   
   if (isSmsEvent) {
@@ -151,17 +163,25 @@ export const notifyOrderUpdate = async (
             try {
                 const orderId   = params?.orderId  || (data?.orderId ? String(data.orderId).slice(-6).toUpperCase() : 'N/A');
                 const rider     = params?.rider    || 'Your rider';
-                const location  = params?.location || '';
+                let location    = params?.location || '';
                 const amount    = params?.totalAmount;
                 const method    = params?.paymentMethod;
                 const baseUrl   = process.env.PUBLIC_APP_URL || '';
                 const trackUrl  = baseUrl ? `${baseUrl}/track/${data?.orderId || orderId}` : '';
 
+                if (!location) {
+                  if (event as string === 'ARRIVED_PICKUP') {
+                    location = 'pickup point';
+                  } else if (event as string === 'ARRIVED_DELIVERY') {
+                    location = 'destination';
+                  }
+                }
+
                 const paymentText = (method === 'CASH' && amount) ? `\n💰 Total to pay: ETB ${amount}` : '';
 
                 // 📱 Rich SMS per event
                 let smsBody = '';
-                switch (event) {
+                switch (event as string) {
                   case 'MISSION_ACCEPTED':
                     smsBody = [
                       `✅ EthioLogistics - Order #${orderId}`,
@@ -175,10 +195,13 @@ export const notifyOrderUpdate = async (
                     break;
 
                   case 'RIDER_ARRIVED':
+                  case 'ARRIVED_PICKUP':
+                  case 'ARRIVED_DELIVERY':
+                    const locText = event === 'ARRIVED_DELIVERY' ? 'destination' : 'pickup point';
                     smsBody = [
                       `📍 EthioLogistics - Order #${orderId}`,
                       ``,
-                      `${rider} has ARRIVED at the ${location}.`,
+                      `${rider} has ARRIVED at the ${location || locText}.`,
                       `📦 Status: Awaiting collection`,
                       paymentText,
                       trackUrl ? `\nTrack live: ${trackUrl}` : '',
@@ -186,6 +209,7 @@ export const notifyOrderUpdate = async (
                     break;
 
                   case 'ORDER_COLLECTED':
+                  case 'PICKED_UP':
                     smsBody = [
                       `🚀 EthioLogistics - Order #${orderId}`,
                       ``,
@@ -198,6 +222,7 @@ export const notifyOrderUpdate = async (
                     break;
 
                   case 'MISSION_SUCCESS':
+                  case 'DELIVERED':
                     smsBody = [
                       `🎉 EthioLogistics - Order #${orderId}`,
                       ``,
