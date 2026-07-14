@@ -441,8 +441,10 @@ export default function LogisticsMap({
         <HeatmapLayer points={heatPoints} visible={showHeatmap} />
         <TileLayer
           attribution='&copy; Google Maps'
-          url="https://mt1.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}"
+          url="https://mt{s}.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}"
+          subdomains="0123"
           maxZoom={20}
+          keepBuffer={12}
         />
 
         {Object.entries(fleet).map(([id, pos]) => {
