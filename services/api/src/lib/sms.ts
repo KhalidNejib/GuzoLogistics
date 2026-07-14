@@ -8,7 +8,7 @@ import { logger } from './logger.js';
 
 const AFRO_TOKEN = process.env.AFRO_SMS_TOKEN || '';
 const AFRO_IDENTIFIER_ID = process.env.AFRO_IDENTIFIER_ID || ''; // From AfroMessage dashboard
-const AFRO_SENDER_NAME = process.env.AFRO_SENDER_NAME || 'EthioLog'; // Your approved sender name
+const AFRO_SENDER_NAME = process.env.AFRO_SENDER_NAME || ''; // Your approved sender name
 
 /**
  * Normalizes an Ethiopian phone number to the 251XXXXXXXXX format
@@ -53,7 +53,9 @@ export const sendSMS = async (to: string, message: string): Promise<{ success: b
     if (AFRO_IDENTIFIER_ID) {
       url.searchParams.append('from', AFRO_IDENTIFIER_ID);
     }
-    url.searchParams.append('sender', AFRO_SENDER_NAME);
+    if (AFRO_SENDER_NAME) {
+      url.searchParams.append('sender', AFRO_SENDER_NAME);
+    }
     url.searchParams.append('to', msisdn);
     url.searchParams.append('message', message.substring(0, 480));
     url.searchParams.append('callback', '');
