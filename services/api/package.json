@@ -4,9 +4,9 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx --import ./src/instrument.ts watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node --import ./dist/instrument.js dist/index.js",
     "sync:history": "tsx src/scripts/syncRouteHistory.ts",
     "check-user": "tsx src/scripts/checkUser.ts",
     "test": "vitest run"
