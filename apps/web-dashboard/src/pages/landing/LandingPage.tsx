@@ -273,7 +273,7 @@ export default function LandingPage() {
       </div>
 
       {/* ── Navigation ────────────────────────────────────────────────────── */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#02040a]/75 backdrop-blur-xl border-b border-white/5 shadow-xl shadow-black/80' : 'bg-transparent'}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-305 ${scrolled ? 'bg-[#02040a]/75 backdrop-blur-xl border-b border-white/5 shadow-xl shadow-black/80' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <a href="#top" className="flex items-center gap-3 group">
             <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 transition-transform group-hover:scale-[1.04]">
@@ -368,7 +368,7 @@ export default function LandingPage() {
             <SignedIn>
               <Link
                 to="/dashboard"
-                className="group inline-flex items-center gap-2 bg-white text-slate-950 font-extrabold px-8 py-4 rounded-xl transition-all duration-200 hover:bg-slate-200 shadow-xl shadow-white/5 hover:-translate-y-0.5"
+                className="group inline-flex items-center gap-2 bg-white text-slate-950 font-extrabold px-8 py-4 rounded-xl transition-all duration-200 hover:bg-slate-205 shadow-xl shadow-white/5 hover:-translate-y-0.5"
               >
                 Access Control Console
                 <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
@@ -379,7 +379,7 @@ export default function LandingPage() {
           </div>
 
           {/* Modern SaaS Keyboard command tags */}
-          <div className="mt-10 flex items-center justify-center gap-2 text-xs text-slate-650">
+          <div className="mt-10 flex items-center justify-center gap-2 text-xs text-slate-655">
             <span className="px-2 py-0.5 bg-white/[0.03] border border-white/[0.06] rounded font-mono">F1</span>
             <span>Open live tracking guide</span>
             <span className="mx-2">•</span>
@@ -589,7 +589,7 @@ export default function LandingPage() {
                     {f.icon}
                   </div>
                   <h3 className="font-extrabold text-lg text-white mb-2 tracking-tight">{f.title}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed font-sans">{f.desc}</p>
+                  <p className="text-slate-450 text-sm leading-relaxed font-sans">{f.desc}</p>
                 </div>
                 
                 <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider group-hover:text-blue-400 transition-colors">
