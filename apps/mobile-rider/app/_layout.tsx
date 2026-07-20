@@ -67,19 +67,14 @@ function RootLayoutNav() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {isSignedIn ? (
-        // Authenticated: show the full app
-        <>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        </>
-      ) : (
-        // Not authenticated: only allow auth screens
-        <>
-          <Stack.Screen name="(auth)/login" />
-          <Stack.Screen name="(auth)/register" />
-        </>
-      )}
+      {/* All screens must be declared unconditionally — expo-router does not
+          allow conditional/fragment children inside <Stack>.
+          Auth-gating is handled inside (tabs)/_layout.tsx which redirects to
+          /(auth)/login when the user is not signed in. */}
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(auth)/login" />
+      <Stack.Screen name="(auth)/register" />
+      <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }
