@@ -44,6 +44,8 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ visible, ord
     }
   }, [visible]);
 
+  const insets = useSafeAreaInsets();
+
   if (!order) return null;
 
   const getStatusAction = () => {
@@ -150,7 +152,6 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ visible, ord
   const cName = order.customerName || 'Customer';
   const cInit = cName.trim().charAt(0).toUpperCase();
   const s = getStyles(isDark);
-  const insets = useSafeAreaInsets();
 
   return (
     <Modal visible={visible} transparent animationType="slide">
