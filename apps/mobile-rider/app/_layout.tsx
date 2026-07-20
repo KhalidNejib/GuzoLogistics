@@ -7,6 +7,13 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: 'https://f1d5e7bca31be61b0e3b6f7fe492d3fd@o4511768507711488.ingest.us.sentry.io/4511768633999360',
+  // Adjust tracing rates as needed for production performance
+  tracesSampleRate: 1.0,
+});
 
 import { ActivityIndicator, View, Text } from 'react-native';
 import { useColorScheme } from '../components/useColorScheme';
@@ -77,7 +84,7 @@ function RootLayoutNav() {
   );
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
@@ -122,3 +129,5 @@ export default function RootLayout() {
     );
   }
 }
+
+export default Sentry.wrap(RootLayout);

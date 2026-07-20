@@ -53,6 +53,13 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "guzo-logistics",
+          "project": "react-native"
+        }
+      ],
       "expo-router",
       "expo-secure-store",
       [
