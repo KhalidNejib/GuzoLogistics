@@ -16,6 +16,7 @@
     "@clerk/express": "^2.1.1",
     "@ethio-logistics/env": "file:../../packages/env",
     "@ethio-logistics/types": "file:../../packages/types",
+    "@sentry/node": "^10.67.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.5",

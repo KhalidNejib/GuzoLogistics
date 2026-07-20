@@ -17,6 +17,8 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().optional(),
   SMS_ET_KEY: z.string().optional(),
   SMS_ET_ID: z.string().optional(),
+  SENTRY_DSN: z.string().optional(),
+  VITE_SENTRY_DSN: z.string().optional(),
 
   // Shared / Frontend
   VITE_CLERK_PUBLISHABLE_KEY: z
@@ -35,6 +37,7 @@ if (isBrowser) {
   rawEnv = {
     NODE_ENV: (import.meta as any).env.MODE,
     VITE_CLERK_PUBLISHABLE_KEY: (import.meta as any).env.VITE_CLERK_PUBLISHABLE_KEY,
+    VITE_SENTRY_DSN: (import.meta as any).env.VITE_SENTRY_DSN,
   };
 } else {
   // 4. BACKEND LOGIC (Node)

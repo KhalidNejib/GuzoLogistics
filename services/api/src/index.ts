@@ -20,6 +20,7 @@ import { Server } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { rateLimit } from 'express-rate-limit';
 import { logger } from './lib/logger.js';
+import { initSentry, Sentry } from './lib/sentry.js';
 
 // 👉 IDENTITY & CACHE LAYER
 import { redis } from './lib/redis.js';
@@ -39,12 +40,15 @@ const app = express();
 app.set('trust proxy', 1); // 👉 Allow Ngrok/Proxies to pass original IP for Rate Limiting
 const httpServer = createServer(app);
 
+// 👉 SENTRY — must be init before any other app code
+initSentry();
+
 // 👉 PRODUCTION-GRADE REDIS ADAPTER
 // We need two separate connections: one for Publishing, one for Subscribing
 const pubClient = redis;
 const subClient = pubClient.duplicate();
 
-subClient.on('error', (err) => console.error('🔴 [Redis Sub] Error:', err));
+subClient.on('error', (err) => logger.error({ err }, '[Redis Sub] Connection error'));
 
 const io = new Server(httpServer, {
   cors: {
@@ -59,7 +63,7 @@ const io = new Server(httpServer, {
 });
 
 io.on('connection', (socket) => {
-  console.info(`🟢 [Socket] NEW CONNECTION: ${socket.id}`);
+  logger.info({ socketId: socket.id }, '[Socket] New connection');
 });
 
 // 👉 INITIALIZE SYSTEM
@@ -168,16 +172,13 @@ app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/admin', adminRoutes);
 
 // 👉 Legacy aliases (temporary — keep mobile app working during migration)
+// TODO: Remove once mobile-rider confirms /api/v1/* is stable across all installs
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/merchant', merchantRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
-
-// 👉 Global Dev Redirects (Ensures both old and new paths work during tunnel dev)
-app.use('/api/user', (req, res, next) => { if (!req.path.startsWith('/v1')) req.url = '/v1' + req.url; next(); }, userRoutes);
-app.use('/api/orders', (req, res, next) => { if (!req.path.startsWith('/v1')) req.url = '/v1' + req.url; next(); }, orderRoutes);
 
 app.get('/', (_req, res) => {
   res.json({
@@ -214,24 +215,22 @@ const routeHistorySyncTimer = setInterval(() => {
 }, ROUTE_HISTORY_SYNC_INTERVAL_MS);
 
 httpServer.listen(PORT, '0.0.0.0', () => {
-  console.info('──────────────────────────────────────────');
-  console.info(`🚀 PRO-LOGISTICS SERVER RUNNING`);
-  console.info(`📡 MODE: ${appConfig.nodeEnv}`);
-  console.info(`🔗 ADAPTER: Redis Cluster Enabled`);
-  console.info(`🌍 URL: http://0.0.0.0:${PORT}`);
-  console.info('──────────────────────────────────────────');
+  logger.info({ port: PORT, env: appConfig.nodeEnv }, '🚀 Guzo Logistics API server started');
 });
 
 const gracefulShutdown = () => {
-  console.info('🛑 Shutting down server...');
+  logger.info('🛑 Shutting down server...');
   clearInterval(routeHistorySyncTimer);
   httpServer.close(async () => {
     await pubClient.quit();
     await subClient.quit();
-    console.info('Systems Synchronized & Offline.');
+    logger.info('Systems synchronized and offline.');
     process.exit(0);
   });
 };
 
 process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
+
+// 👉 SENTRY — global Express error handler (must be registered last)
+Sentry.setupExpressErrorHandler(app);

@@ -1,8 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import * as Sentry from '@sentry/react';
 import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-react';
 import { clerkConfig } from '@ethio-logistics/env';
 import { ReactNode, useMemo } from 'react';
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
+
+// Initialise Sentry — graceful no-op if VITE_SENTRY_DSN is not configured
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN as string,
+    environment: import.meta.env.MODE,
+    tracesSampleRate: import.meta.env.PROD ? 0.1 : 0,
+    // Don't send events during development unless DSN explicitly set
+    enabled: import.meta.env.PROD,
+  });
+}
 
 function GlobalErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
@@ -31,7 +43,13 @@ export function Providers({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ErrorBoundary FallbackComponent={GlobalErrorFallback}>
+    <ErrorBoundary
+      FallbackComponent={GlobalErrorFallback}
+      onError={(error, info) => {
+        // Forward caught React tree errors to Sentry
+        Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
+      }}
+    >
       <ClerkProvider
         publishableKey={PUBLISHABLE_KEY}
         afterSignOutUrl="/"
@@ -44,3 +62,4 @@ export function Providers({ children }: { children: ReactNode }) {
     </ErrorBoundary>
   );
 }
+

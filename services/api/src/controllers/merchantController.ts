@@ -10,6 +10,32 @@ import { AuthRequest } from '../middleware/auth.js';
 import { sendPushNotification } from '../lib/notifications.js';
 import { generateTransactionId, generatePayoutId } from '../lib/idGenerator.js';
 import { Server } from 'socket.io';
+import { z } from 'zod';
+import { logger } from '../lib/logger.js';
+
+// ─── Finance validation schemas ───────────────────────────────────────────────
+const payoutRequestSchema = z.object({
+  amount: z.number({ invalid_type_error: 'amount must be a number' }).positive('amount must be positive'),
+  bankDetails: z.object({
+    bankName: z.string().min(1).optional(),
+    accountNumber: z.string().min(1).optional(),
+    accountName: z.string().min(1).optional(),
+  }).optional(),
+});
+
+const settlementRequestSchema = z.object({
+  amount: z.number({ invalid_type_error: 'amount must be a number' }).positive('amount must be positive'),
+  referenceId: z.string().min(1, 'referenceId is required'),
+  method: z.string().optional(),
+  proofImageUrl: z.string().url('proofImageUrl must be a valid URL').optional().or(z.literal('')),
+});
+
+const processPayoutSchema = z.object({
+  status: z.enum(['PROCESSING', 'PAID', 'REJECTED'], {
+    errorMap: () => ({ message: 'status must be PROCESSING, PAID, or REJECTED' }),
+  }),
+  notes: z.string().optional(),
+});
 
 if (cloudinaryConfig.apiKey) {
   cloudinary.config({
@@ -172,7 +198,7 @@ export const completeOnboarding = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json({ message: 'Onboarding complete! Welcome aboard.', merchant: updated });
   } catch (error) {
-    console.error('Error completing onboarding:', error);
+    logger.error({ error }, 'completeOnboarding failed');
     return res.status(500).json({ error: 'Failed to complete onboarding.' });
   }
 };
@@ -251,7 +277,7 @@ export const collectCashFromRider = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     await session.abortTransaction();
-    console.error('Error settling cash:', error);
+    logger.error({ error }, 'collectCashFromRider failed');
     return res.status(500).json({ error: 'Settle attempt failed.' });
   } finally {
     session.endSession();
@@ -267,13 +293,13 @@ export const requestPayout = async (req: AuthRequest, res: Response) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const merchantId = req.user?._id;
-    const { amount, bankDetails } = req.body;
-
-    if (!amount || amount <= 0) {
+    const parsed = payoutRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
       await session.abortTransaction();
-      return res.status(400).json({ error: 'Invalid payout amount.' });
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     }
+    const { amount, bankDetails } = parsed.data;
+    const merchantId = req.user?._id;
 
     const merchant = await User.findById(merchantId).session(session);
     if (!merchant || (merchant.finance?.balance || 0) < amount) {
@@ -322,7 +348,7 @@ export const requestPayout = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     await session.abortTransaction();
-    console.error('Payout error:', error);
+    logger.error({ error }, 'requestPayout failed');
     return res.status(500).json({ error: 'Failed to request payout.' });
   } finally {
     session.endSession();
@@ -340,13 +366,13 @@ export const processPayout = async (req: AuthRequest, res: Response) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { status, notes } = req.body as { status?: string; notes?: string };
-    const payoutId = req.params.id;
-
-    if (!['PROCESSING', 'PAID', 'REJECTED'].includes(status || '')) {
+    const parsed = processPayoutSchema.safeParse(req.body);
+    if (!parsed.success) {
       await session.abortTransaction();
-      return res.status(400).json({ error: 'status must be PROCESSING, PAID, or REJECTED.' });
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     }
+    const { status, notes } = parsed.data;
+    const payoutId = req.params.id;
 
     const payout = await Payout.findById(payoutId).session(session);
     if (!payout || payout.status === 'PAID' || payout.status === 'REJECTED') {
@@ -381,7 +407,7 @@ export const processPayout = async (req: AuthRequest, res: Response) => {
     return res.status(200).json({ message: 'Payout updated.', payout });
   } catch (error) {
     await session.abortTransaction();
-    console.error('Process payout error:', error);
+    logger.error({ error }, 'processPayout failed');
     return res.status(500).json({ error: 'Failed to update payout.' });
   } finally {
     session.endSession();
@@ -440,7 +466,7 @@ export const uploadImage = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json({ url: result.secure_url });
   } catch (error) {
-    console.error('Image upload error:', error);
+    logger.error({ error }, 'uploadImage failed');
     return res.status(500).json({ error: 'Image upload failed.' });
   }
 };
@@ -474,11 +500,11 @@ export const getFinanceHistory = async (req: AuthRequest, res: Response) => {
 export const requestSettlement = async (req: AuthRequest, res: Response) => {
   try {
     const riderId = req.user?._id;
-    const { amount, referenceId, method, proofImageUrl } = req.body;
-
-    if (!amount || amount <= 0 || !referenceId) {
-      return res.status(400).json({ error: 'All fields required.' });
+    const parsed = settlementRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     }
+    const { amount, referenceId, method, proofImageUrl } = parsed.data;
 
     const existing = await Transaction.findOne({ referenceId, status: { $ne: 'FAILED' } });
     if (existing) {
@@ -523,8 +549,8 @@ export const requestSettlement = async (req: AuthRequest, res: Response) => {
 
     return res.status(201).json({ message: 'Submitted!', transaction });
   } catch (error) {
-      console.error(error);
-    return res.status(500).json({ error: 'Failed' });
+    logger.error({ error }, 'requestSettlement failed');
+    return res.status(500).json({ error: 'Settlement request failed.' });
   }
 };
 

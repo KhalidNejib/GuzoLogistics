@@ -29,10 +29,11 @@ const router: Router = Router();
 
 router.post('/route-geom', getRouteGeometry);
 
-// 🛠️ DEBUG ONLY: Send an arbitrary SMS (USE ONLY FOR TESTING). Gated to ADMIN,
-// and hard-blocked in production inside the controller regardless of role —
-// same pattern as debug/clear-all below.
-router.post('/debug/send-sms', requireUser, requireRole('ADMIN'), debugSendSMS);
+// 🛠️ DEBUG ONLY — not registered in production; the controller also hard-blocks
+// them, but keeping them out of the route table is cleaner.
+if (process.env.NODE_ENV !== 'production') {
+  router.post('/debug/send-sms', requireUser, requireRole('ADMIN'), debugSendSMS);
+}
 
 
 // Merchant creates a new delivery order
@@ -69,8 +70,8 @@ router.post('/:id/auto-assign', requireUser, requireRole('MERCHANT'), autoAssign
 router.get('/track/:token', getOrderByToken);
 router.post('/track/:token/rate', rateOrder);
 
-// 🛠️ DEBUG ONLY: Clear all orders (USE ONLY FOR TESTING). Gated to ADMIN,
-// and hard-blocked in production inside the controller regardless of role.
-router.delete('/debug/clear-all', requireUser, requireRole('ADMIN'), debugClearAllOrders);
+if (process.env.NODE_ENV !== 'production') {
+  router.delete('/debug/clear-all', requireUser, requireRole('ADMIN'), debugClearAllOrders);
+}
 
 export default router;

@@ -59,3 +59,8 @@ jobs:
       # ─── Tests ─────────────────────────────────────────────────────────────
       - name: Vitest — API (services/api)
         run: pnpm --filter @ethio-logistics/api test
+
+      # ─── Build ─────────────────────────────────────────────────────────────
+      - name: Build Web Dashboard
+        run: pnpm --filter web-dashboard build
+
