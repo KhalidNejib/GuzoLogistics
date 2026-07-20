@@ -1,13 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-require-imports */
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import * as Sentry from '@sentry/react-native';
+
+// ─── CRITICAL: Must be called at the root layout level for OAuth to work ───────
+// When the OAuth provider redirects back to the app (via Linking / WebBrowser),
+// the redirect lands on the root route ('/'), NOT on the login screen.
+// If maybeCompleteAuthSession() is only called in login.tsx the redirect is
+// silently dropped and Clerk keeps logging '__clerk_client_jwt not found'.
+WebBrowser.maybeCompleteAuthSession();
 
 Sentry.init({
   dsn: 'https://f1d5e7bca31be61b0e3b6f7fe492d3fd@o4511768507711488.ingest.us.sentry.io/4511768633999360',
@@ -16,7 +23,6 @@ Sentry.init({
 });
 
 import { ActivityIndicator, View, Text } from 'react-native';
-import { useColorScheme } from '../components/useColorScheme';
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { tokenCache } from '../lib/tokenCache';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -35,7 +41,6 @@ const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 function RootLayoutNav() {
   const { isLoaded, isSignedIn } = useAuth();
-  const colorScheme = useColorScheme();
 
   // Show loading spinner while Clerk initialises
   if (!isLoaded) {
