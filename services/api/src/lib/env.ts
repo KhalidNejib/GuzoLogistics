@@ -75,5 +75,9 @@ export const smsConfig = {
 };
 
 export const orsConfig = {
-  apiKey: get('ORS_API_KEY'),
+  apiKey: getOptional('ORS_API_KEY', ''),
 };
+
+if (appConfig.nodeEnv === 'production' && !orsConfig.apiKey) {
+  console.warn('⚠️ WARNING: ORS_API_KEY is not set in this environment. Route geometry calculations will fail.');
+}
