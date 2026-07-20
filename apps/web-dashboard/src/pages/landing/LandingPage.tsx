@@ -4,15 +4,13 @@ import { SignedIn, SignedOut } from '@clerk/clerk-react';
 
 /**
  * ── Design notes ──────────────────────────────────────────────────────────
- * Palette:  bg #06070a · ink #EEF0F4 · muted #8B93A7
- *           blue   #2563eb (brand primary / dispatch - Guzo deep blue)
- *           sky    #0ea5e9 (live telemetry - signal blue)
- *           cyan   #06b6d4 (motion feedback)
- * Type:     Display  → 'Space Grotesk' (headlines, wordmark)
+ * Palette:  bg #030407 (pitch black with subtle depth)
+ *           blue   #2563eb (brand primary / dispatch)
+ *           sky    #0ea5e9 (live telemetry)
+ *           cyan   #06b6d4 (accent motion highlights)
+ * Type:     Display  → 'Space Grotesk'
  *           Body     → 'Inter'
- *           Data     → 'JetBrains Mono' (order IDs, coordinates, timestamps)
- * Signature: a dashed route-line with a moving waypoint dot threads behind
- *           the hero and reappears as the section divider.
+ *           Data     → 'JetBrains Mono'
  * ───────────────────────────────────────────────────────────────────────── */
 
 function useGoogleFonts() {
@@ -26,6 +24,40 @@ function useGoogleFonts() {
       'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap';
     document.head.appendChild(link);
   }, []);
+}
+
+function RevealOnScroll({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const [ref, setRef] = React.useState<HTMLDivElement | null>(null);
+  const [visible, setVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!ref) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => setVisible(true), delay);
+        observer.unobserve(ref);
+      }
+    }, { threshold: 0.05 });
+    observer.observe(ref);
+    return () => observer.disconnect();
+  }, [ref, delay]);
+
+  return (
+    <div
+      ref={setRef}
+      className={`transition-all duration-1000 ease-out transform ${
+        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function GridDot() {
+  return (
+    <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.015)_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
+  );
 }
 
 const partners = [
@@ -47,6 +79,7 @@ const features = [
     title: 'Precision live tracking',
     desc: 'Rider telemetry updates every 2 seconds on a responsive map. Share a public tracking link so customers stop calling to ask where their order is.',
     accent: 'sky',
+    gridArea: 'lg:col-span-2',
   },
   {
     icon: (
@@ -57,6 +90,7 @@ const features = [
     title: 'Fleet command center',
     desc: 'Invite, approve, or suspend riders yourself. Watch duty status and safety alerts across every service zone you run.',
     accent: 'blue',
+    gridArea: 'lg:col-span-1',
   },
   {
     icon: (
@@ -67,6 +101,7 @@ const features = [
     title: 'Financial intelligence',
     desc: 'Cash reserves, structured payouts, and a running transaction ledger — the numbers a merchant actually checks every morning.',
     accent: 'blue',
+    gridArea: 'lg:col-span-1',
   },
   {
     icon: (
@@ -77,6 +112,7 @@ const features = [
     title: 'Automated rider payouts',
     desc: 'Base fare, distance premiums, and tips calculated per delivery. Settlement logs come out ready for your books.',
     accent: 'sky',
+    gridArea: 'lg:col-span-2',
   },
   {
     icon: (
@@ -87,6 +123,7 @@ const features = [
     title: 'Native rider app',
     desc: 'Works through dead zones. Background GPS keeps logging, cached routes flush once the signal returns, no lost trips.',
     accent: 'blue',
+    gridArea: 'lg:col-span-1',
   },
   {
     icon: (
@@ -97,6 +134,7 @@ const features = [
     title: 'SMS handoff alerts',
     desc: 'Customers get a local-language text the moment a rider starts transit and again on handoff — no app required on their end.',
     accent: 'sky',
+    gridArea: 'lg:col-span-2',
   },
 ];
 
@@ -193,7 +231,7 @@ export default function LandingPage() {
   }, [dispatchStatus]);
 
   const runSimulation = () => {
-    if (dispatchStatus === 'delivered') setActiveRiders(12);
+    if (dispatchStatus === 'delivered') setProgress(0);
     setDispatchStatus('assigned');
     setProgress(15);
   };
@@ -214,31 +252,31 @@ export default function LandingPage() {
   return (
     <div
       style={fontVars}
-      className="min-h-screen bg-[#050609] text-[#EEF0F4] [font-family:var(--font-body)] overflow-x-hidden selection:bg-blue-500/25 selection:text-blue-200"
+      className="min-h-screen bg-[#030407] text-[#EEF0F4] [font-family:var(--font-body)] overflow-x-hidden selection:bg-blue-500/20 selection:text-blue-200"
     >
       {/* ── Ambient background ────────────────────────────────────────── */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-220px] left-[15%] w-[560px] h-[560px] bg-blue-600/[0.05] rounded-full blur-[150px] motion-safe:animate-pulse [animation-duration:9s]" />
-        <div className="absolute top-[-120px] right-[8%] w-[480px] h-[480px] bg-sky-500/[0.04] rounded-full blur-[140px] motion-safe:animate-pulse [animation-duration:13s]" />
-        <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.02)_1px,transparent_1px)] [background-size:26px_26px]" />
+        <div className="absolute top-[-250px] left-[10%] w-[680px] h-[680px] bg-blue-600/[0.04] rounded-full blur-[160px] motion-safe:animate-pulse [animation-duration:12s]" />
+        <div className="absolute top-[-150px] right-[5%] w-[585px] h-[585px] bg-sky-500/[0.03] rounded-full blur-[140px] motion-safe:animate-pulse [animation-duration:15s]" />
+        <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.015)_1px,transparent_1px)] [background-size:24px_24px]" />
       </div>
 
       {/* ── Navigation ────────────────────────────────────────────────── */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled ? 'bg-[#050609]/80 backdrop-blur-xl border-b border-white/[0.05] shadow-2xl shadow-black/60' : 'bg-transparent'
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          scrolled ? 'bg-[#030407]/75 backdrop-blur-md border-b border-white/[0.04] shadow-xl' : 'bg-transparent'
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 h-18 py-4 flex items-center justify-between">
           <a href="#top" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-550/20">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-650 flex items-center justify-center border border-white/[0.08] shadow-md shadow-blue-550/20 transition-transform group-hover:scale-[1.04]">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
               </svg>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="[font-family:var(--font-display)] font-semibold text-white text-lg tracking-tight">GUZO</span>
-              <span className="text-sm text-[#8B93A7]" lang="am">ጉዞ</span>
+              <span className="text-xs text-[#8B93A7] uppercase tracking-normal" lang="am">ጉዞ</span>
             </div>
           </a>
 
@@ -250,7 +288,7 @@ export default function LandingPage() {
               </Link>
               <Link
                 to="/sign-up"
-                className="text-sm font-semibold bg-[#2563eb] text-white px-5 py-2.5 rounded-lg transition-all hover:bg-blue-500 shadow-md shadow-blue-500/10"
+                className="text-sm font-semibold bg-[#2563eb] text-white px-5 py-2.5 rounded-xl transition-all hover:bg-blue-500 hover:scale-[1.01] hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 duration-200"
               >
                 Get started
               </Link>
@@ -258,7 +296,7 @@ export default function LandingPage() {
             <SignedIn>
               <Link
                 to="/dashboard"
-                className="text-sm font-semibold bg-[#2563eb] hover:bg-blue-500 text-white px-5 py-2.5 rounded-lg transition-all shadow-md shadow-blue-500/10"
+                className="text-sm font-semibold bg-[#2563eb] hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl transition-all hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 duration-200"
               >
                 Go to dashboard
               </Link>
@@ -289,7 +327,7 @@ export default function LandingPage() {
             menuOpen ? 'max-h-56' : 'max-h-0'
           }`}
         >
-          <div className="px-6 py-4 flex flex-col gap-2 bg-[#050609]/95 backdrop-blur-xl">
+          <div className="px-6 py-4 flex flex-col gap-2 bg-[#030407]/95 backdrop-blur-xl">
             <SignedOut>
               <Link to="/sign-in" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-[#8B93A7] px-3 py-2.5 rounded-lg">
                 Sign in
@@ -316,67 +354,69 @@ export default function LandingPage() {
       </nav>
 
       {/* ── Hero ──────────────────────────────────────────────────────── */}
-      <section id="top" className="relative pt-40 pb-12 px-6 text-center">
-        <div className="max-w-4xl mx-auto relative z-10">
-          <div className="inline-flex items-center gap-2 text-xs font-medium text-[#0ea5e9] bg-[#0ea5e9]/[0.06] border border-[#0ea5e9]/20 px-3.5 py-1.5 rounded-full mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#0ea5e9] motion-safe:animate-pulse" />
-            Built for delivery fleets in Addis Ababa
+      <section id="top" className="relative pt-44 pb-12 px-6 text-center">
+        <RevealOnScroll>
+          <div className="max-w-4xl mx-auto relative z-10">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#0ea5e9] bg-sky-500/[0.06] border border-sky-500/20 px-4 py-1.5 rounded-full mb-8">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0ea5e9] motion-safe:animate-pulse" />
+              Powering modern fleets in Addis Ababa
+            </div>
+
+            <h1 className="[font-family:var(--font-display)] text-5xl md:text-8xl font-bold tracking-tight leading-[1.02] text-white mb-8">
+              Run your fleet like
+              <br />
+              <span className="bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400 bg-clip-text text-transparent">
+                you see every mile
+              </span>
+            </h1>
+
+            <p className="text-lg md:text-xl text-[#8B93A7] max-w-2xl mx-auto mb-10 leading-relaxed font-sans">
+              Dispatch orders, watch riders move in real time, and automate cash settlements — all from one dashboard built for how delivery actually runs.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <SignedOut>
+                <Link
+                  to="/sign-up"
+                  className="group inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/25 hover:-translate-y-0.5"
+                >
+                  Set up your fleet
+                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </Link>
+                <Link
+                  to="/sign-in"
+                  className="inline-flex items-center gap-2 text-[#EEF0F4] border border-white/10 hover:border-white/20 hover:bg-white/[0.03] px-8 py-3.5 rounded-xl transition-all font-semibold"
+                >
+                  Administrator login
+                </Link>
+              </SignedOut>
+              <SignedIn>
+                <Link
+                  to="/dashboard"
+                  className="group inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/25"
+                >
+                  Open control console
+                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </Link>
+              </SignedIn>
+            </div>
           </div>
-
-          <h1 className="[font-family:var(--font-display)] text-5xl md:text-7xl font-semibold tracking-tight leading-[1.06] text-white mb-7">
-            Run your fleet like
-            <br />
-            <span className="bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400 bg-clip-text text-transparent">
-              you can see every mile
-            </span>
-          </h1>
-
-          <p className="text-lg text-[#8B93A7] max-w-xl mx-auto mb-10 leading-relaxed">
-            Dispatch orders, watch riders move in real time, and settle cash payouts — all from one dashboard built for how delivery actually runs here.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <SignedOut>
-              <Link
-                to="/sign-up"
-                className="group inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-500 text-white font-semibold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/20 hover:-translate-y-0.5"
-              >
-                Set up your fleet
-                <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                </svg>
-              </Link>
-              <Link
-                to="/sign-in"
-                className="inline-flex items-center gap-2 text-[#EEF0F4] border border-white/10 hover:border-white/20 hover:bg-white/[0.03] px-7 py-3.5 rounded-xl transition-all font-medium"
-              >
-                Administrator login
-              </Link>
-            </SignedOut>
-            <SignedIn>
-              <Link
-                to="/dashboard"
-                className="group inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-500 text-white font-semibold px-7 py-3.5 rounded-xl transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/20"
-              >
-                Open control console
-                <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                </svg>
-              </Link>
-            </SignedIn>
-          </div>
-        </div>
+        </RevealOnScroll>
 
         {/* Signature route-line, threading out of the hero */}
         <div className="max-w-4xl mx-auto mt-16 relative z-10">
           <RouteLine />
         </div>
 
-        <div className="max-w-4xl mx-auto -mt-8">
-          <p className="text-xs uppercase tracking-[0.2em] text-[#4A5266] font-semibold mb-6">Powering delivery crews across Ethiopia</p>
-          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+        <div className="max-w-4xl mx-auto -mt-8 opacity-60">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-[#4A5266] font-bold mb-6">Powering delivery crews across Ethiopia</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
             {partners.map((p) => (
-              <span key={p.name} title={p.name} className="[font-family:var(--font-mono)] text-xs font-medium text-[#4A5266] tracking-wider hover:text-[#8B93A7] transition-colors">
+              <span key={p.name} title={p.name} className="[font-family:var(--font-mono)] text-xs font-semibold text-[#4A5266] tracking-wider hover:text-white transition-colors cursor-default">
                 {p.mark}
               </span>
             ))}
@@ -385,100 +425,149 @@ export default function LandingPage() {
       </section>
 
       {/* ── Interactive dispatch simulator ───────────────────────────── */}
-      <section className="px-6 pt-16 pb-24 relative">
-        <div className="max-w-5xl mx-auto">
-          <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-[#090a0e]/90 backdrop-blur-2xl shadow-[0_25px_80px_rgba(0,0,0,0.7)]">
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06] bg-white/[0.015]">
-              <div className="flex items-center gap-2 [font-family:var(--font-mono)] text-xs text-[#4A5266]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0ea5e9] motion-safe:animate-pulse" />
-                dispatch_preview — live demo
-              </div>
-              <div className="text-xs text-[#4A5266] [font-family:var(--font-mono)] hidden sm:block">merchant_console.b2b</div>
-            </div>
-
-            <div className="p-5 md:p-7 grid grid-cols-1 lg:grid-cols-3 gap-5">
-              <div className="lg:col-span-1 border border-white/[0.06] bg-white/[0.015] rounded-xl p-5 flex flex-col justify-between">
-                <div>
-                  <h3 className="[font-family:var(--font-display)] text-sm font-semibold text-white mb-2">Try a dispatch</h3>
-                  <p className="text-[#8B93A7] text-xs leading-relaxed mb-5">
-                    Trigger a mock order and watch it move through assignment, transit, and handoff — the same states your dashboard tracks live.
-                  </p>
-                  <div className="border border-white/[0.06] bg-white/[0.015] rounded-lg p-3.5 mb-4">
-                    <span className="text-[10px] font-semibold text-[#4A5266] uppercase tracking-widest block mb-1.5">Status</span>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-[#EEF0F4]">{statusLabel[dispatchStatus]}</span>
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide ${
-                          dispatchStatus === 'idle'
-                            ? 'bg-white/[0.04] text-[#4A5266]'
-                            : dispatchStatus === 'assigned'
-                              ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                              : dispatchStatus === 'transit'
-                                ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20 motion-safe:animate-pulse'
-                                : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        }`}
-                      >
-                        {dispatchStatus}
-                      </span>
-                    </div>
+      <section className="px-6 py-20 relative">
+        <div className="max-w-6xl mx-auto">
+          <RevealOnScroll>
+            <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-[#07090d]/90 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,0.8)]">
+              {/* Terminal Title Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05] bg-white/[0.01]">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/30 border border-red-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-amber-500/30 border border-amber-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-emerald-500/30 border border-emerald-500/50" />
+                  <div className="flex items-center gap-2 [font-family:var(--font-mono)] text-[11px] text-[#4A5266] ml-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0ea5e9] motion-safe:animate-pulse" />
+                    live_telemetry_simulator.sh
                   </div>
                 </div>
-                <button
-                  onClick={runSimulation}
-                  disabled={dispatchStatus === 'assigned' || dispatchStatus === 'transit'}
-                  className="w-full py-3 rounded-lg bg-[#2563eb] hover:bg-blue-500 font-semibold text-xs text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-blue-500/10"
-                >
-                  {dispatchStatus === 'idle' ? 'Dispatch mock order' : dispatchStatus === 'delivered' ? 'Reset simulation' : 'Processing…'}
-                </button>
+                <div className="text-[11px] text-[#4A5266] [font-family:var(--font-mono)] hidden sm:block">command_console.v1</div>
               </div>
 
-              <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-                <div className="bg-white/[0.015] border border-white/[0.06] rounded-xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] uppercase font-semibold tracking-widest text-[#4A5266] block mb-1">Active riders</span>
-                  <h4 className="[font-family:var(--font-mono)] text-2xl font-medium text-white">{activeRiders}</h4>
-                </div>
-                <div className="bg-white/[0.015] border border-white/[0.06] rounded-xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] uppercase font-semibold tracking-widest text-[#4A5266] block mb-1">Telemetry uptime</span>
-                  <h4 className="[font-family:var(--font-mono)] text-2xl font-medium text-blue-500">99.9%</h4>
-                </div>
-
-                <div className="col-span-2 bg-white/[0.015] border border-white/[0.06] rounded-xl p-5 space-y-4">
-                  <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                    <span className="text-xs font-medium text-[#8B93A7]">Transit to Bole, Addis Ababa</span>
-                    <span className="[font-family:var(--font-mono)] text-xs text-[#4A5266]">OR-49520-ET</span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs font-medium">
-                      <span className="text-[#8B93A7]">Route progress</span>
-                      <span className="[font-family:var(--font-mono)] text-blue-400">{progress}%</span>
-                    </div>
-                    <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-sky-400 rounded-full transition-all duration-700 ease-out"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { label: 'Order created', active: progress >= 0 },
-                      { label: 'Rider dispatched', active: progress >= 15 },
-                      { label: 'Handed off', active: progress >= 100 },
-                    ].map((step) => (
-                      <div
-                        key={step.label}
-                        className={`p-2 rounded-lg border text-center text-[10px] font-medium transition-all duration-500 ${
-                          step.active ? 'bg-blue-500/[0.06] border-blue-500/20 text-blue-400' : 'bg-transparent border-white/[0.06] text-[#4A5266]'
-                        }`}
-                      >
-                        {step.label}
+              {/* Grid content inside simulator */}
+              <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-4 gap-6">
+                
+                {/* Control card panel */}
+                <div className="lg:col-span-1 border border-white/[0.06] bg-white/[0.01] rounded-2xl p-5 flex flex-col justify-between">
+                  <div>
+                    <h3 className="[font-family:var(--font-display)] text-sm font-semibold tracking-tight text-white mb-2 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                      Dispatch Center
+                    </h3>
+                    <p className="text-[#8B93A7] text-xs leading-relaxed mb-6">
+                      Trigger a simulated order to preview GPS polling, state transitions, and real-time transit telemetry.
+                    </p>
+                    
+                    <div className="border border-white/[0.06] bg-black/40 rounded-xl p-4 space-y-2 mb-4">
+                      <span className="text-[9px] font-bold text-[#4A5266] uppercase tracking-widest block">System state</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-white">{statusLabel[dispatchStatus]}</span>
+                        <span
+                          className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                            dispatchStatus === 'idle'
+                              ? 'bg-white/[0.04] text-[#4A5266] border border-white/[0.05]'
+                              : dispatchStatus === 'assigned'
+                                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                : dispatchStatus === 'transit'
+                                  ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20 motion-safe:animate-pulse'
+                                  : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25'
+                          }`}
+                        >
+                          {dispatchStatus}
+                        </span>
                       </div>
-                    ))}
+                    </div>
                   </div>
+
+                  <button
+                    onClick={runSimulation}
+                    disabled={dispatchStatus === 'assigned' || dispatchStatus === 'transit'}
+                    className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 shadow-md shadow-blue-500/10"
+                  >
+                    {dispatchStatus === 'idle' ? '⚡ Run Dispatch Mock' : dispatchStatus === 'delivered' ? '🔄 Reset Simulation' : 'Processing path...'}
+                  </button>
                 </div>
+
+                {/* Simulated dashboard maps & progress log */}
+                <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  
+                  {/* Stats card 1 */}
+                  <div className="bg-white/[0.01] border border-white/[0.05] rounded-xl p-5 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase font-semibold tracking-widest text-[#4A5266] block mb-1">Riders Active</span>
+                      <h4 className="[font-family:var(--font-mono)] text-3xl font-semibold text-white">{activeRiders}</h4>
+                    </div>
+                    <span className="text-[10px] text-emerald-400 font-semibold mt-4 bg-emerald-500/[0.06] border border-emerald-500/10 px-2 py-0.5 rounded自-start w-max">
+                      ● Connect OK
+                    </span>
+                  </div>
+
+                  {/* Stats card 2 */}
+                  <div className="bg-white/[0.01] border border-white/[0.05] rounded-xl p-5 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase font-semibold tracking-widest text-[#4A5266] block mb-1">API Telemetry</span>
+                      <h4 className="[font-family:var(--font-mono)] text-3xl font-semibold text-blue-400">99.99%</h4>
+                    </div>
+                    <span className="text-[10px] text-[#8B93A7] mt-4">2s latency SLA</span>
+                  </div>
+
+                  {/* Stats card 3 */}
+                  <div className="bg-white/[0.01] border border-white/[0.05] rounded-xl p-5 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase font-semibold tracking-widest text-[#4A5266] block mb-1">COD Ledger</span>
+                      <h4 className="[font-family:var(--font-mono)] text-3xl font-semibold text-white">42,500 <span className="text-xs text-[#8B93A7]">ETB</span></h4>
+                    </div>
+                    <span className="text-[10px] text-[#4A5266] mt-4">Safe paydowns</span>
+                  </div>
+
+                  {/* Bottom progress bar tracking route map container */}
+                  <div className="sm:col-span-3 bg-white/[0.01] border border-white/[0.05] rounded-xl p-6 space-y-5">
+                    <div className="flex items-center justify-between border-b border-white/[0.06] pb-3.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        <span className="text-xs font-semibold text-white">Route: Bole (Origin) → Kazanchis (Destination)</span>
+                      </div>
+                      <span className="[font-family:var(--font-mono)] text-[11px] text-[#4A5266]">ID-GUZO-ET-702</span>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-xs font-medium">
+                        <span className="text-[#8B93A7]">Distance Covered</span>
+                        <span className="[font-family:var(--font-mono)] text-blue-400">{progress}%</span>
+                      </div>
+                      <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden relative">
+                        <div
+                          className="h-full bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-400 rounded-full transition-all duration-1000 ease-out"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Step milestones */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { label: '01. Created', active: progress >= 0 },
+                        { label: '02. Dispatched', active: progress >= 15 },
+                        { label: '03. Delivered', active: progress >= 100 },
+                      ].map((step, idx) => (
+                        <div
+                          key={idx}
+                          className={`p-3 rounded-xl border text-center text-[10px] font-semibold transition-all duration-700 ${
+                            step.active
+                              ? 'bg-blue-500/[0.06] border-blue-500/20 text-blue-400 shadow-sm'
+                              : 'bg-transparent border-white/[0.05] text-[#4A5266]'
+                          }`}
+                        >
+                          {step.label}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+
               </div>
             </div>
-          </div>
+          </RevealOnScroll>
         </div>
       </section>
 
@@ -486,144 +575,165 @@ export default function LandingPage() {
         <RouteLine flip />
       </div>
 
-      {/* ── Features ──────────────────────────────────────────────────── */}
-      <section className="px-6 py-24 relative">
+      {/* ── Bento Features ────────────────────────────────────────────── */}
+      <section className="px-6 py-24 relative z-10">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16 max-w-xl mx-auto">
-            <p className="text-xs uppercase tracking-[0.2em] text-blue-500 font-semibold mb-3">What you get</p>
-            <h2 className="[font-family:var(--font-display)] text-3xl md:text-5xl font-semibold text-white tracking-tight leading-tight">
-              Everything a dispatch desk needs, nothing it doesn’t
-            </h2>
-          </div>
+          <RevealOnScroll>
+            <div className="text-center mb-20 max-w-2xl mx-auto">
+              <p className="text-xs uppercase tracking-[0.25em] text-blue-500 font-bold mb-3">Enterprise Dashboard</p>
+              <h2 className="[font-family:var(--font-display)] text-3xl md:text-5xl font-bold text-white tracking-tight leading-tight">
+                Everything you need to run your dispatch network
+              </h2>
+            </div>
+          </RevealOnScroll>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {features.map((f) => (
-              <div
-                key={f.title}
-                className="group relative bg-white/[0.015] border border-white/[0.07] hover:border-white/[0.14] rounded-xl p-6 transition-all duration-300"
-              >
+          <RevealOnScroll>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {features.map((f, i) => (
                 <div
-                  className={`w-10 h-10 rounded-lg bg-white/[0.03] border border-white/[0.08] flex items-center justify-center mb-5 ${
-                    f.accent === 'blue' ? 'text-blue-500' : 'text-sky-400'
-                  }`}
+                  key={i}
+                  className={`group relative bg-white/[0.015] border border-white/[0.07] hover:border-white/[0.14] rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 ${f.gridArea}`}
                 >
-                  {f.icon}
+                  {/* Subtle top light overlay */}
+                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  
+                  <div
+                    className={`w-11 h-11 rounded-xl bg-white/[0.02] border border-white/[0.08] flex items-center justify-center mb-5 ${
+                      f.accent === 'blue' ? 'text-blue-400 group-hover:text-blue-300' : 'text-sky-400 group-hover:text-sky-300'
+                    }`}
+                  >
+                    {f.icon}
+                  </div>
+                  <h3 className="[font-family:var(--font-display)] font-semibold text-base text-white mb-2">{f.title}</h3>
+                  <p className="text-[#8B93A7] text-sm leading-relaxed font-sans">{f.desc}</p>
                 </div>
-                <h3 className="[font-family:var(--font-display)] font-semibold text-base text-white mb-2">{f.title}</h3>
-                <p className="text-[#8B93A7] text-sm leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </RevealOnScroll>
         </div>
       </section>
 
-      {/* ── How it works (a real sequence, so numbering earns its place) ── */}
-      <section className="px-6 py-24 border-t border-white/[0.06] relative">
+      {/* ── How it works ──────────────────────────────────────────────── */}
+      <section className="px-6 py-28 border-t border-white/[0.05] relative bg-gradient-to-b from-transparent to-[#05060a]/20">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-xs uppercase tracking-[0.2em] text-sky-400 font-semibold mb-3">Getting started</p>
-            <h2 className="[font-family:var(--font-display)] text-3xl md:text-4xl font-semibold text-white tracking-tight">Three stops to your first dispatch</h2>
-          </div>
+          <RevealOnScroll>
+            <div className="text-center mb-20">
+              <p className="text-xs uppercase tracking-[0.2em] text-sky-400 font-bold mb-3">Getting Started</p>
+              <h2 className="[font-family:var(--font-display)] text-3xl md:text-5xl font-bold text-white tracking-tight">Three steps to your first dispatch</h2>
+            </div>
+          </RevealOnScroll>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            {waypoints.map((s) => (
-              <div key={s.n} className="relative">
-                <span className="[font-family:var(--font-mono)] text-xs text-blue-500 font-medium block mb-4">{s.n}</span>
-                <h3 className="[font-family:var(--font-display)] font-semibold text-lg text-white mb-2">{s.title}</h3>
-                <p className="text-[#8B93A7] text-sm leading-relaxed">{s.desc}</p>
-              </div>
-            ))}
-          </div>
+          <RevealOnScroll>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+              {waypoints.map((s, idx) => (
+                <div key={idx} className="relative group p-6 rounded-2xl border border-white/[0.04] bg-white/[0.01] hover:border-white/[0.08] transition-colors">
+                  <span className="[font-family:var(--font-mono)] text-xs text-blue-500 font-semibold block mb-4">{s.n}</span>
+                  <h3 className="[font-family:var(--font-display)] font-semibold text-lg text-white mb-2">{s.title}</h3>
+                  <p className="text-[#8B93A7] text-sm leading-relaxed font-sans">{s.desc}</p>
+                </div>
+              ))}
+            </div>
+          </RevealOnScroll>
         </div>
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────────── */}
-      <section className="px-6 py-24 border-t border-white/[0.06]">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-xs uppercase tracking-[0.2em] text-blue-500 font-semibold mb-3">Questions</p>
-            <h2 className="[font-family:var(--font-display)] text-2xl md:text-3xl font-semibold text-white">Before you sign up</h2>
-          </div>
+      <section className="px-6 py-28 border-t border-white/[0.05]">
+        <div className="max-w-3xl mx-auto">
+          <RevealOnScroll>
+            <div className="text-center mb-16">
+              <p className="text-xs uppercase tracking-[0.2em] text-blue-500 font-bold mb-3">Questions</p>
+              <h2 className="[font-family:var(--font-display)] text-3xl md:text-4xl font-bold text-white">Before you sign up</h2>
+            </div>
+          </RevealOnScroll>
 
-          <div className="space-y-3">
-            {faqs.map((faq, i) => {
-              const open = openFaq === i;
-              return (
-                <div key={faq.q} className="border border-white/[0.07] bg-white/[0.015] rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => setOpenFaq(open ? null : i)}
-                    aria-expanded={open}
-                    className="w-full flex items-center justify-between gap-4 p-4.5 text-left font-medium text-sm text-white hover:bg-white/[0.02] transition-colors"
-                  >
-                    <span>{faq.q}</span>
-                    <svg
-                      className={`w-4 h-4 text-[#4A5266] shrink-0 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+          <RevealOnScroll>
+            <div className="space-y-4">
+              {faqs.map((faq, i) => {
+                const open = openFaq === i;
+                return (
+                  <div key={i} className="border border-white/[0.06] bg-white/[0.01] rounded-2xl overflow-hidden transition-all duration-300">
+                    <button
+                      onClick={() => setOpenFaq(open ? null : i)}
+                      aria-expanded={open}
+                      className="w-full flex items-center justify-between gap-4 p-5 text-left font-semibold text-sm md:text-base text-white hover:bg-white/[0.02] transition-colors"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
-                  </button>
-                  <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                    <div className="overflow-hidden">
-                      <p className="text-sm text-[#8B93A7] leading-relaxed px-4.5 pb-4.5">{faq.a}</p>
+                      <span className="font-sans">{faq.q}</span>
+                      <svg
+                        className={`w-4 h-4 text-[#4A5266] shrink-0 transition-transform duration-300 ${open ? 'rotate-185' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </button>
+                    <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                      <div className="overflow-hidden">
+                        <p className="text-sm text-[#8B93A7] leading-relaxed px-5 pb-5 font-sans border-t border-white/[0.04] pt-4">{faq.a}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </RevealOnScroll>
         </div>
       </section>
 
       {/* ── CTA ───────────────────────────────────────────────────────── */}
-      <section className="px-6 py-24 border-t border-white/[0.06]">
-        <div className="max-w-3xl mx-auto">
-          <div className="relative rounded-3xl overflow-hidden border border-white/[0.08] bg-gradient-to-br from-blue-950/[0.05] via-[#050609] to-transparent p-10 md:p-14 text-center">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.06),transparent_70%)] pointer-events-none" />
-            <div className="relative z-10 space-y-5">
-              <h2 className="[font-family:var(--font-display)] text-3xl md:text-5xl font-semibold text-white tracking-tight leading-tight">
-                Start running your fleet today
-              </h2>
-              <p className="text-[#8B93A7] text-sm md:text-base max-w-lg mx-auto leading-relaxed">
-                Connect your riders, automate cash settlements, and get delivery telemetry you can trust. No setup fee.
-              </p>
-              <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
-                <SignedOut>
-                  <Link
-                    to="/sign-up"
-                    className="inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-blue-500 text-white font-semibold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/20 hover:-translate-y-0.5"
-                  >
-                    Set up your fleet, free
-                  </Link>
-                  <a
-                    href="mailto:support@guzologistics.com"
-                    className="inline-flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 hover:bg-white/[0.03] text-[#EEF0F4] font-medium px-7 py-3.5 rounded-xl transition-all"
-                  >
-                    Talk to us about enterprise
-                  </a>
-                </SignedOut>
-                <SignedIn>
-                  <Link
-                    to="/dashboard"
-                    className="inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-500 text-white font-semibold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/20"
-                  >
-                    Go to your dashboard
-                  </Link>
-                </SignedIn>
+      <section className="px-6 py-28 border-t border-white/[0.05]">
+        <div className="max-w-4xl mx-auto">
+          <RevealOnScroll>
+            <div className="relative rounded-3xl overflow-hidden border border-white/[0.08] p-10 md:p-16 text-center"
+              style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(37,99,235,0.06) 0%, transparent 70%), #06070a' }}>
+              
+              <GridDot />
+              
+              <div className="relative z-10 space-y-6">
+                <span className="text-[10px] font-bold tracking-[0.25em] text-[#0ea5e9] uppercase font-mono">READY TO BEGIN?</span>
+                <h2 className="[font-family:var(--font-display)] text-3xl md:text-6xl font-bold text-white tracking-tight leading-tight">
+                  Start running your fleet today
+                </h2>
+                <p className="text-[#8B93A7] text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+                  Connect your riders, automate cash settlements, and get delivery telemetry you can trust. Zero setup key required.
+                </p>
+                <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
+                  <SignedOut>
+                    <Link
+                      to="/sign-up"
+                      className="inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-blue-500 text-white font-semibold px-8 py-4 rounded-xl transition-all shadow-lg shadow-blue-500/25 hover:-translate-y-0.5 active:scale-95"
+                    >
+                      Set up your fleet, free
+                    </Link>
+                    <a
+                      href="mailto:support@guzologistics.com"
+                      className="inline-flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 hover:bg-white/[0.03] text-[#EEF0F4] font-semibold px-8 py-4 rounded-xl transition-all"
+                    >
+                      Talk to us about enterprise
+                    </a>
+                  </SignedOut>
+                  <SignedIn>
+                    <Link
+                      to="/dashboard"
+                      className="inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-500 text-white font-semibold px-8 py-4 rounded-xl transition-all shadow-lg shadow-blue-500/25 hover:-translate-y-0.5"
+                    >
+                      Go to your dashboard →
+                    </Link>
+                  </SignedIn>
+                </div>
               </div>
             </div>
-          </div>
+          </RevealOnScroll>
         </div>
       </section>
 
       {/* ── Footer ────────────────────────────────────────────────────── */}
-      <footer className="border-t border-white/[0.06] px-6 py-12">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-650 flex items-center justify-center">
-              <span className="[font-family:var(--font-display)] text-[11px] font-bold text-white">G</span>
+      <footer className="border-t border-white/[0.05] px-6 py-12 bg-black/30">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-650 flex items-center justify-center border border-white/[0.08] shadow-md shadow-blue-500/10">
+              <span className="[font-family:var(--font-display)] text-xs font-bold text-white">G</span>
             </div>
             <div>
               <p className="[font-family:var(--font-display)] font-semibold text-white text-sm">Guzo Logistics</p>
@@ -631,7 +741,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-[#8B93A7]">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs font-medium text-[#8B93A7]">
             <a href="mailto:support@guzologistics.com" className="hover:text-white transition-colors">
               support@guzologistics.com
             </a>
@@ -641,13 +751,13 @@ export default function LandingPage() {
             </Link>
             <button 
               onClick={() => { throw new Error('Guzo Test Error: Sentry configuration verified.'); }} 
-              className="hover:text-red-400 transition-colors text-[10px] uppercase tracking-wider font-bold border border-white/[0.05] bg-white/[0.02] px-2 py-0.5 rounded cursor-pointer"
+              className="hover:text-red-400 transition-colors text-[10px] uppercase tracking-wider font-bold border border-white/[0.08] bg-white/[0.02] px-2.5 py-1 rounded-lg cursor-pointer"
             >
               Test Diagnostics
             </button>
           </div>
 
-          <p className="text-[11px] text-[#4A5266]">© 2026 Guzo Logistics</p>
+          <p className="text-[11px] text-[#4A5266]">© 2026 Guzo Logistics. All rights reserved.</p>
         </div>
       </footer>
     </div>
