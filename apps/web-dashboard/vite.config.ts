@@ -18,6 +18,21 @@ export default defineConfig({
     target: 'esnext',
     rollupOptions: {
       external: ['fs', 'path', 'dotenv'],
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-clerk': ['@clerk/clerk-react'],
+          'vendor-leaflet': ['leaflet', 'react-leaflet'],
+          'vendor-charts': ['recharts'],
+          'vendor-ui': [
+            '@radix-ui/react-slot',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tooltip',
+            '@radix-ui/react-switch',
+            '@radix-ui/react-separator',
+          ],
+        },
+      },
     },
   },
 });

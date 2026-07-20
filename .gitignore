@@ -32,3 +32,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Build/typecheck error dumps and metadata — should never be committed
+error_log.txt
+tsc_output.txt
+tsc_errors.txt
+*.tsbuildinfo

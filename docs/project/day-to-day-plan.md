@@ -1,9 +1,8 @@
 # Comprehensive Day-To-Day Execution Plan
 
-This document outlines a professional, structured 4-week (24 working days) execution sprint for delivering the AI-Native Real-Time Delivery Tracking SaaS. 
+This document outlines the professional, structured 4-week (24 working days) execution sprint for delivering the AI-Native Real-Time Delivery Tracking SaaS. The strategy isolates dependencies: we build the infrastructure first, lock down the backend APIs, connect the merchant interface, and conclude with the complex mobile GPS mechanics.
 
-The strategy isolates dependencies: we build the infrastructure first, lock down the backend APIs, connect the merchant interface, and conclude with the complex mobile GPS mechanics.
-
+---
 
 ## Phase 1: Foundation & Backend (Days 1–7)
 
@@ -13,7 +12,7 @@ The strategy isolates dependencies: we build the infrastructure first, lock down
   * Initialize standard `.gitignore` and `git` repository.
   * Create the upstream GitHub repository and configure `main` / `dev` branch protection rules.
   * Initialize `pnpm` workspaces (`apps/`, `packages/`, `services/`).
-  * Configure Turborepo for build-caching across environments config.
+  * Configure Turborepo for build-caching across environments.
   * Establish ESLint, Prettier, and Husky Git hooks for uniform TypeScript standards.
 
 * **Day 2: Cloud Infrastructure & Secrets Provisioning**
@@ -37,11 +36,11 @@ The strategy isolates dependencies: we build the infrastructure first, lock down
 * **Day 6: Socket.io Foundation**
   * Bind Socket.io to the Express server.
   * Integrate custom middleware to block Socket connections lacking valid Clerk tokens.
-  * Implement the Server Room logic (`order:_id`, `zone:_id`).
+  * Implement the Server Room logic (`order:{orderId}`, `merchant:{merchantId}`, `riders:global`).
 
 * **Day 7: Redis Live-Tracking Sync**
   * Implement the handler for `location-update` events pushing to Redis.
-  * Configure Redis TTLs (Time-To-Live) so stales coordinates automatically delete to save free-tier RAM limits.
+  * Configure Redis TTLs (Time-To-Live) so stale coordinates automatically delete to save free-tier RAM limits.
 
 ---
 
@@ -66,7 +65,7 @@ The strategy isolates dependencies: we build the infrastructure first, lock down
   * Hook form data to `POST /api/orders`. Ensure validation (no bad addresses) utilizing local geocoding lookups.
 
 * **Day 12: Real-time Web Consumption**
-  * Architect the `useSocket` React hook. 
+  * Architect the `useSocket` React hook.
   * Connect the Web Dashboard to the specific `order` room. Bind the incoming Socket coordinate updates directly to the map marker's state.
 
 * **Day 13: Order Metrics & History UI**
@@ -88,7 +87,7 @@ The strategy isolates dependencies: we build the infrastructure first, lock down
   * Update Rider availability on the main REST endpoint so they can receive localized bursts.
 
 * **Day 16: OS Background Geolocation Perms**
-  * Install `expo-location` and `expo-background-fetch`.
+  * Install `expo-location` and `expo-task-manager`.
   * Craft the aggressive OS permission requests ("Allow all the time" for GPS).
 
 * **Day 17: Mobile Socket Publishing**
@@ -97,14 +96,14 @@ The strategy isolates dependencies: we build the infrastructure first, lock down
 
 * **Day 18: Battery & Offline Edge Cases**
   * Add conditional logic: Stop GPS when standing still for > 3 minutes.
-  * Inject `AsyncStorage` caching buffers to save coordinates locally when the WebSocket disconnects via 4G drop-outs.
+  * Inject `AsyncStorage` offline buffer to save telemetry locally when the WebSocket disconnects via 4G drop-outs. Flush buffered events on reconnect.
 
 * **Day 19: Order Dispatch & Push Notifications**
   * Build the pop-up modal "New Order Nearby."
   * Wire up "Accept Order" and "Mark Delivered" large vehicle-safe action buttons.
 
 * **Day 20: Map Navigation Visuals (Mobile)**
-  * Display a simple directional polyline utilizing a free OSRM (Open Source Routing Machine) lookup from Start -> A -> B.
+  * Display a simple directional polyline utilizing a free ORS (OpenRouteService) lookup from Start → A → B.
 
 ---
 
@@ -113,19 +112,22 @@ The strategy isolates dependencies: we build the infrastructure first, lock down
 **Goal**: Polish the final customer edge case (the Magic Tracking Link), QA the entire lifecycle, and move out of `localhost` into production clouds.
 
 * **Day 21: Customer Public Tracking Portal**
-  * Build a public Next.js/Vite route: `/track/:trackingToken` holding NO auth barriers.
+  * Build a Vite route: `/track/:trackingToken` holding NO auth barriers.
   * Display the live Leaflet map and simplified progressive timelines.
 
 * **Day 22: Background Database Sync (Cron Jobs)**
   * Write a Node.js worker/cron that runs every 5 minutes.
   * Transfer cached live-tracking footprints from Redis into MongoDB `routeHistory` for historical auditing/receipts.
 
-* **Day 23: Deployment Architecture**
-  * Setup Github Actions CI/CD to run ESLint & isolated Jest route tests.
+* **Day 23: Deployment Architecture & CI/CD**
+  * Setup GitHub Actions CI/CD pipeline (`.github/workflows/ci.yml`) to run:
+    * ESLint across the full monorepo
+    * TypeScript `tsc --noEmit` across all packages (`@ethio-logistics/api`, `mobile-rider`, `web-dashboard`)
+    * **Vitest** unit & integration tests for the `@ethio-logistics/api` service
   * Deploy Web Dashboard & Tracking Link to Vercel Edge.
   * Deploy Node/Express Server + Socket engine to a Render Web Service container.
 
 * **Day 24: Field Testing & Final Handover**
-  * Generate physical Android `.apk` builds.
+  * Generate physical Android `.apk` builds via EAS Build.
   * Ride a vehicle performing a physical tracking loop while observing the deployed web dashboard in real-time.
   * Squash network race conditions and verify final documentation.
