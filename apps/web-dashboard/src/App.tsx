@@ -7,6 +7,7 @@ import { Toaster } from 'sonner';
 // Auth & onboarding — always eagerly loaded (critical path)
 import SignInPage from '@/pages/auth/SignInPage';
 import SignUpPage from '@/pages/auth/SignUpPage';
+import LandingPage from '@/pages/landing/LandingPage';
 import OnboardingWizard from '@/components/onboarding/OnboardingWizard';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 
@@ -124,7 +125,7 @@ function ProtectedApp() {
           <Route path="fleet" element={<FleetPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="admin" element={<AdminPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Suspense>
     </AdminLayout>
@@ -137,6 +138,16 @@ export default function App() {
       <Toaster position="top-right" richColors closeButton />
       <Routes>
         {/* PUBLIC ROUTES */}
+        <Route path="/" element={
+          <>
+            <SignedIn>
+              <Navigate to="/dashboard" replace />
+            </SignedIn>
+            <SignedOut>
+              <LandingPage />
+            </SignedOut>
+          </>
+        } />
         <Route path="/sign-in/*" element={<SignInPage />} />
         <Route path="/sign-up/*" element={<SignUpPage />} />
         <Route path="/track/:token" element={
@@ -147,14 +158,14 @@ export default function App() {
 
         {/* PROTECTED ROUTES */}
         <Route
-          path="/*"
+          path="/dashboard/*"
           element={
             <>
               <SignedIn>
                 <ProtectedApp />
               </SignedIn>
               <SignedOut>
-                <Navigate to="/sign-in" replace />
+                <Navigate to="/" replace />
               </SignedOut>
             </>
           }

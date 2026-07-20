@@ -37,11 +37,11 @@ import { toast } from 'sonner';
 import { useSocket } from '@/hooks/useSocket';
 
 const navItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
-  { name: 'Orders', icon: Package, path: '/orders' },
-  { name: 'Live Tracking', icon: Map, path: '/tracking' },
-  { name: 'Fleet', icon: Truck, path: '/fleet' },
-  { name: 'Settings', icon: Settings, path: '/settings' },
+  { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { name: 'Orders', icon: Package, path: '/dashboard/orders' },
+  { name: 'Live Tracking', icon: Map, path: '/dashboard/tracking' },
+  { name: 'Fleet', icon: Truck, path: '/dashboard/fleet' },
+  { name: 'Settings', icon: Settings, path: '/dashboard/settings' },
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -57,7 +57,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const menuItems = React.useMemo(() => {
     const items = [...navItems];
     if (isAdmin) {
-      items.push({ name: 'Admin Panel', icon: Shield, path: '/admin' });
+      items.push({ name: 'Admin Panel', icon: Shield, path: '/dashboard/admin' });
     }
     return items;
   }, [isAdmin]);
