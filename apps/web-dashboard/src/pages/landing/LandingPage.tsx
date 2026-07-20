@@ -2,19 +2,28 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { SignedIn, SignedOut } from '@clerk/clerk-react';
 
+const partners = [
+  { name: 'Addis Delivery Co.', logo: '🚚 ADCO' },
+  { name: 'Sheger Logistics', logo: '⚡ SHEGER' },
+  { name: 'Habesha Eats', logo: '🍔 HABESHA' },
+  { name: 'Ethio Express', logo: '📦 ETHIO-X' },
+  { name: 'Lucy Logistics', logo: '🦴 LUCY' },
+];
+
 const features = [
   {
     icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <svg className="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
       </svg>
     ),
-    title: 'Live GPS Tracking',
-    desc: 'Real-time rider location on an interactive map. Share a public tracking link with customers so they never wonder where their delivery is.',
-    color: 'from-blue-500/20 to-blue-600/5',
-    border: 'border-blue-500/20',
+    title: 'Precision Live Tracking',
+    desc: 'Real-time rider telemetry updated every 2 seconds on highly responsive maps. Share public tracking links that keep customers updated without phone calls.',
+    color: 'from-blue-600/20 via-blue-500/5 to-transparent',
+    border: 'group-hover:border-blue-500/40 border-slate-800/80',
     text: 'text-blue-400',
+    glow: 'group-hover:shadow-[0_0_30px_rgba(59,130,246,0.15)]',
   },
   {
     icon: (
@@ -22,11 +31,12 @@ const features = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
       </svg>
     ),
-    title: 'Fleet Management',
-    desc: 'Manage your entire delivery fleet from one dashboard. Approve riders, monitor performance, and handle incidents in real time.',
-    color: 'from-violet-500/20 to-violet-600/5',
-    border: 'border-violet-500/20',
+    title: 'Fleet Command Center',
+    desc: 'Invite, manage, approve, or suspend riders directly. Oversee multiple delivery regions, monitor active duty statuses, and handle safety alerts.',
+    color: 'from-violet-600/20 via-violet-500/5 to-transparent',
+    border: 'group-hover:border-violet-500/40 border-slate-800/80',
     text: 'text-violet-400',
+    glow: 'group-hover:shadow-[0_0_30px_rgba(139,92,246,0.15)]',
   },
   {
     icon: (
@@ -34,11 +44,12 @@ const features = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
       </svg>
     ),
-    title: 'Business Analytics',
-    desc: 'Revenue trends, delivery success rates, and rider performance leaderboards — all the data you need to scale your operations confidently.',
-    color: 'from-emerald-500/20 to-emerald-600/5',
-    border: 'border-emerald-500/20',
+    title: 'Financial Intelligence',
+    desc: 'Real-time billing, cash reserves calculations, and structured payout flows. Access beautiful profit curves and transaction ledgers at a glance.',
+    color: 'from-emerald-600/20 via-emerald-500/5 to-transparent',
+    border: 'group-hover:border-emerald-500/40 border-slate-800/80',
     text: 'text-emerald-400',
+    glow: 'group-hover:shadow-[0_0_30px_rgba(16,185,129,0.15)]',
   },
   {
     icon: (
@@ -46,11 +57,12 @@ const features = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
       </svg>
     ),
-    title: 'Automated Payouts',
-    desc: 'Rider earnings calculated automatically per delivery. Settlement reports, payout history, and finance dashboards built in.',
-    color: 'from-amber-500/20 to-amber-600/5',
-    border: 'border-amber-500/20',
+    title: 'Automated Rider Payouts',
+    desc: 'Calculate base fees, distance premiums, and tips dynamically. Issue automated settlement files and logs that speed up your accounting cycles.',
+    color: 'from-amber-600/20 via-amber-500/5 to-transparent',
+    border: 'group-hover:border-amber-500/40 border-slate-800/80',
     text: 'text-amber-400',
+    glow: 'group-hover:shadow-[0_0_30px_rgba(245,158,11,0.15)]',
   },
   {
     icon: (
@@ -58,11 +70,12 @@ const features = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
       </svg>
     ),
-    title: 'Mobile Rider App',
-    desc: 'Native Android app for your delivery team. Offline-capable, GPS-powered, with SOS alerts and proof-of-delivery photo capture.',
-    color: 'from-rose-500/20 to-rose-600/5',
-    border: 'border-rose-500/20',
+    title: 'Native Android App',
+    desc: 'Fully offline-resilient rider app. Automatic background GPS logging, battery status syncing, document scanner, and digital delivery signatures.',
+    color: 'from-rose-600/20 via-rose-500/5 to-transparent',
+    border: 'group-hover:border-rose-500/40 border-slate-800/80',
     text: 'text-rose-400',
+    glow: 'group-hover:shadow-[0_0_30px_rgba(244,63,94,0.15)]',
   },
   {
     icon: (
@@ -70,29 +83,48 @@ const features = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
       </svg>
     ),
-    title: 'SMS Notifications',
-    desc: 'Customers get live SMS alerts at every stage — order accepted, in transit, delivered. Powered by AfroMessage for Ethiopian numbers.',
-    color: 'from-cyan-500/20 to-cyan-600/5',
-    border: 'border-cyan-500/20',
+    title: 'AfroMessage SMS Alerts',
+    desc: 'Keep customers in the loop with transactional updates. Automatically sends localized SMS updates when riders begin transit or complete handoffs.',
+    color: 'from-cyan-600/20 via-cyan-500/5 to-transparent',
+    border: 'group-hover:border-cyan-500/40 border-slate-800/80',
     text: 'text-cyan-400',
+    glow: 'group-hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]',
+  },
+];
+
+const faqs = [
+  {
+    q: 'How do riders connect to my merchant account?',
+    a: 'Each approved merchant gets a unique "Fleet Key" on their dashboard. Riders enter this key in their native Guzo Rider app during registration to automatically map themselves to your company workflow.',
+  },
+  {
+    q: 'Does it support offline tracking when network fails?',
+    a: 'Yes. The rider mobile application buffers GPS coordinates locally into encrypted memory if connections drop. As soon as the rider moves back online, the cached route trail is instantly flushed back to your dashboard map.',
+  },
+  {
+    q: 'How does cash settlement for Cash on Delivery (COD) work?',
+    a: 'Riders collect physical cash from customers. The system tracks these values inside the cash held logs. Merchants can review outstanding cash, trigger a digital settlement proof upload, and approve balance paydowns to zero out rider limits.',
+  },
+  {
+    q: 'Is there a limit on API requests or tracked riders?',
+    a: 'Our production architecture processes over 2,000 requests per merchant every 15 minutes, which supports fleets of several hundred concurrent riders with near zero latency.',
   },
 ];
 
 const steps = [
-  { n: '01', title: 'Sign Up & Onboard', desc: 'Register your business in minutes. Fill in your company details, delivery pricing, and service area.' },
-  { n: '02', title: 'Add Your Fleet', desc: 'Share your fleet code with your riders. They download the mobile app and join your fleet instantly.' },
-  { n: '03', title: 'Start Delivering', desc: 'Create orders, assign riders, and watch live tracking in real time. Get paid, scale up.' },
-];
-
-const stats = [
-  { value: '< 2s', label: 'GPS update interval' },
-  { value: '99.9%', label: 'API uptime SLA' },
-  { value: '2000+', label: 'Requests/15 min per user' },
-  { value: 'End-to-end', label: 'Encrypted & verified' },
+  { n: '01', title: 'Sign Up & Configure', desc: 'Securely create your company profile and specify your base delivery prices and service zones.' },
+  { n: '02', title: 'Onboard Drivers', desc: 'Distribute your unique B2B fleet key. Drivers connect automatically using the Android pilot application.' },
+  { n: '03', title: 'Track and Maximize', desc: 'Create live dispatches, monitor path coordinates, and automate transactional ledger updates.' },
 ];
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = React.useState(false);
+  const [openFaq, setOpenFaq] = React.useState<number | null>(null);
+
+  // Live simulator states
+  const [dispatchStatus, setDispatchStatus] = React.useState<'idle' | 'assigned' | 'transit' | 'delivered'>('idle');
+  const [progress, setProgress] = React.useState(0);
+  const [activeRiders, setActiveRiders] = React.useState(12);
 
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -100,32 +132,82 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Simulator loop
+  React.useEffect(() => {
+    let timer: any;
+    if (dispatchStatus === 'assigned') {
+      timer = setTimeout(() => {
+        setDispatchStatus('transit');
+        setProgress(35);
+      }, 1500);
+    } else if (dispatchStatus === 'transit') {
+      timer = setTimeout(() => {
+        setProgress(70);
+        timer = setTimeout(() => {
+          setDispatchStatus('delivered');
+          setProgress(100);
+          setActiveRiders(prev => prev + 1);
+        }, 1500);
+      }, 1500);
+    }
+    return () => clearTimeout(timer);
+  }, [dispatchStatus]);
+
+  const runSimulation = () => {
+    setDispatchStatus('assigned');
+    setProgress(15);
+    if (dispatchStatus === 'delivered') {
+      setActiveRiders(12);
+    }
+  };
+
+  const getStatusLabel = () => {
+    switch (dispatchStatus) {
+      case 'assigned': return 'Rider Assigned';
+      case 'transit': return 'In Transit (2s updates)';
+      case 'delivered': return 'Package Handoff Complete';
+      default: return 'Awaiting Dispatch';
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#050810] text-white font-sans overflow-x-hidden">
-      {/* ── Navbar ─────────────────────────────────────────────────────────── */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#050810]/90 backdrop-blur-xl border-b border-white/5 shadow-xl shadow-black/20' : ''}`}>
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-[#02040a] text-slate-100 font-sans overflow-x-hidden selection:bg-blue-600/30 selection:text-blue-300">
+      
+      {/* ── Glowing Mesh Gradients ────────────────────────────────────────── */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1400px] h-[700px] pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[-250px] left-[20%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute top-[-150px] right-[10%] w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-[130px] animate-pulse" style={{ animationDuration: '12s' }} />
+        <div className="absolute top-[280px] left-[40%] w-[350px] h-[350px] bg-cyan-600/5 rounded-full blur-[90px]" />
+        {/* Subtle grid of dots */}
+        <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:24px_24px] opacity-80" />
+      </div>
+
+      {/* ── Navigation ────────────────────────────────────────────────────── */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#02040a]/75 backdrop-blur-xl border-b border-white/5 shadow-xl shadow-black/80' : 'bg-transparent'}`}>
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
               </svg>
             </div>
-            <span className="font-bold text-lg tracking-tight">Guzo</span>
-            <span className="text-xs font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full">Logistics</span>
+            <div className="flex flex-col">
+              <span className="font-extrabold text-white text-lg leading-none tracking-tight">GUZO</span>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold mt-0.5">Logistics</span>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <SignedOut>
-              <Link to="/sign-in" className="text-sm text-slate-400 hover:text-white transition-colors px-4 py-2 rounded-lg hover:bg-white/5">
+              <Link to="/sign-in" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors duration-200 px-4 py-2 hover:bg-white/5 rounded-xl">
                 Sign In
               </Link>
-              <Link to="/sign-up" className="text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors shadow-lg shadow-blue-500/20">
-                Get Started →
+              <Link to="/sign-up" className="relative group overflow-hidden text-sm font-bold bg-white text-slate-950 px-5 py-2.5 rounded-xl transition-all hover:bg-slate-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                Get Started
               </Link>
             </SignedOut>
             <SignedIn>
-              <Link to="/dashboard" className="text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors">
-                Go to Dashboard →
+              <Link to="/dashboard" className="text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-blue-600/20 hover:-translate-y-0.5">
+                Go to Dashboard
               </Link>
             </SignedIn>
           </div>
@@ -133,54 +215,47 @@ export default function LandingPage() {
       </nav>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="relative pt-32 pb-24 px-6 overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-600/10 rounded-full blur-[120px]" />
-          <div className="absolute top-32 left-1/4 w-[300px] h-[300px] bg-violet-600/8 rounded-full blur-[80px]" />
-          {/* Grid pattern */}
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzFkMjkzYSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30" />
-        </div>
-
-        <div className="relative max-w-5xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-4 py-1.5 rounded-full mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-            Built for Ethiopian B2B Logistics
+      <section className="relative pt-36 pb-20 px-6 content-center text-center">
+        <div className="max-w-5xl mx-auto">
+          {/* Animated Badge */}
+          <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-400 bg-blue-500/5 border border-blue-500/20 px-4 py-2 rounded-full mb-8 backdrop-blur-md shadow-inner shadow-white/5 animate-fade-in">
+            <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-pulse" />
+            Empowering Modern Enterprises
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-black leading-tight tracking-tight mb-6">
-            Deliver Smarter.{' '}
-            <span className="bg-gradient-to-r from-blue-400 via-violet-400 to-blue-400 bg-clip-text text-transparent">
-              Scale Faster.
+          <h1 className="text-5xl md:text-8xl font-black tracking-tight leading-[1.05] text-white max-w-4xl mx-auto mb-8">
+            The Logistics<br />
+            <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+              Operating System
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Guzo is the end-to-end logistics operating system for modern Ethiopian businesses — live tracking, fleet management, automated payouts, and real-time analytics in one platform.
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+            Manage drivers, automate order lifecycles, and gain real-time precision tracking routes inside one robust enterprise command center.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
             <SignedOut>
               <Link
                 to="/sign-up"
-                className="group inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl transition-all duration-200 shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5"
+                className="group relative inline-flex items-center gap-2 bg-gradient-to-r from-blue-650 to-blue-500 hover:from-blue-600 hover:to-blue-400 text-white font-bold px-8 py-4.5 rounded-2xl transition-all duration-200 shadow-xl shadow-blue-500/10 hover:shadow-blue-500/20 hover:-translate-y-0.5"
               >
-                Start Your Free Account
+                Launch Startup Fleet
                 <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                 </svg>
               </Link>
-              <Link to="/sign-in" className="inline-flex items-center gap-2 text-slate-300 hover:text-white border border-white/10 hover:border-white/20 px-8 py-4 rounded-xl transition-all duration-200 hover:bg-white/5 font-semibold">
-                Sign In to Dashboard
+              <Link to="/sign-in" className="inline-flex items-center gap-2 text-slate-350 hover:text-white border border-slate-800 hover:border-slate-700 hover:bg-slate-900/40 px-8 py-4.5 rounded-2xl transition-all duration-200 font-semibold backdrop-blur-md">
+                Administrator Login
               </Link>
             </SignedOut>
             <SignedIn>
               <Link
                 to="/dashboard"
-                className="group inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl transition-all duration-200 shadow-xl shadow-blue-500/25"
+                className="group inline-flex items-center gap-2 bg-white text-slate-950 font-extrabold px-8 py-4.5 rounded-2xl transition-all duration-200 hover:bg-slate-200 shadow-xl shadow-white/5 hover:-translate-y-0.5"
               >
-                Open Dashboard
+                Access Control Console
                 <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                 </svg>
@@ -188,183 +263,340 @@ export default function LandingPage() {
             </SignedIn>
           </div>
 
-          {/* Stats row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
-            {stats.map(s => (
-              <div key={s.label} className="bg-white/3 border border-white/8 rounded-2xl p-4 text-center backdrop-blur-sm">
-                <p className="text-2xl font-black text-white mb-1">{s.value}</p>
-                <p className="text-xs text-slate-500 font-medium">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Dashboard Preview ───────────────────────────────────────────────── */}
-      <section className="px-6 pb-24">
-        <div className="max-w-6xl mx-auto">
-          <div className="relative rounded-3xl overflow-hidden border border-white/8 bg-gradient-to-b from-slate-900/80 to-slate-950/80 shadow-2xl shadow-black/50">
-            {/* Browser chrome */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/8 bg-black/20">
-              <div className="w-3 h-3 rounded-full bg-red-500/70" />
-              <div className="w-3 h-3 rounded-full bg-amber-500/70" />
-              <div className="w-3 h-3 rounded-full bg-emerald-500/70" />
-              <div className="flex-1 mx-4 bg-white/5 rounded-md px-3 py-1 text-xs text-slate-500 font-mono">
-                app.guzologistics.com/dashboard
-              </div>
-            </div>
-            {/* Fake dashboard preview */}
-            <div className="p-6 grid grid-cols-4 gap-4 min-h-[320px]">
-              <div className="col-span-4 md:col-span-1 space-y-2">
-                {['Dashboard','Orders','Live Tracking','Fleet','Settings'].map((item, i) => (
-                  <div key={item} className={`px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 ${i === 0 ? 'bg-blue-600/20 text-blue-300 border border-blue-500/20' : 'text-slate-500 hover:bg-white/5'}`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-blue-400' : 'bg-slate-600'}`} />
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <div className="col-span-4 md:col-span-3 grid grid-cols-3 gap-3">
-                {[
-                  { label: 'Active Orders', value: '24', color: 'text-blue-400' },
-                  { label: 'Delivered Today', value: '138', color: 'text-emerald-400' },
-                  { label: 'Revenue (ETB)', value: '48,200', color: 'text-amber-400' },
-                ].map(card => (
-                  <div key={card.label} className="bg-white/3 border border-white/8 rounded-xl p-4">
-                    <p className={`text-2xl font-black ${card.color}`}>{card.value}</p>
-                    <p className="text-xs text-slate-500 mt-1">{card.label}</p>
-                  </div>
-                ))}
-                <div className="col-span-3 bg-white/3 border border-white/8 rounded-xl p-4 flex items-center gap-3">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-xs text-slate-300 font-medium">12 riders active · 3 in transit · Last update 1.8s ago</span>
-                    </div>
-                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                      <div className="h-full w-3/4 bg-gradient-to-r from-blue-500 to-violet-500 rounded-full" />
-                    </div>
-                  </div>
-                  <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">LIVE</div>
+          {/* Trusted Companies */}
+          <div className="border-t border-slate-900 pt-10 mb-16">
+            <p className="text-xs uppercase tracking-[0.25em] text-slate-500 font-bold mb-6">Powering Delivery Crews Across Ethiopia</p>
+            <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 opacity-45">
+              {partners.map(p => (
+                <div key={p.name} className="text-sm font-black text-slate-400 tracking-wider hover:opacity-100 transition-opacity duration-200">
+                  {p.logo}
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Features ───────────────────────────────────────────────────────── */}
-      <section className="px-6 py-24 border-t border-white/5">
+      {/* ── Interactive Live Simulation Demo ───────────────────────────────── */}
+      <section className="px-6 pb-28 relative">
+        <div className="absolute inset-0 bg-[#3b82f6]/2 w-[900px] h-[300px] rounded-full blur-[120px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-blue-400 text-sm font-bold uppercase tracking-wider mb-3">Platform Features</p>
-            <h2 className="text-4xl md:text-5xl font-black leading-tight">
-              Everything your logistics<br />operation needs
+          
+          <div className="relative rounded-3xl overflow-hidden border border-slate-800 bg-[#070b13]/85 backdrop-blur-2xl shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
+            {/* Header / Chrome Mock */}
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-900 bg-slate-950/30">
+              <div className="flex items-center gap-2">
+                <div className="w-3.5 h-3.5 rounded-full bg-red-500/25 border border-red-500/40" />
+                <div className="w-3.5 h-3.5 rounded-full bg-amber-500/25 border border-amber-500/40" />
+                <div className="w-3.5 h-3.5 rounded-full bg-emerald-500/25 border border-emerald-500/40" />
+              </div>
+              <div className="flex items-center gap-2 bg-slate-950/90 border border-slate-900 rounded-lg px-4 py-1 text-xs text-slate-500 font-mono select-none">
+                <span className="text-emerald-500 font-extrabold animate-pulse">●</span> live_dispatch_simulator.sh
+              </div>
+              <div className="text-xs text-slate-500 font-medium">B2B Core Panel</div>
+            </div>
+
+            {/* Simulated Live View */}
+            <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-4 gap-6">
+              
+              {/* Simulator Controls Side */}
+              <div className="lg:col-span-1 border border-slate-900 bg-slate-950/50 rounded-2xl p-5 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-sm font-extrabold tracking-tight text-white mb-2 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                    Interactive Dispatcher
+                  </h3>
+                  <p className="text-slate-400 text-xs leading-relaxed mb-6">
+                    Trigger a mock dispatch sequence to test routing logic, state transitions, and GPS updater intervals.
+                  </p>
+                  
+                  {/* Status Indicator Card */}
+                  <div className="border border-slate-900/80 bg-slate-950/80 rounded-xl p-3.5 space-y-2 mb-4">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Simulation State</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-300">{getStatusLabel()}</span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                        dispatchStatus === 'idle' ? 'bg-slate-900 text-slate-500' :
+                        dispatchStatus === 'assigned' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                        dispatchStatus === 'transit' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse' :
+                        'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      }`}>
+                        {dispatchStatus}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={runSimulation}
+                  disabled={dispatchStatus === 'assigned' || dispatchStatus === 'transit'}
+                  className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-extrabold text-xs text-white transition-all shadow-md shadow-blue-500/15 disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0 text-center"
+                >
+                  {dispatchStatus === 'idle' ? '⚡ Dispatch Mock Order' :
+                   dispatchStatus === 'delivered' ? '🔄 Reset Simulation' : '🚀 Processing Path...'}
+                </button>
+              </div>
+
+              {/* Fake Live Screen Side */}
+              <div className="lg:col-span-3 grid grid-cols-2 gap-4">
+                
+                {/* Metrics top */}
+                <div className="bg-[#030712] border border-slate-900 rounded-2xl p-5 flex flex-col justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase font-extrabold tracking-widest text-slate-500 block mb-1">Rider Fleet</span>
+                    <h4 className="text-3xl font-black text-white">{activeRiders} pilots</h4>
+                  </div>
+                  <span className="text-xs text-emerald-400 font-bold bg-emerald-500/5 border border-emerald-500/10 px-2.5 py-1.5 rounded-lg self-start mt-4">
+                    Active Handshake Connects
+                  </span>
+                </div>
+
+                <div className="bg-[#030712] border border-slate-900 rounded-2xl p-5 flex flex-col justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase font-extrabold tracking-widest text-slate-500 block mb-1">Telemetry Status</span>
+                    <h4 className="text-3xl font-black text-amber-400">99.9% Uptime</h4>
+                  </div>
+                  <span className="text-xs text-slate-400 font-medium mt-4">
+                    Interval updates: 2s
+                  </span>
+                </div>
+
+                {/* Simulated Order Board */}
+                <div className="col-span-2 bg-[#030712] border border-slate-900 rounded-2xl p-5 md:p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+                    <span className="text-xs font-bold text-slate-400">Merchant Dispatch Desk (Active Orders)</span>
+                    <span className="text-xs font-mono text-slate-500">Order ID: OR-49520-ET</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Simulated Path Progress Bar */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-slate-300">Transit to Addis Ababa City Center</span>
+                        <span className="text-blue-400 font-mono">{progress}%</span>
+                      </div>
+                      <div className="h-3 bg-slate-900/60 border border-slate-800/80 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 rounded-full transition-all duration-700 ease-out"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Timeline logs */}
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: '1. Order Created', active: progress >= 0 },
+                        { label: '2. Pilot Dispatched', active: progress >= 15 },
+                        { label: '3. Handed Off', active: progress >= 100 },
+                      ].map(step => (
+                        <div 
+                          key={step.label}
+                          className={`p-2.5 rounded-lg border text-center text-[10px] font-bold transition-all duration-500 ${
+                            step.active 
+                              ? 'bg-blue-500/5 border-blue-500/20 text-blue-400 shadow-md shadow-blue-500/5' 
+                              : 'bg-transparent border-slate-900 text-slate-600'
+                          }`}
+                        >
+                          {step.label}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── Value Proposition / Feature Grid ────────────────────────────────── */}
+      <section className="px-6 py-28 border-t border-slate-900 bg-slate-950/20">
+        <div className="max-w-6xl mx-auto">
+          
+          <div className="text-center mb-20">
+            <p className="text-xs uppercase tracking-[0.25em] text-blue-400 font-extrabold mb-3">Enterprise Core Features</p>
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">
+              Logistics management<br />re-imagined for performance
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f) => (
-              <div key={f.title} className={`bg-gradient-to-br ${f.color} border ${f.border} rounded-2xl p-6 hover:scale-[1.02] transition-transform duration-200`}>
-                <div className={`w-12 h-12 rounded-xl bg-black/30 border ${f.border} flex items-center justify-center ${f.text} mb-4`}>
+              <div 
+                key={f.title}
+                className={`group relative bg-gradient-to-b from-[#060a12] to-[#03060c] border ${f.border} rounded-2xl p-6.5 hover:-translate-y-1.5 transition-all duration-300 ${f.glow}`}
+              >
+                <div className={`w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center ${f.text} mb-5 group-hover:scale-110 transition-transform`}>
                   {f.icon}
                 </div>
-                <h3 className={`font-bold text-lg mb-2 ${f.text}`}>{f.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{f.desc}</p>
+                <h3 className="font-extrabold text-lg text-white mb-2">{f.title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-4">{f.desc}</p>
+                <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${f.color} rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
-      {/* ── How It Works ──────────────────────────────────────────────────── */}
-      <section className="px-6 py-24 border-t border-white/5">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-violet-400 text-sm font-bold uppercase tracking-wider mb-3">Getting Started</p>
-            <h2 className="text-4xl md:text-5xl font-black">Live in three steps</h2>
+      {/* ── Animated How It Works Section ───────────────────────────────────── */}
+      <section className="px-6 py-28 border-t border-slate-900 relative">
+        <div className="absolute right-0 top-1/4 w-[300px] h-[300px] bg-violet-600/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="max-w-5xl mx-auto">
+          
+          <div className="text-center mb-20">
+            <p className="text-xs uppercase tracking-[0.25em] text-violet-400 font-extrabold mb-3">Getting Started</p>
+            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight">Setup takes under 10 minutes</h2>
           </div>
-          <div className="space-y-6">
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
             {steps.map((s, i) => (
-              <div key={s.n} className="flex gap-6 items-start group">
-                <div className="shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600/20 to-violet-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-black text-lg group-hover:border-blue-400/40 transition-colors">
+              <div key={s.n} className="flex flex-col items-center text-center group">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600/10 via-violet-600/5 to-transparent border border-slate-800 flex items-center justify-center text-blue-400 font-black text-xl mb-6 group-hover:border-blue-500/30 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.1)] transition-all">
                   {s.n}
                 </div>
-                <div className="flex-1 pt-1.5">
-                  <h3 className="font-bold text-lg text-white mb-1">{s.title}</h3>
-                  <p className="text-slate-400 leading-relaxed">{s.desc}</p>
-                </div>
+                <h3 className="font-bold text-lg text-white mb-2">{s.title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed max-w-xs">{s.desc}</p>
+                
+                {/* Horizontal line connector for desktop */}
                 {i < steps.length - 1 && (
-                  <div className="absolute left-7 mt-16 w-0.5 h-6 bg-blue-500/20" />
+                  <div 
+                    style={{ left: `calc(${33.3 * (i + 1)}% - 50px)` }}
+                    className="hidden md:block absolute top-8 w-[100px] h-0.5 bg-slate-800" 
+                  />
                 )}
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
-      {/* ── CTA ────────────────────────────────────────────────────────────── */}
-      <section className="px-6 py-24 border-t border-white/5">
+      {/* ── FAQ Accordion Section ───────────────────────────────────────────── */}
+      <section className="px-6 py-28 border-t border-slate-900 bg-slate-950/10">
         <div className="max-w-3xl mx-auto">
-          <div className="relative bg-gradient-to-br from-blue-600/20 via-violet-600/10 to-blue-600/5 border border-blue-500/20 rounded-3xl p-12 text-center overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.1),transparent_70%)]" />
-            <div className="relative">
-              <p className="text-blue-400 text-sm font-bold uppercase tracking-wider mb-4">Ready to scale?</p>
-              <h2 className="text-4xl md:text-5xl font-black mb-4">
-                Start managing your fleet today
-              </h2>
-              <p className="text-slate-400 mb-8 text-lg max-w-xl mx-auto">
-                Join businesses across Ethiopia using Guzo to power their delivery operations. Setup takes under 10 minutes.
+          
+          <div className="text-center mb-16">
+            <p className="text-xs uppercase tracking-[0.25em] text-cyan-400 font-extrabold mb-3">Frequently Asked Questions</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-white">Got Questions? We got answers.</h2>
+          </div>
+
+          <div className="space-y-4">
+            {faqs.map((faq, i) => (
+              <div 
+                key={faq.q}
+                className="border border-slate-900 bg-slate-950/60 rounded-xl overflow-hidden transition-all duration-300"
+              >
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between p-5 text-left font-bold text-sm text-white select-none hover:bg-slate-900/20 active:bg-slate-900/40 transition-colors"
+                >
+                  <span>{faq.q}</span>
+                  <svg 
+                    className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`}
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+                <div 
+                  className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                    openFaq === i ? 'max-h-[200px] border-t border-slate-900/60 p-5' : 'max-h-0'
+                  }`}
+                >
+                  <p className="text-xs text-slate-400 leading-relaxed font-normal">{faq.a}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── Ready to Scale Call to Action ───────────────────────────────────── */}
+      <section className="px-6 py-28 border-t border-slate-900">
+        <div className="max-w-4xl mx-auto">
+          
+          <div className="relative rounded-[2.5rem] overflow-hidden border border-slate-800 bg-gradient-to-br from-[#060c18] via-[#040810] to-transparent p-12 text-center shadow-[0_30px_90px_rgba(0,0,0,0.6)]">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.1),transparent_75%)] pointer-events-none" />
+            
+            <div className="relative z-10 space-y-6">
+              <p className="text-xs uppercase tracking-[0.25em] text-blue-400 font-extrabold">Ready to begin?</p>
+              <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">Start managing your<br />fleet today</h2>
+              <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+                Connect your riders, automate COD bank paydowns, and get reliable delivery telemetry. Zero startup fee.
               </p>
-              <SignedOut>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              
+              <div className="pt-6 flex flex-col sm:flex-row gap-4 justify-center">
+                <SignedOut>
                   <Link
                     to="/sign-up"
-                    className="group inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-xl shadow-blue-500/25 hover:-translate-y-0.5"
+                    className="group inline-flex items-center justify-center gap-2 bg-white text-slate-950 font-bold px-8 py-4.5 rounded-xl hover:bg-slate-200 transition-all shadow-lg hover:-translate-y-0.5 active:translate-y-0"
                   >
-                    Create Free Account
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    Setup Free Merchant
+                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                     </svg>
                   </Link>
                   <a
                     href="mailto:support@guzologistics.com"
-                    className="inline-flex items-center justify-center gap-2 text-slate-300 border border-white/10 hover:border-white/20 hover:bg-white/5 px-8 py-4 rounded-xl transition-all font-semibold"
+                    className="inline-flex items-center justify-center gap-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/20 text-slate-300 font-bold px-8 py-4.5 rounded-xl transition-all"
                   >
-                    Contact Sales
+                    Discuss Enterprise SLA
                   </a>
-                </div>
-              </SignedOut>
-              <SignedIn>
-                <Link to="/dashboard" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-xl shadow-blue-500/25">
-                  Open Dashboard →
-                </Link>
-              </SignedIn>
+                </SignedOut>
+                <SignedIn>
+                  <Link
+                    to="/dashboard"
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4.5 rounded-xl transition-all shadow-lg shadow-blue-500/10 hover:-translate-y-0.5"
+                  >
+                    Navigate to Dashboard →
+                  </Link>
+                </SignedIn>
+              </div>
             </div>
           </div>
+
         </div>
       </section>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-white/5 px-6 py-12">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <footer className="border-t border-slate-900 bg-slate-950/45 px-6 py-16">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+          
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
               </svg>
             </div>
             <div>
-              <p className="font-bold text-white">Guzo Logistics</p>
-              <p className="text-xs text-slate-500">Built for Ethiopian business</p>
+              <p className="font-extrabold text-white text-base tracking-tight leading-tight">GUZO Logistics</p>
+              <p className="text-[10px] text-slate-500 tracking-wider">Enterprise-grade dispatch networks</p>
             </div>
           </div>
-          <div className="flex items-center gap-6 text-sm text-slate-500">
-            <a href="mailto:support@guzologistics.com" className="hover:text-slate-300 transition-colors">support@guzologistics.com</a>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-xs font-semibold text-slate-400">
+            <a href="mailto:support@guzologistics.com" className="hover:text-white transition-colors">support@guzologistics.com</a>
             <span>+251 900 11 22 33</span>
-            <Link to="/sign-up" className="hover:text-slate-300 transition-colors">Get Started</Link>
+            <Link to="/sign-up" className="hover:text-white transition-colors">Register Hub</Link>
           </div>
-          <p className="text-xs text-slate-600">© 2025 Guzo Logistics. All rights reserved.</p>
+
+          <div className="flex flex-col items-center md:items-end gap-1.5 text-[11px] text-slate-600 font-medium">
+            <p>© 2026 Guzo Logistics. All rights reserved.</p>
+            <p>Built for scale in Addis Ababa, Ethiopia.</p>
+          </div>
+
         </div>
       </footer>
+
     </div>
   );
 }
