@@ -5,21 +5,14 @@ import { SignedIn, SignedOut } from '@clerk/clerk-react';
 /**
  * ── Design notes ──────────────────────────────────────────────────────────
  * Palette:  bg #06070a · ink #EEF0F4 · muted #8B93A7
- *           amber #E8A33D  (dispatch / primary action — reads "Ethiopian
- *           gold" without being literal, distinct from the generic
- *           blue-on-black SaaS default)
- *           teal   #2DD6C4  (live telemetry / motion — the "signal" color)
+ *           blue   #2563eb (brand primary / dispatch - Guzo deep blue)
+ *           sky    #0ea5e9 (live telemetry - signal blue)
+ *           cyan   #06b6d4 (motion feedback)
  * Type:     Display  → 'Space Grotesk' (headlines, wordmark)
  *           Body     → 'Inter'
- *           Data     → 'JetBrains Mono' (order IDs, coordinates, timestamps
- *           — logistics data should look like logistics data)
+ *           Data     → 'JetBrains Mono' (order IDs, coordinates, timestamps)
  * Signature: a dashed route-line with a moving waypoint dot threads behind
- *           the hero and reappears as the section divider — the one visual
- *           idea repeated deliberately rather than a new decoration per
- *           section. "ጉዞ" (Amharic for "journey") sits as a quiet mark next
- *           to the wordmark rather than a generic tagline.
- * Fonts are loaded at runtime below so this file works standalone; move the
- * <link> tags into index.html's <head> for production instead.
+ *           the hero and reappears as the section divider.
  * ───────────────────────────────────────────────────────────────────────── */
 
 function useGoogleFonts() {
@@ -53,7 +46,7 @@ const features = [
     ),
     title: 'Precision live tracking',
     desc: 'Rider telemetry updates every 2 seconds on a responsive map. Share a public tracking link so customers stop calling to ask where their order is.',
-    accent: 'teal',
+    accent: 'sky',
   },
   {
     icon: (
@@ -63,7 +56,7 @@ const features = [
     ),
     title: 'Fleet command center',
     desc: 'Invite, approve, or suspend riders yourself. Watch duty status and safety alerts across every service zone you run.',
-    accent: 'amber',
+    accent: 'blue',
   },
   {
     icon: (
@@ -73,7 +66,7 @@ const features = [
     ),
     title: 'Financial intelligence',
     desc: 'Cash reserves, structured payouts, and a running transaction ledger — the numbers a merchant actually checks every morning.',
-    accent: 'amber',
+    accent: 'blue',
   },
   {
     icon: (
@@ -83,7 +76,7 @@ const features = [
     ),
     title: 'Automated rider payouts',
     desc: 'Base fare, distance premiums, and tips calculated per delivery. Settlement logs come out ready for your books.',
-    accent: 'teal',
+    accent: 'sky',
   },
   {
     icon: (
@@ -93,7 +86,7 @@ const features = [
     ),
     title: 'Native rider app',
     desc: 'Works through dead zones. Background GPS keeps logging, cached routes flush once the signal returns, no lost trips.',
-    accent: 'amber',
+    accent: 'blue',
   },
   {
     icon: (
@@ -103,14 +96,14 @@ const features = [
     ),
     title: 'SMS handoff alerts',
     desc: 'Customers get a local-language text the moment a rider starts transit and again on handoff — no app required on their end.',
-    accent: 'teal',
+    accent: 'sky',
   },
 ];
 
 const faqs = [
   {
     q: 'How do riders connect to my merchant account?',
-    a: 'Every approved merchant gets a unique Fleet Key on their dashboard. Riders enter it once in the Guzo Rider app during registration and they\u2019re mapped to your fleet automatically.',
+    a: 'Every approved merchant gets a unique Fleet Key on their dashboard. Riders enter it once in the Guzo Rider app during registration and they’re mapped to your fleet automatically.',
   },
   {
     q: 'Does tracking still work when a rider loses signal?',
@@ -118,7 +111,7 @@ const faqs = [
   },
   {
     q: 'How does cash-on-delivery settlement work?',
-    a: 'Riders collect cash from customers and it\u2019s logged against their held balance. They upload a digital settlement proof, and you approve it to zero the balance back out.',
+    a: 'Riders collect cash from customers and it’s logged against their held balance. They upload a digital settlement proof, and you approve it to zero the balance back out.',
   },
   {
     q: 'Is there a limit on tracked riders or requests?',
@@ -132,8 +125,6 @@ const waypoints = [
   { n: '03', title: 'Dispatch & reconcile', desc: 'Send live orders, watch the route in real time, and let payouts settle themselves at the end of the day.' },
 ];
 
-/** A dashed route line with a moving waypoint dot — the page's one repeated
- *  visual signature, standing in for an actual GPS polyline. */
 function RouteLine({ className = '', flip = false }: { className?: string; flip?: boolean }) {
   return (
     <svg
@@ -152,11 +143,11 @@ function RouteLine({ className = '', flip = false }: { className?: string; flip?
       />
       <defs>
         <linearGradient id="route-gradient" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#2DD6C4" stopOpacity="0" />
-          <stop offset="15%" stopColor="#2DD6C4" stopOpacity="0.6" />
-          <stop offset="50%" stopColor="#E8A33D" stopOpacity="0.5" />
-          <stop offset="85%" stopColor="#2DD6C4" stopOpacity="0.6" />
-          <stop offset="100%" stopColor="#2DD6C4" stopOpacity="0" />
+          <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0" />
+          <stop offset="15%" stopColor="#0ea5e9" stopOpacity="0.6" />
+          <stop offset="50%" stopColor="#2563eb" stopOpacity="0.5" />
+          <stop offset="85%" stopColor="#0ea5e9" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0" />
         </linearGradient>
       </defs>
     </svg>
@@ -210,7 +201,7 @@ export default function LandingPage() {
   const statusLabel: Record<typeof dispatchStatus, string> = {
     idle: 'Awaiting dispatch',
     assigned: 'Rider assigned',
-    transit: 'In transit \u2014 2s updates',
+    transit: 'In transit — 2s updates',
     delivered: 'Handoff complete',
   };
 
@@ -223,31 +214,31 @@ export default function LandingPage() {
   return (
     <div
       style={fontVars}
-      className="min-h-screen bg-[#06070a] text-[#EEF0F4] [font-family:var(--font-body)] overflow-x-hidden selection:bg-amber-500/25 selection:text-amber-200"
+      className="min-h-screen bg-[#050609] text-[#EEF0F4] [font-family:var(--font-body)] overflow-x-hidden selection:bg-blue-500/25 selection:text-blue-200"
     >
       {/* ── Ambient background ────────────────────────────────────────── */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-220px] left-[15%] w-[560px] h-[560px] bg-[#E8A33D]/[0.06] rounded-full blur-[150px] motion-safe:animate-pulse [animation-duration:9s]" />
-        <div className="absolute top-[-120px] right-[8%] w-[480px] h-[480px] bg-[#2DD6C4]/[0.05] rounded-full blur-[140px] motion-safe:animate-pulse [animation-duration:13s]" />
-        <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.025)_1px,transparent_1px)] [background-size:26px_26px]" />
+        <div className="absolute top-[-220px] left-[15%] w-[560px] h-[560px] bg-blue-600/[0.05] rounded-full blur-[150px] motion-safe:animate-pulse [animation-duration:9s]" />
+        <div className="absolute top-[-120px] right-[8%] w-[480px] h-[480px] bg-sky-500/[0.04] rounded-full blur-[140px] motion-safe:animate-pulse [animation-duration:13s]" />
+        <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.02)_1px,transparent_1px)] [background-size:26px_26px]" />
       </div>
 
       {/* ── Navigation ────────────────────────────────────────────────── */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled ? 'bg-[#06070a]/80 backdrop-blur-xl border-b border-white/[0.06] shadow-2xl shadow-black/60' : 'bg-transparent'
+          scrolled ? 'bg-[#050609]/80 backdrop-blur-xl border-b border-white/[0.05] shadow-2xl shadow-black/60' : 'bg-transparent'
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 h-18 py-4 flex items-center justify-between">
           <a href="#top" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-[#E8A33D] to-[#f0bc6a] flex items-center justify-center shadow-lg shadow-amber-500/20">
-              <svg className="w-5 h-5 text-[#06070a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-550/20">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
               </svg>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="[font-family:var(--font-display)] font-semibold text-white text-lg tracking-tight">GUZO</span>
-              <span className="text-sm text-[#8B93A7]" lang="am">\u1310\u12dd</span>
+              <span className="text-sm text-[#8B93A7]" lang="am">ጉዞ</span>
             </div>
           </a>
 
@@ -259,7 +250,7 @@ export default function LandingPage() {
               </Link>
               <Link
                 to="/sign-up"
-                className="text-sm font-semibold bg-[#EEF0F4] text-[#06070a] px-5 py-2.5 rounded-lg transition-all hover:bg-white"
+                className="text-sm font-semibold bg-[#2563eb] text-white px-5 py-2.5 rounded-lg transition-all hover:bg-blue-500 shadow-md shadow-blue-500/10"
               >
                 Get started
               </Link>
@@ -267,7 +258,7 @@ export default function LandingPage() {
             <SignedIn>
               <Link
                 to="/dashboard"
-                className="text-sm font-semibold bg-[#E8A33D] hover:bg-[#f0bc6a] text-[#06070a] px-5 py-2.5 rounded-lg transition-all"
+                className="text-sm font-semibold bg-[#2563eb] hover:bg-blue-500 text-white px-5 py-2.5 rounded-lg transition-all shadow-md shadow-blue-500/10"
               >
                 Go to dashboard
               </Link>
@@ -298,7 +289,7 @@ export default function LandingPage() {
             menuOpen ? 'max-h-56' : 'max-h-0'
           }`}
         >
-          <div className="px-6 py-4 flex flex-col gap-2 bg-[#06070a]/95 backdrop-blur-xl">
+          <div className="px-6 py-4 flex flex-col gap-2 bg-[#050609]/95 backdrop-blur-xl">
             <SignedOut>
               <Link to="/sign-in" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-[#8B93A7] px-3 py-2.5 rounded-lg">
                 Sign in
@@ -306,7 +297,7 @@ export default function LandingPage() {
               <Link
                 to="/sign-up"
                 onClick={() => setMenuOpen(false)}
-                className="text-sm font-semibold bg-[#E8A33D] text-[#06070a] px-3 py-2.5 rounded-lg text-center"
+                className="text-sm font-semibold bg-[#2563eb] text-white px-3 py-2.5 rounded-lg text-center"
               >
                 Get started
               </Link>
@@ -315,7 +306,7 @@ export default function LandingPage() {
               <Link
                 to="/dashboard"
                 onClick={() => setMenuOpen(false)}
-                className="text-sm font-semibold bg-[#E8A33D] text-[#06070a] px-3 py-2.5 rounded-lg text-center"
+                className="text-sm font-semibold bg-[#2563eb] text-white px-3 py-2.5 rounded-lg text-center"
               >
                 Go to dashboard
               </Link>
@@ -327,26 +318,28 @@ export default function LandingPage() {
       {/* ── Hero ──────────────────────────────────────────────────────── */}
       <section id="top" className="relative pt-40 pb-12 px-6 text-center">
         <div className="max-w-4xl mx-auto relative z-10">
-          <div className="inline-flex items-center gap-2 text-xs font-medium text-[#2DD6C4] bg-[#2DD6C4]/[0.06] border border-[#2DD6C4]/20 px-3.5 py-1.5 rounded-full mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#2DD6C4] motion-safe:animate-pulse" />
+          <div className="inline-flex items-center gap-2 text-xs font-medium text-[#0ea5e9] bg-[#0ea5e9]/[0.06] border border-[#0ea5e9]/20 px-3.5 py-1.5 rounded-full mb-8">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0ea5e9] motion-safe:animate-pulse" />
             Built for delivery fleets in Addis Ababa
           </div>
 
           <h1 className="[font-family:var(--font-display)] text-5xl md:text-7xl font-semibold tracking-tight leading-[1.06] text-white mb-7">
             Run your fleet like
             <br />
-            you can see every mile
+            <span className="bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400 bg-clip-text text-transparent">
+              you can see every mile
+            </span>
           </h1>
 
           <p className="text-lg text-[#8B93A7] max-w-xl mx-auto mb-10 leading-relaxed">
-            Dispatch orders, watch riders move in real time, and settle cash payouts \u2014 all from one dashboard built for how delivery actually runs here.
+            Dispatch orders, watch riders move in real time, and settle cash payouts — all from one dashboard built for how delivery actually runs here.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <SignedOut>
               <Link
                 to="/sign-up"
-                className="group inline-flex items-center gap-2 bg-[#E8A33D] hover:bg-[#f0bc6a] text-[#06070a] font-semibold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-amber-500/10 hover:-translate-y-0.5"
+                className="group inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-500 text-white font-semibold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/20 hover:-translate-y-0.5"
               >
                 Set up your fleet
                 <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
@@ -363,7 +356,7 @@ export default function LandingPage() {
             <SignedIn>
               <Link
                 to="/dashboard"
-                className="group inline-flex items-center gap-2 bg-[#EEF0F4] text-[#06070a] font-semibold px-7 py-3.5 rounded-xl transition-all hover:bg-white hover:-translate-y-0.5"
+                className="group inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-500 text-white font-semibold px-7 py-3.5 rounded-xl transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/20"
               >
                 Open control console
                 <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
@@ -394,11 +387,11 @@ export default function LandingPage() {
       {/* ── Interactive dispatch simulator ───────────────────────────── */}
       <section className="px-6 pt-16 pb-24 relative">
         <div className="max-w-5xl mx-auto">
-          <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-[#0a0c11]/90 backdrop-blur-2xl shadow-[0_25px_80px_rgba(0,0,0,0.7)]">
+          <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-[#090a0e]/90 backdrop-blur-2xl shadow-[0_25px_80px_rgba(0,0,0,0.7)]">
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06] bg-white/[0.015]">
               <div className="flex items-center gap-2 [font-family:var(--font-mono)] text-xs text-[#4A5266]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#2DD6C4] motion-safe:animate-pulse" />
-                dispatch_preview \u2014 live demo
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0ea5e9] motion-safe:animate-pulse" />
+                dispatch_preview — live demo
               </div>
               <div className="text-xs text-[#4A5266] [font-family:var(--font-mono)] hidden sm:block">merchant_console.b2b</div>
             </div>
@@ -408,7 +401,7 @@ export default function LandingPage() {
                 <div>
                   <h3 className="[font-family:var(--font-display)] text-sm font-semibold text-white mb-2">Try a dispatch</h3>
                   <p className="text-[#8B93A7] text-xs leading-relaxed mb-5">
-                    Trigger a mock order and watch it move through assignment, transit, and handoff \u2014 the same states your dashboard tracks live.
+                    Trigger a mock order and watch it move through assignment, transit, and handoff — the same states your dashboard tracks live.
                   </p>
                   <div className="border border-white/[0.06] bg-white/[0.015] rounded-lg p-3.5 mb-4">
                     <span className="text-[10px] font-semibold text-[#4A5266] uppercase tracking-widest block mb-1.5">Status</span>
@@ -419,9 +412,9 @@ export default function LandingPage() {
                           dispatchStatus === 'idle'
                             ? 'bg-white/[0.04] text-[#4A5266]'
                             : dispatchStatus === 'assigned'
-                              ? 'bg-[#2DD6C4]/10 text-[#2DD6C4] border border-[#2DD6C4]/20'
+                              ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                               : dispatchStatus === 'transit'
-                                ? 'bg-[#E8A33D]/10 text-[#E8A33D] border border-[#E8A33D]/20 motion-safe:animate-pulse'
+                                ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20 motion-safe:animate-pulse'
                                 : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                         }`}
                       >
@@ -433,9 +426,9 @@ export default function LandingPage() {
                 <button
                   onClick={runSimulation}
                   disabled={dispatchStatus === 'assigned' || dispatchStatus === 'transit'}
-                  className="w-full py-3 rounded-lg bg-[#E8A33D] hover:bg-[#f0bc6a] font-semibold text-xs text-[#06070a] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full py-3 rounded-lg bg-[#2563eb] hover:bg-blue-500 font-semibold text-xs text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-blue-500/10"
                 >
-                  {dispatchStatus === 'idle' ? 'Dispatch mock order' : dispatchStatus === 'delivered' ? 'Reset simulation' : 'Processing\u2026'}
+                  {dispatchStatus === 'idle' ? 'Dispatch mock order' : dispatchStatus === 'delivered' ? 'Reset simulation' : 'Processing…'}
                 </button>
               </div>
 
@@ -446,7 +439,7 @@ export default function LandingPage() {
                 </div>
                 <div className="bg-white/[0.015] border border-white/[0.06] rounded-xl p-4 flex flex-col justify-between">
                   <span className="text-[10px] uppercase font-semibold tracking-widest text-[#4A5266] block mb-1">Telemetry uptime</span>
-                  <h4 className="[font-family:var(--font-mono)] text-2xl font-medium text-[#E8A33D]">99.9%</h4>
+                  <h4 className="[font-family:var(--font-mono)] text-2xl font-medium text-blue-500">99.9%</h4>
                 </div>
 
                 <div className="col-span-2 bg-white/[0.015] border border-white/[0.06] rounded-xl p-5 space-y-4">
@@ -457,11 +450,11 @@ export default function LandingPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs font-medium">
                       <span className="text-[#8B93A7]">Route progress</span>
-                      <span className="[font-family:var(--font-mono)] text-[#2DD6C4]">{progress}%</span>
+                      <span className="[font-family:var(--font-mono)] text-blue-400">{progress}%</span>
                     </div>
                     <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-[#2DD6C4] to-[#E8A33D] rounded-full transition-all duration-700 ease-out"
+                        className="h-full bg-gradient-to-r from-blue-500 to-sky-400 rounded-full transition-all duration-700 ease-out"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -475,7 +468,7 @@ export default function LandingPage() {
                       <div
                         key={step.label}
                         className={`p-2 rounded-lg border text-center text-[10px] font-medium transition-all duration-500 ${
-                          step.active ? 'bg-[#2DD6C4]/[0.06] border-[#2DD6C4]/20 text-[#2DD6C4]' : 'bg-transparent border-white/[0.06] text-[#4A5266]'
+                          step.active ? 'bg-blue-500/[0.06] border-blue-500/20 text-blue-400' : 'bg-transparent border-white/[0.06] text-[#4A5266]'
                         }`}
                       >
                         {step.label}
@@ -497,9 +490,9 @@ export default function LandingPage() {
       <section className="px-6 py-24 relative">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 max-w-xl mx-auto">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#E8A33D] font-semibold mb-3">What you get</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-blue-500 font-semibold mb-3">What you get</p>
             <h2 className="[font-family:var(--font-display)] text-3xl md:text-5xl font-semibold text-white tracking-tight leading-tight">
-              Everything a dispatch desk needs, nothing it doesn\u2019t
+              Everything a dispatch desk needs, nothing it doesn’t
             </h2>
           </div>
 
@@ -511,7 +504,7 @@ export default function LandingPage() {
               >
                 <div
                   className={`w-10 h-10 rounded-lg bg-white/[0.03] border border-white/[0.08] flex items-center justify-center mb-5 ${
-                    f.accent === 'amber' ? 'text-[#E8A33D]' : 'text-[#2DD6C4]'
+                    f.accent === 'blue' ? 'text-blue-500' : 'text-sky-400'
                   }`}
                 >
                   {f.icon}
@@ -528,14 +521,14 @@ export default function LandingPage() {
       <section className="px-6 py-24 border-t border-white/[0.06] relative">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#2DD6C4] font-semibold mb-3">Getting started</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-sky-400 font-semibold mb-3">Getting started</p>
             <h2 className="[font-family:var(--font-display)] text-3xl md:text-4xl font-semibold text-white tracking-tight">Three stops to your first dispatch</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
             {waypoints.map((s) => (
               <div key={s.n} className="relative">
-                <span className="[font-family:var(--font-mono)] text-xs text-[#E8A33D] font-medium block mb-4">{s.n}</span>
+                <span className="[font-family:var(--font-mono)] text-xs text-blue-500 font-medium block mb-4">{s.n}</span>
                 <h3 className="[font-family:var(--font-display)] font-semibold text-lg text-white mb-2">{s.title}</h3>
                 <p className="text-[#8B93A7] text-sm leading-relaxed">{s.desc}</p>
               </div>
@@ -548,7 +541,7 @@ export default function LandingPage() {
       <section className="px-6 py-24 border-t border-white/[0.06]">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#E8A33D] font-semibold mb-3">Questions</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-blue-500 font-semibold mb-3">Questions</p>
             <h2 className="[font-family:var(--font-display)] text-2xl md:text-3xl font-semibold text-white">Before you sign up</h2>
           </div>
 
@@ -587,7 +580,8 @@ export default function LandingPage() {
       {/* ── CTA ───────────────────────────────────────────────────────── */}
       <section className="px-6 py-24 border-t border-white/[0.06]">
         <div className="max-w-3xl mx-auto">
-          <div className="relative rounded-3xl overflow-hidden border border-white/[0.08] bg-gradient-to-br from-white/[0.03] to-transparent p-10 md:p-14 text-center">
+          <div className="relative rounded-3xl overflow-hidden border border-white/[0.08] bg-gradient-to-br from-blue-950/[0.05] via-[#050609] to-transparent p-10 md:p-14 text-center">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.06),transparent_70%)] pointer-events-none" />
             <div className="relative z-10 space-y-5">
               <h2 className="[font-family:var(--font-display)] text-3xl md:text-5xl font-semibold text-white tracking-tight leading-tight">
                 Start running your fleet today
@@ -599,7 +593,7 @@ export default function LandingPage() {
                 <SignedOut>
                   <Link
                     to="/sign-up"
-                    className="inline-flex items-center justify-center gap-2 bg-[#E8A33D] hover:bg-[#f0bc6a] text-[#06070a] font-semibold px-7 py-3.5 rounded-xl transition-all"
+                    className="inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-blue-500 text-white font-semibold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/20 hover:-translate-y-0.5"
                   >
                     Set up your fleet, free
                   </Link>
@@ -613,7 +607,7 @@ export default function LandingPage() {
                 <SignedIn>
                   <Link
                     to="/dashboard"
-                    className="inline-flex items-center gap-2 bg-[#E8A33D] hover:bg-[#f0bc6a] text-[#06070a] font-semibold px-7 py-3.5 rounded-xl transition-all"
+                    className="inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-500 text-white font-semibold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/20"
                   >
                     Go to your dashboard
                   </Link>
@@ -628,8 +622,8 @@ export default function LandingPage() {
       <footer className="border-t border-white/[0.06] px-6 py-12">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-gradient-to-tr from-[#E8A33D] to-[#f0bc6a] flex items-center justify-center">
-              <span className="[font-family:var(--font-display)] text-[11px] font-bold text-[#06070a]">G</span>
+            <div className="w-7 h-7 rounded-md bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-650 flex items-center justify-center">
+              <span className="[font-family:var(--font-display)] text-[11px] font-bold text-white">G</span>
             </div>
             <div>
               <p className="[font-family:var(--font-display)] font-semibold text-white text-sm">Guzo Logistics</p>
@@ -653,7 +647,7 @@ export default function LandingPage() {
             </button>
           </div>
 
-          <p className="text-[11px] text-[#4A5266]">\u00a9 2026 Guzo Logistics</p>
+          <p className="text-[11px] text-[#4A5266]">© 2026 Guzo Logistics</p>
         </div>
       </footer>
     </div>
