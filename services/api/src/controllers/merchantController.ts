@@ -210,7 +210,7 @@ export const collectCashFromRider = async (req: AuthRequest, res: Response) => {
 
     await User.updateOne(
       { _id: riderId },
-      { $set: { 'finance.cashHeld': 0 } },
+      { $inc: { 'finance.cashHeld': -cashAmount } },
       { session }
     );
 
@@ -393,11 +393,40 @@ export const processPayout = async (req: AuthRequest, res: Response) => {
  * @desc    Rider uploads a Telebirr payment screenshot to Cloudinary
  * @access  Private (Rider only)
  */
-export const uploadSettlementProof = async (req: AuthRequest, res: Response) => {
+export const uploadImage = async (req: AuthRequest, res: Response) => {
   try {
-    const { imageBase64 } = req.body;
+    const { imageBase64, documentType } = req.body;
     if (!imageBase64) {
       return res.status(400).json({ error: 'No image provided.' });
+    }
+
+    // Determine Cloudinary folder based on documentType
+    let folder = 'ethio-logistics/settlements';
+    if (documentType) {
+      switch (documentType) {
+        case 'settlement':
+        case 'SETTLEMENT':
+          folder = 'ethio-logistics/settlements';
+          break;
+        case 'license':
+        case 'LICENSE':
+          folder = 'ethio-logistics/kyc/license';
+          break;
+        case 'national-id':
+        case 'NATIONAL_ID':
+          folder = 'ethio-logistics/kyc/national-id';
+          break;
+        case 'vehicle':
+        case 'VEHICLE':
+          folder = 'ethio-logistics/kyc/vehicle';
+          break;
+        case 'profile':
+        case 'PROFILE':
+          folder = 'ethio-logistics/profile';
+          break;
+        default:
+          folder = 'ethio-logistics/misc';
+      }
     }
 
     const formatted = imageBase64.startsWith('data:')
@@ -405,16 +434,20 @@ export const uploadSettlementProof = async (req: AuthRequest, res: Response) => 
       : `data:image/jpeg;base64,${imageBase64}`;
 
     const result = await cloudinary.uploader.upload(formatted, {
-      folder: 'ethio-logistics/settlements',
+      folder,
       transformation: [{ quality: 'auto', fetch_format: 'auto' }],
     });
 
     return res.status(200).json({ url: result.secure_url });
   } catch (error) {
-    console.error('Proof upload error:', error);
+    console.error('Image upload error:', error);
     return res.status(500).json({ error: 'Image upload failed.' });
   }
 };
+
+// Backward-compatible alias for older clients during deployment cycle
+export const uploadSettlementProof = uploadImage;
+
 
 /**
  * @route   GET /api/v1/merchant/finance/history

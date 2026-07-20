@@ -274,7 +274,7 @@ export default function FinanceSection() {
                           <div className="mb-3 relative group/proof overflow-hidden rounded-xl border-2 border-emerald-200 dark:border-emerald-800">
                             <img
                               src={s.proofImageUrl}
-                              alt="Telebirr payment proof"
+                              alt={`Telebirr payment proof from ${s.user?.fullName || 'rider'} — Ref ${s.referenceId}`}
                               className="w-full h-28 object-cover"
                             />
                             <div className="absolute inset-0 bg-black/0 group-hover/proof:bg-black/20 transition-all flex items-center justify-center">

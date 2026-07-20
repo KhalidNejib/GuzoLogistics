@@ -438,7 +438,10 @@ export default function RiderDashboard() {
   // ── Road routing ──────────────────────────────────────────────
   const fetchRoadRoute = useCallback(async (from: any, to: any) => {
     try {
-      const orsKey = process.env.EXPO_PUBLIC_ORS_API_KEY || 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImU2MDYyYWJmMWU5NjRlNjViMDc2ZmI1YjhjODc3YzcwIiwiaCI6Im11cm11cjY0In0=';
+      const orsKey = process.env.EXPO_PUBLIC_ORS_API_KEY;
+      if (!orsKey) {
+        throw new Error('EXPO_PUBLIC_ORS_API_KEY is not defined');
+      }
       const orsUrl = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${orsKey}&start=${from.lng},${from.lat}&end=${to.lng},${to.lat}`;
       const res = await fetch(orsUrl);
       const data = await res.json();

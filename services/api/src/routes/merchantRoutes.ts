@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireUser, requireRole } from '../middleware/auth.js';
-import { getProfile, updateProfile, renameRider, completeOnboarding, collectCashFromRider, requestPayout, processPayout, getFinanceHistory, uploadSettlementProof, requestSettlement, getPendingSettlements, verifySettlement, getPendingPilots, approvePilot, togglePilotActive, deletePilot } from '../controllers/merchantController.js';
+import { getProfile, updateProfile, renameRider, completeOnboarding, collectCashFromRider, requestPayout, processPayout, getFinanceHistory, uploadImage, uploadSettlementProof, requestSettlement, getPendingSettlements, verifySettlement, getPendingPilots, approvePilot, togglePilotActive, deletePilot } from '../controllers/merchantController.js';
 import { getMerchantAnalytics, getRiderLeaderboard } from '../controllers/orderController.js';
 
 const router: Router = Router();
@@ -23,7 +23,10 @@ router.patch('/riders/:id/name', requireUser, requireRole('MERCHANT'), renameRid
 // Onboarding
 router.post('/onboarding', requireUser, requireRole('MERCHANT'), completeOnboarding);
 router.get('/onboarding/status', requireUser, requireRole('MERCHANT'), async (req: any, res: any) => {
-  res.json({ onboardingCompleted: req.user?.onboardingCompleted ?? false });
+  res.json({
+    onboardingCompleted: req.user?.onboardingCompleted ?? false,
+    isApproved: req.user?.isApproved ?? false,
+  });
 });
 
 // Pilot Management
@@ -38,9 +41,10 @@ router.post('/finance/payout', requireUser, requireRole('MERCHANT'), requestPayo
 router.patch('/finance/payouts/:id', requireUser, requireRole('ADMIN'), processPayout);
 router.get('/finance/history', requireUser, getFinanceHistory);
 
-// Digital Settlement (Repaying debt via Telebirr)
-router.post('/finance/upload-proof', requireUser, uploadSettlementProof);
-router.post('/finance/settle-request', requireUser, requestSettlement);
+// Digital Settlement (Repaying debt via Telebirr) — rider only, they're the ones with cash debt to settle
+router.post('/finance/upload-proof', requireUser, requireRole('RIDER'), uploadSettlementProof);
+router.post('/upload-image', requireUser, requireRole('RIDER'), uploadImage);
+router.post('/finance/settle-request', requireUser, requireRole('RIDER'), requestSettlement);
 router.get('/finance/pending-settlements', requireUser, requireRole('MERCHANT'), getPendingSettlements);
 router.post('/finance/verify-settlement/:id', requireUser, requireRole('MERCHANT'), verifySettlement);
 

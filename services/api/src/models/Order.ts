@@ -81,6 +81,15 @@ const orderSchema = new Schema(
         type: Boolean,
         default: false,
       },
+      // Set inside the settleOrder() transaction once money has actually
+      // moved. This is the guard against double-settlement: if
+      // updateOrderStatus() is retried/duplicated after the order is
+      // already DELIVERED, settleOrder() checks this flag and aborts
+      // instead of re-crediting balances a second time.
+      settled: {
+        type: Boolean,
+        default: false,
+      },
     },
     paymentMethod: {
       type: String,

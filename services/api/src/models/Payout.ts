@@ -14,7 +14,6 @@ const payoutSchema = new Schema(
     },
     referenceId: {
       type: String,
-      index: true,
     },
     status: {
       type: String,
@@ -36,6 +35,11 @@ const payoutSchema = new Schema(
     notes: String,
   },
   { timestamps: true }
+);
+
+payoutSchema.index(
+  { referenceId: 1 },
+  { unique: true, partialFilterExpression: { referenceId: { $exists: true } } }
 );
 
 type Payout = InferSchemaType<typeof payoutSchema>;

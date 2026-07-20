@@ -41,7 +41,7 @@ export const STRINGS = {
   },
   SETTLEMENT_APPROVED: {
     en: { title: '💚 Debt Cleared!', body: 'Your ETB {amount} Telebirr repayment was verified and accepted. Your debt is now cleared.' },
-    am: { title: '💚 빚 ተወረወረ!', body: 'ETB {amount} Telebirr ክፍያዎ ተረጋግጦ ተቀbyteytel።빚ዎ አሁን ጸድቷል።' },
+    am: { title: '💚 እዳ ተጠርጓል!', body: 'የ{amount} ብር ቴሌብር ክፍያዎ ተረጋግጦ ተቀባይነት አግኝቷል። እዳዎ አሁን ጸድቷል።' },
   },
   SETTLEMENT_REJECTED: {
     en: { title: '❌ Settlement Rejected', body: 'Your ETB {amount} repayment request was rejected. Please contact the office or resubmit with a valid Telebirr ID.' },
@@ -250,9 +250,19 @@ export const notifyOrderUpdate = async (
   }
 };
 
-export const broadcastNotificationToRiders = async (title: string, body: string, data?: any) => {
+export const broadcastNotificationToRiders = async (title: string, body: string, data?: any, serviceCity?: string) => {
   try {
-    const riders = await User.find({ role: 'RIDER' }).select('expoPushToken expoPushTokens').lean();
+    // Previously this queried every RIDER on the platform with no city
+    // filter, so a new order in one city pushed a notification to riders
+    // in every other city too — fine at one-city scale, doesn't scale
+    // beyond it. serviceCity already exists on User and is used elsewhere
+    // (socket.ts's city-fleet rooms); reuse it here. When no city is
+    // provided, fall back to the old platform-wide behavior rather than
+    // silently notifying nobody.
+    const query: any = { role: 'RIDER' };
+    if (serviceCity) query.serviceCity = serviceCity;
+
+    const riders = await User.find(query).select('expoPushToken expoPushTokens').lean();
     
     const tokens: string[] = [];
     riders.forEach((r: any) => {

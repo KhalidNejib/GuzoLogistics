@@ -16,7 +16,14 @@ export function SettlementTerminal({ rider, loading, onSettle, onClose }: Settle
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={onClose} />
+       <div 
+         className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" 
+         onClick={onClose}
+         role="button"
+         tabIndex={0}
+         aria-label="Close settlement dialog"
+         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClose(); } }}
+       />
        <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-[40px] shadow-2xl border border-slate-200 dark:border-zinc-800 animate-in zoom-in-95 overflow-hidden">
           <div className="bg-slate-900 p-8 text-white relative">
              <div className="absolute top-0 right-0 p-8 opacity-20">

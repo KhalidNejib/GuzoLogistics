@@ -78,14 +78,24 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ visible, onCom
       if (!result.canceled && result.assets[0].base64) {
         setIsUploading(true);
         const token = await getToken();
-        const uploadRes = await fetch(`${API_URL}/api/v1/merchant/finance/upload-proof`, {
+        
+        let docType = 'misc';
+        if (field === 'profilePhotoUrl') docType = 'profile';
+        else if (field === 'vehiclePhotoUrl') docType = 'vehicle';
+        else if (field === 'licensePhotoUrl') docType = 'license';
+        else if (field === 'faydaIdPhotoUrl') docType = 'national-id';
+
+        const uploadRes = await fetch(`${API_URL}/api/v1/merchant/upload-image`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json', 
             'Authorization': `Bearer ${token}`,
             'ngrok-skip-browser-warning': 'true'
           },
-          body: JSON.stringify({ imageBase64: result.assets[0].base64 }),
+          body: JSON.stringify({ 
+            imageBase64: result.assets[0].base64,
+            documentType: docType
+          }),
         });
 
         const data = await uploadRes.json();

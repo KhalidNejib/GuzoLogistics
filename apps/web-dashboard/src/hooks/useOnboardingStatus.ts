@@ -7,6 +7,7 @@ const API_URL = getApiUrl();
 export function useOnboardingStatus() {
   const { getToken, isSignedIn } = useAuth();
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null); // null = loading
+  const [isApproved, setIsApproved] = useState<boolean | null>(null); // null = loading
   const [isChecking, setIsChecking] = useState(true);
 
   const checkStatus = useCallback(async () => {
@@ -23,13 +24,16 @@ export function useOnboardingStatus() {
       if (res.ok) {
         const data = await res.json();
         setOnboardingCompleted(data.onboardingCompleted);
+        setIsApproved(data.isApproved);
       } else {
         // If endpoint fails (e.g. server down), don't block the user
         setOnboardingCompleted(true);
+        setIsApproved(true);
       }
     } catch {
       // Network error — don't force onboarding, just let them in
       setOnboardingCompleted(true);
+      setIsApproved(true);
     } finally {
       setIsChecking(false);
     }
@@ -39,7 +43,10 @@ export function useOnboardingStatus() {
     checkStatus();
   }, [checkStatus]);
 
-  const markCompleted = () => setOnboardingCompleted(true);
+  const markCompleted = () => {
+    setOnboardingCompleted(true);
+    setIsApproved(false); // Once onboarding is completed, they enter review/not yet approved
+  };
 
-  return { onboardingCompleted, isChecking, markCompleted };
+  return { onboardingCompleted, isApproved, isChecking, markCompleted };
 }

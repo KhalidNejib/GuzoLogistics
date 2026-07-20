@@ -70,6 +70,10 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    isApproved: {
+      type: Boolean,
+      default: false,
+    },
     logoUrl: {
       type: String,
       default: null,

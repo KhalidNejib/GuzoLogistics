@@ -116,7 +116,21 @@ export const requireRole = (allowedRole: 'MERCHANT' | 'RIDER' | 'ADMIN') => {
     console.info(`🔐 [Auth] Role Check: User=${req.user?._id}, Role=${userRole}, Required=${allowedRole}`);
 
     if (userRole === 'ADMIN') return next();
-    if (userRole === allowedRole) return next();
+    if (userRole === allowedRole) {
+      if (
+        allowedRole === 'MERCHANT' &&
+        req.user?.onboardingCompleted &&
+        !req.user?.isApproved &&
+        !req.path.endsWith('/onboarding') &&
+        !req.path.endsWith('/onboarding/status')
+      ) {
+        return res.status(403).json({
+          error: 'PendingVerification',
+          message: 'Your merchant account is pending verification by our administrative team.',
+        });
+      }
+      return next();
+    }
 
 
 

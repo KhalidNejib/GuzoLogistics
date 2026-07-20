@@ -66,19 +66,23 @@ export const handleClerkWebhook = async (req: Request, res: Response) => {
       const phoneNumber = phone_numbers?.[0]?.phone_number || '+251000000000';
 
       // public_metadata is set by trusted backend/admin code — always honor it if present.
-      // unsafe_metadata is client-writable at signUp.create() time, so it's the only role hint
-      // available for a brand-new rider signup before our backend has ever seen the user.
-      // We only trust it to grant RIDER (the least-privileged role) — never MERCHANT or ADMIN —
-      // so a malicious client can't self-elevate via unsafe_metadata.
+      // unsafe_metadata is client-writable at signUp.create() time. We allow MERCHANT and RIDER
+      // from it (never ADMIN) because:
+      //   - The web dashboard stamps { role: 'MERCHANT' } at signUp for all its users,
+      //     including Google OAuth flows where we can't set publicMetadata server-side first.
+      //   - The mobile rider app stamps { role: 'RIDER' } at signUp.
+      //   - ADMIN is never grantable via client-side metadata — it must go through publicMetadata
+      //     which only trusted backend code can write.
       const publicRole = (public_metadata?.role as string)?.toUpperCase();
       const unsafeRole = (unsafe_metadata?.role as string)?.toUpperCase();
       const validRoles = ['MERCHANT', 'RIDER', 'ADMIN'];
+      const trustedUnsafeRoles = ['MERCHANT', 'RIDER']; // ADMIN is always blocked from unsafeMetadata
 
       let resolvedRole: string | undefined;
       if (validRoles.includes(publicRole)) {
         resolvedRole = publicRole;
-      } else if (unsafeRole === 'RIDER') {
-        resolvedRole = 'RIDER';
+      } else if (trustedUnsafeRoles.includes(unsafeRole)) {
+        resolvedRole = unsafeRole;
       }
 
       const existingUser = await User.findOne({ clerkId });

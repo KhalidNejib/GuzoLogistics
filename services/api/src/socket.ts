@@ -121,6 +121,14 @@ export const initializeSocket = (io: Server) => {
         socket.join('riders:fleet');
         socket.join(`city:fleet:${city}`);
         logger.info({ userId: user._id, city }, `🏍️ [Socket] Rider joined ${city} fleet and private room`);
+      } else if (user.role === 'ADMIN') {
+        // Previously ADMIN fell into the merchant branch below and was only
+        // ever joined to a meaningless `merchant:{id}` room — nothing ever
+        // joined `admin:dispatch`, so incidentController's SOS broadcast to
+        // that room reached nobody. Admins now join it explicitly on connect.
+        socket.join('admin:dispatch');
+        socket.join(`city:fleet:${city}`);
+        logger.info({ userId: user._id, city }, `🚨 [Socket] Admin joined dispatch room`);
       } else {
         const merchantRoom = `merchant:${user._id.toString()}`;
         socket.join(merchantRoom);

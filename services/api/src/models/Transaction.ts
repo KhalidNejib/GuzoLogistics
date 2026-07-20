@@ -54,6 +54,8 @@ const transactionSchema = new Schema(
   { timestamps: true }
 );
 
+transactionSchema.index({ user: 1, createdAt: -1 });
+
 transactionSchema.index(
   { referenceId: 1 },
   { unique: true, partialFilterExpression: { referenceId: { $exists: true }, referenceActive: true } }

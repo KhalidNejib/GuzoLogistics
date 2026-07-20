@@ -40,14 +40,12 @@ redis.on('end', () => {
 redis.on('error', (err) => {
   console.error('🔴 [Redis] Error:', err);
 });
-process.on('SIGINT', async () => {
-  console.info('Shutting down Redis...');
-  try {
-    await redis.quit();
-    console.info('🟢 [Redis] Shutdown complete');
-    process.exit(0);
-  } catch (err) {
-    console.error('🔴 Shutdown error', err);
-    process.exit(1);
-  }
-});
+
+// NOTE: this module intentionally does NOT register its own SIGINT/SIGTERM
+// handler. Previously it did, independently of index.ts's gracefulShutdown
+// and mongoose.ts's gracefulExit — three separate handlers all racing to
+// call process.exit() on every deploy/restart, so whichever finished first
+// killed the process, possibly before the HTTP server had drained
+// connections or sockets had closed cleanly. Shutdown is now owned by a
+// single handler in index.ts, which closes the HTTP server first, then
+// Mongo, then this Redis client, in that order, before exiting once.

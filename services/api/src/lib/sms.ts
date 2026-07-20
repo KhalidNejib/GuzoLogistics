@@ -11,6 +11,16 @@ const AFRO_IDENTIFIER_ID = process.env.AFRO_IDENTIFIER_ID || ''; // From AfroMes
 const AFRO_SENDER_NAME = process.env.AFRO_SENDER_NAME || ''; // Your approved sender name
 
 /**
+ * Masks a phone number for logging — keeps enough to correlate/debug a
+ * delivery issue without putting a full PII phone number in the log drain.
+ * e.g. 251912345678 -> 2519****5678
+ */
+function maskPhone(msisdn: string): string {
+  if (msisdn.length <= 6) return '*'.repeat(msisdn.length);
+  return `${msisdn.slice(0, 4)}${'*'.repeat(msisdn.length - 8)}${msisdn.slice(-4)}`;
+}
+
+/**
  * Normalizes an Ethiopian phone number to the 251XXXXXXXXX format
  */
 function normalizeEthiopianPhone(to: string): string {
@@ -38,13 +48,16 @@ function normalizeEthiopianPhone(to: string): string {
 export const sendSMS = async (to: string, message: string): Promise<{ success: boolean; error?: any }> => {
   try {
     const msisdn = normalizeEthiopianPhone(to);
+    const maskedPhone = maskPhone(msisdn);
 
-    console.log(`\n📬 [SMS AfroMessage] Sending → ${msisdn}`);
-    console.log(`📝 [SMS AfroMessage] Message: "${message.substring(0, 60)}..."`);
+    // Previously logged the full phone number and full message body on
+    // every send (both via console.log and logger.info) — that's PII
+    // sitting in the log drain. Log a masked phone and message length only.
+    console.log(`\n📬 [SMS AfroMessage] Sending → ${maskedPhone} (${message.length} chars)`);
 
     if (!AFRO_TOKEN) {
       console.warn('⚠️ [SMS] AFRO_SMS_TOKEN is not set. Add it to your .env file!');
-      console.log(`📋 [SMS FAKE-SEND] Would send to ${msisdn}: "${message}"`);
+      console.log(`📋 [SMS FAKE-SEND] Would send to ${maskedPhone} (${message.length} chars)`);
       return { success: false, error: 'Missing AFRO_SMS_TOKEN' };
     }
 
@@ -69,22 +82,24 @@ export const sendSMS = async (to: string, message: string): Promise<{ success: b
     });
 
     const result = await response.json() as any;
-    console.log('[DEBUG SMS] AfroMessage Response:', JSON.stringify(result));
+    // Log the acknowledge/status code only, not the full response body —
+    // AfroMessage's response can echo the message content back.
+    console.log('[DEBUG SMS] AfroMessage acknowledge:', result?.acknowledge ?? result?.response?.acknowledge ?? 'unknown');
 
     // AfroMessage returns { acknowledge: 'success' } on success
     if (result?.acknowledge === 'success' || result?.response?.acknowledge === 'success') {
-      logger.info({ msisdn, result }, '✅ [SMS AfroMessage] Delivered successfully');
-      console.log(`✅ [SMS] Successfully sent to ${msisdn}`);
+      logger.info({ maskedPhone }, '✅ [SMS AfroMessage] Delivered successfully');
+      console.log(`✅ [SMS] Successfully sent to ${maskedPhone}`);
       return { success: true };
     } else {
-      logger.error({ msisdn, result }, '❌ [SMS AfroMessage] Gateway rejection');
-      console.error(`❌ [SMS] Failed for ${msisdn}:`, result);
+      logger.error({ maskedPhone, acknowledge: result?.acknowledge }, '❌ [SMS AfroMessage] Gateway rejection');
+      console.error(`❌ [SMS] Failed for ${maskedPhone}`);
       return { success: false, error: result };
     }
 
   } catch (error: any) {
-    logger.error({ err: error.message, to }, '🔥 [SMS AfroMessage] Network failure');
-    console.error(`🔥 [SMS] Exception for ${to}:`, error.message);
+    logger.error({ err: error.message, maskedPhone: maskPhone(normalizeEthiopianPhone(to)) }, '🔥 [SMS AfroMessage] Network failure');
+    console.error(`🔥 [SMS] Exception for ${maskPhone(normalizeEthiopianPhone(to))}:`, error.message);
     return { success: false, error: error.message };
   }
 };

@@ -15,10 +15,26 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
+// ── Safety guardrails ────────────────────────────────────────────────────────
+if (process.env.NODE_ENV === 'production') {
+  throw new Error(
+    'clearRiders: refused to run in production. Set NODE_ENV to development or test before running this script.'
+  );
+}
+if (!process.argv.includes('--confirm')) {
+  console.error('Aborted. This script permanently deletes rider data. Pass --confirm to proceed.');
+  process.exit(1);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function clearRiders() {
   try {
     console.log('📡 Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI!);
+    const dbName = mongoose.connection.name;
+    console.log('⚠️  Database name that WILL be modified:', dbName);
+    console.log('Proceeding with rider purge in 1 second…');
+    await new Promise(r => setTimeout(r, 1000));
     console.log('✅ Connected.');
 
     // 1. Find all riders

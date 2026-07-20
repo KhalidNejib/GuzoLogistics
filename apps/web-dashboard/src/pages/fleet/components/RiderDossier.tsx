@@ -38,7 +38,7 @@ export function RiderDossier({ rider, onClose, onToggleActive, onDelete }: Rider
           <div className="flex items-center gap-6">
              <div className="h-32 w-32 rounded-[40px] bg-blue-600 overflow-hidden shadow-2xl border-4 border-white dark:border-zinc-900">
                 {rider.profilePhotoUrl ? (
-                  <img src={rider.profilePhotoUrl} className="w-full h-full object-cover" />
+                  <img src={rider.profilePhotoUrl} alt={`${rider.fullName}'s profile photo`} className="w-full h-full object-cover" />
                 ) : <div className="w-full h-full flex items-center justify-center text-white text-4xl font-black">{rider.fullName?.charAt(0)}</div>}
              </div>
              <div className="space-y-2">
@@ -75,7 +75,7 @@ export function RiderDossier({ rider, onClose, onToggleActive, onDelete }: Rider
                    <p className="text-[10px] font-bold text-slate-500">Registered Vehicle</p>
                    <div className="aspect-video rounded-2xl bg-slate-100 dark:bg-zinc-900 overflow-hidden border border-slate-200 dark:border-zinc-800">
                       {rider.vehiclePhotoUrl ? (
-                        <img src={rider.vehiclePhotoUrl} className="w-full h-full object-cover" />
+                        <img src={rider.vehiclePhotoUrl} alt={`${rider.fullName}'s registered vehicle`} className="w-full h-full object-cover" />
                       ) : <div className="w-full h-full flex items-center justify-center text-slate-300 font-bold italic">No Photo</div>}
                    </div>
                 </div>

@@ -12,18 +12,36 @@ const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
 if (!CLERK_SECRET_KEY) { console.error('CLERK_SECRET_KEY not set'); process.exit(1); }
 const clerk = createClerkClient({ secretKey: CLERK_SECRET_KEY });
 
+function parseArgs(argv: string[]) {
+  const args: Record<string, string> = {};
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i].startsWith('--')) {
+      const key = argv[i].slice(2);
+      const value = argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[++i] : 'true';
+      args[key] = value;
+    }
+  }
+  return args;
+}
+
 // Patches both the source of truth (Mongo) and Clerk's publicMetadata.role.
-// Previously this script only wrote to Mongo, which left Clerk's metadata
-// unset/stale — and requireUser's auto-sync in auth.ts treats a missing
-// Clerk role hint as "default to RIDER", so any promoted merchant whose
-// Clerk profile still had a placeholder name would get silently demoted
-// back to RIDER on their very next authenticated request. Writing to both
-// stores means that can't happen again for accounts fixed through here.
-async function setRole(db: mongoose.mongo.Db, email: string, role: 'MERCHANT' | 'RIDER') {
+async function setRole(db: mongoose.mongo.Db, email: string, role: 'MERCHANT' | 'RIDER' | 'ADMIN') {
   const user = await db.collection('users').findOne({ email }, { projection: { clerkId: 1, role: 1 } });
 
   if (!user) {
-    console.log(`⚠️  Not found: ${email}`);
+    console.log(`⚠️  Not found: ${email}. Pre-creating placeholder user as ${role}...`);
+    await db.collection('users').insertOne({
+      email,
+      fullName: 'Awaiting Sign-up',
+      role,
+      phoneNumber: '+251000000000',
+      clerkId: `pending_${Math.random().toString(36).substring(7)}`,
+      onboardingCompleted: true,
+      isApproved: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    console.log(`✅ Pre-created placeholder user in DB for ${email} as ${role}!`);
     return;
   }
 
@@ -48,6 +66,13 @@ async function setRole(db: mongoose.mongo.Db, email: string, role: 'MERCHANT' | 
 }
 
 async function fixRoles() {
+  const args = parseArgs(process.argv.slice(2));
+
+  if (!args.email || !args.role || (args.role !== 'MERCHANT' && args.role !== 'RIDER' && args.role !== 'ADMIN')) {
+    console.error('Usage: fixUserRole.ts --email <email> --role <MERCHANT|RIDER|ADMIN>');
+    process.exit(1);
+  }
+
   await mongoose.connect(MONGODB_URI!);
   console.log('✅ Connected to:', mongoose.connection.name);
 
@@ -58,21 +83,8 @@ async function fixRoles() {
   console.log('\n📋 All users in DB:');
   users.forEach(u => console.log(`  [${u.role}] ID: ${u._id} — ${u.fullName} — ${u.email}`));
 
-  // Fix specific accounts: RIDER → MERCHANT
-  const emailsToMerchant = ['anti546784@gmail.com', 'tesnimnejib0@gmail.com'];
-  for (const email of emailsToMerchant) {
-    await setRole(db, email, 'MERCHANT');
-  }
-
-  // Fix these specific accounts: MERCHANT → RIDER
-  const emailsToRider = [
-    'a28288962@gmail.com',
-    'anti43254@gmail.com',
-  ];
-
-  for (const email of emailsToRider) {
-    await setRole(db, email, 'RIDER');
-  }
+  // Fix specific account:
+  await setRole(db, args.email, args.role as 'MERCHANT' | 'RIDER' | 'ADMIN');
 
   await mongoose.disconnect();
   console.log('\n🔌 Disconnected.');

@@ -83,10 +83,10 @@ export default function RiderProfile() {
         try {
           setIsUploadingProof(true);
           const token = await getToken();
-          const uploadRes = await fetch(`${API_URL}/api/v1/merchant/finance/upload-proof`, {
+          const uploadRes = await fetch(`${API_URL}/api/v1/merchant/upload-image`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
-            body: JSON.stringify({ imageBase64: asset.base64 }),
+            body: JSON.stringify({ imageBase64: asset.base64, documentType: 'settlement' }),
           });
           const data = await uploadRes.json();
           if (uploadRes.ok) setProofImageUrl(data.url);

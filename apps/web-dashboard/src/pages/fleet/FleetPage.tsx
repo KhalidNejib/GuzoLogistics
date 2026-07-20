@@ -109,7 +109,8 @@ export default function FleetPage() {
                 Generate Fleet Key
               </button>
             ) : (
-              <span
+              <button
+                type="button"
                 onClick={() => {
                   const key =
                     merchantProfile?.fleetKey ||
@@ -123,7 +124,7 @@ export default function FleetPage() {
               >
                 {merchantProfile?.fleetKey ||
                   (riders.length > 0 ? (riders[0] as any).fleetKey : 'GENERATING...')}
-              </span>
+              </button>
             )}
           </div>
         </div>
@@ -183,7 +184,7 @@ export default function FleetPage() {
                   <div className="flex gap-4 relative z-10">
                     <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/30 overflow-hidden shrink-0 border-2 border-white dark:border-zinc-900 shadow-md">
                       {pilot.profilePhotoUrl ? (
-                        <img src={pilot.profilePhotoUrl} className="w-full h-full object-cover" />
+                        <img src={pilot.profilePhotoUrl} alt={`${pilot.user?.fullName || 'Pilot'}'s profile photo`} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-amber-600 text-xl font-black">
                           {(pilot.user?.fullName || 'P').charAt(0)}
@@ -275,7 +276,7 @@ export default function FleetPage() {
                     <div className="flex gap-4">
                       <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 overflow-hidden ring-4 ring-white dark:ring-zinc-900 shadow-sm">
                         {rider.profilePhotoUrl ? (
-                          <img src={rider.profilePhotoUrl} className="w-full h-full object-cover" />
+                          <img src={rider.profilePhotoUrl} alt={`${rider.fullName}'s profile photo`} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-blue-600 text-xl font-black">
                             {rider.fullName?.charAt(0)}

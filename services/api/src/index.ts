@@ -159,11 +159,13 @@ app.get('/health', async (_req, res) => {
 // 👉 REST ROUTES (v1 — versioned for safe future breaking changes)
 import incidentRoutes from './routes/incidentRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 app.use('/api/v1/webhooks', webhookRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/merchant', merchantRoutes);
 app.use('/api/v1/incidents', incidentRoutes);
 app.use('/api/v1/user', userRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 // 👉 Legacy aliases (temporary — keep mobile app working during migration)
 app.use('/api/webhooks', webhookRoutes);
@@ -171,6 +173,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/merchant', merchantRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 👉 Global Dev Redirects (Ensures both old and new paths work during tunnel dev)
 app.use('/api/user', (req, res, next) => { if (!req.path.startsWith('/v1')) req.url = '/v1' + req.url; next(); }, userRoutes);

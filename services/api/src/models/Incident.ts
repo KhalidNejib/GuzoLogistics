@@ -53,6 +53,11 @@ incidentSchema.index({ location: '2dsphere' });
 incidentSchema.index({ rider: 1 });
 incidentSchema.index({ status: 1 });
 
-const Incident = mongoose.model<IIncident>('Incident', incidentSchema);
+// Was `mongoose.model<IIncident>(...)` with no re-registration guard — the
+// odd one out compared to every other model in this codebase. Re-evaluating
+// this module (dev hot-reload, some serverless cold-start patterns) throws
+// OverwriteModelError. This matches the same-file-safe pattern used
+// everywhere else (User.ts, RiderProfile.ts, Order.ts, etc.).
+const Incident = mongoose.models.Incident || mongoose.model<IIncident>('Incident', incidentSchema);
 
 export default Incident;

@@ -13,8 +13,14 @@
     "mobile": "turbo run dev --filter=mobile-rider --filter=@ethio-logistics/env --filter=@ethio-logistics/types",
     "dev:all": "turbo run dev",
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "eslint .",
     "prepare": "husky"
+  },
+  "pnpm": {
+    "overrides": {
+      "hono": "^4.12.25",
+      "js-cookie": "^3.0.7"
+    }
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

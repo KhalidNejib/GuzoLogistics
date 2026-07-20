@@ -3,6 +3,7 @@ import { AuthRequest, requireUser } from '../middleware/auth.js';
 import User from '../models/User.js';
 import RiderProfile from '../models/RiderProfile.js';
 import { redis } from '../lib/redis.js';
+import { sendPushNotification } from '../lib/notifications.js';
 
 const router: Router = Router();
 
@@ -43,6 +44,18 @@ router.patch('/rider-onboarding', requireUser, async (req: AuthRequest, res: Res
     const merchant = await User.findOne({ fleetKey: fleetKey.toUpperCase(), role: 'MERCHANT' });
     if (!merchant) return res.status(404).json({ error: 'Invalid Fleet Key. Please contact your company admin.' });
 
+    // Detect a fleet-switch before overwriting: a rider resubmitting
+    // onboarding with a different fleetKey unconditionally reassigns
+    // RiderProfile.merchant, including while APPROVED and actively working
+    // for a different company — and previously the old merchant was never
+    // told the rider just left. Not a security hole, but a real
+    // business-logic gap for a multi-tenant fleet system. Fetch the prior
+    // state up front so we can notify the outgoing merchant after the
+    // switch actually happens below.
+    const existingProfile = await RiderProfile.findOne({ user: userId }).select('merchant').lean() as any;
+    const previousMerchantId = existingProfile?.merchant?.toString();
+    const isFleetSwitch = previousMerchantId && previousMerchantId !== merchant._id.toString();
+
     // 1. Update/Create Rider Profile
     const profile = await RiderProfile.findOneAndUpdate(
       { user: userId },
@@ -62,7 +75,6 @@ router.patch('/rider-onboarding', requireUser, async (req: AuthRequest, res: Res
         vehiclePhotoUrl,
         emergencyContact,
         onboardingStatus: 'IN_REVIEW', // Move to review phase
-        currentLocation: { type: 'Point', coordinates: [38.7578, 8.9806] } // Default to Addis Ababa
       },
       { upsert: true, new: true, runValidators: true }
     );
@@ -98,6 +110,26 @@ router.patch('/rider-onboarding', requireUser, async (req: AuthRequest, res: Res
         emergencyContact,
         onboardingStatus: 'IN_REVIEW'
       });
+    }
+
+    // 🔔 Notify the OUTGOING merchant if this was a fleet-switch — they
+    // previously had no way to find out a rider just left for a different
+    // company until the rider silently vanished from their roster.
+    if (isFleetSwitch) {
+      const riderDisplayName = fullName || req.user?.fullName || 'A rider';
+      if (io) {
+        io.to(`merchant:${previousMerchantId}`).emit('rider_left_fleet', {
+          riderId: userId,
+          riderName: riderDisplayName,
+          newFleetKey: fleetKey.toUpperCase(),
+        });
+      }
+      sendPushNotification(
+        previousMerchantId,
+        '👋 Rider Left Your Fleet',
+        `${riderDisplayName} has switched to a different fleet.`,
+        { type: 'RIDER_FLEET_SWITCH', riderId: userId }
+      ).catch((err) => console.error('[Onboarding] Failed to notify outgoing merchant of fleet switch:', err));
     }
 
     return res.status(200).json({ 
@@ -184,6 +216,22 @@ router.post('/location', requireUser, async (req: AuthRequest, res: Response) =>
     const isGlobal   = !safeOrderId;
     const city       = (req.user as any)?.serviceCity || 'Default';
 
+    // Resolve ownership once, up front, and reuse it for both the socket
+    // broadcast and the Redis writes below. Previously the ownership check
+    // ("only the assigned rider may broadcast") only wrapped the socket.io
+    // emit — the Redis writes for order:location:${orderId} ran
+    // unconditionally just below it, regardless of whether this rider
+    // actually owned that order. Nothing currently reads that key back out,
+    // so it wasn't exploitable yet, but the first read path added against
+    // it (e.g. the public tracking page) would let any authenticated rider
+    // inject fake location data into an order that isn't theirs.
+    let ownedOrder: any = null;
+    if (!isGlobal) {
+      ownedOrder = await (await import('../models/Order.js')).default
+        .findById(safeOrderId).select('merchant rider').lean() as any;
+    }
+    const ownsOrder = isGlobal || (ownedOrder && ownedOrder.rider?.toString() === mongoId);
+
     // ── 1. Fan out via socket.io (if server has io instance) ────────────
     const io = req.app.get('socketio');
     if (io) {
@@ -195,31 +243,31 @@ router.post('/location', requireUser, async (req: AuthRequest, res: Response) =>
         io.to(`city:fleet:${city}`).emit('fleet_radar_update', {
           riderId: mongoId, orderId: 'IDLE', lat, lng, speed, riderName: verifiedName
         });
-      } else {
-        // Security: only the assigned rider may broadcast
-        const order = await (await import('../models/Order.js')).default
-          .findById(safeOrderId).select('merchant rider').lean() as any;
-        if (order && order.rider?.toString() === mongoId) {
-          io.to(`order:${safeOrderId}`).emit('rider_moved', payload);
-          if (order.merchant) {
-            io.to(`merchant:${order.merchant.toString()}`).emit('fleet_radar_update', {
-              riderId: mongoId, orderId: safeOrderId, lat, lng, speed, riderName: verifiedName
-            });
-          }
+      } else if (ownsOrder) {
+        io.to(`order:${safeOrderId}`).emit('rider_moved', payload);
+        if (ownedOrder.merchant) {
+          io.to(`merchant:${ownedOrder.merchant.toString()}`).emit('fleet_radar_update', {
+            riderId: mongoId, orderId: safeOrderId, lat, lng, speed, riderName: verifiedName
+          });
         }
       }
     }
 
     // ── 2. Update Redis cache ────────────────────────────────────────────
     const telemetry = JSON.stringify({ lat, lng, battery, speed, riderName, lastSeen: Date.now() });
-    await redis.set(`order:location:${safeOrderId || 'global'}`, telemetry, 'EX', 60);
+    // rider_location is keyed by the rider's own mongoId — no order
+    // ownership question, always safe to write.
     await redis.set(`rider_location:${mongoId}`, JSON.stringify([lat, lng]), 'EX', 120);
 
-    if (safeOrderId) {
-      const historyKey = `order:history:points:${safeOrderId}`;
-      await redis.lpush(historyKey, telemetry);
-      await redis.ltrim(historyKey, 0, 49);
-      await redis.expire(historyKey, 3600);
+    if (isGlobal || ownsOrder) {
+      await redis.set(`order:location:${safeOrderId || 'global'}`, telemetry, 'EX', 60);
+
+      if (safeOrderId) {
+        const historyKey = `order:history:points:${safeOrderId}`;
+        await redis.lpush(historyKey, telemetry);
+        await redis.ltrim(historyKey, 0, 49);
+        await redis.expire(historyKey, 3600);
+      }
     }
 
     return res.status(200).json({ ok: true });

@@ -20,6 +20,15 @@ export class FinanceService {
         return;
       }
 
+      // Idempotency guard: if this order was already settled (e.g. a
+      // retried/duplicated status-update request re-invoked settleOrder),
+      // bail out here instead of crediting balances a second time.
+      if (order.financeSnapshot?.settled) {
+        logger.warn({ orderId, riderId }, '⚠️ [Settlement] settleOrder called again for an already-settled order — skipping');
+        await session.abortTransaction();
+        return;
+      }
+
       const merchantId = order.merchant;
       const deliveryFee = order.priceInfo?.amount || 0;
       const itemPrice = order.priceInfo?.itemPrice || 0;
@@ -83,7 +92,8 @@ export class FinanceService {
           'financeSnapshot.merchantProfit': merchantProfit, 
           'financeSnapshot.riderEarning': riderEarning, 
           'financeSnapshot.settlementMethod': settlementMethod,
-          'financeSnapshot.settlementFailed': false
+          'financeSnapshot.settlementFailed': false,
+          'financeSnapshot.settled': true
         } 
       }, { session });
 

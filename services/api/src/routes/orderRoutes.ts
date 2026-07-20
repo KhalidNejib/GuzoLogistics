@@ -28,7 +28,11 @@ const acceptOrderLimiter = rateLimit({
 const router: Router = Router();
 
 router.post('/route-geom', getRouteGeometry);
-router.post('/debug/send-sms', requireUser, debugSendSMS);
+
+// 🛠️ DEBUG ONLY: Send an arbitrary SMS (USE ONLY FOR TESTING). Gated to ADMIN,
+// and hard-blocked in production inside the controller regardless of role —
+// same pattern as debug/clear-all below.
+router.post('/debug/send-sms', requireUser, requireRole('ADMIN'), debugSendSMS);
 
 
 // Merchant creates a new delivery order

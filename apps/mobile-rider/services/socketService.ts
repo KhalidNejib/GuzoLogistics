@@ -18,8 +18,8 @@
 
 import { io, Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from './apiConfig';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 const OFFLINE_BUFFER_KEY = 'rider_offline_location_buffer';
 
 // ── Types ────────────────────────────────────────────────────────
@@ -291,7 +291,7 @@ class SocketService {
     return this.on('account_reactivated', cb);
   }
 
-  onNotification(cb: (data: { title: string; body: string; orderId?: string }) => void): () => void {
+  onNotification(cb: (data: { title: string; body: string; orderId?: string; type?: string }) => void): () => void {
     return this.on('notification', cb);
   }
 

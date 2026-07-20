@@ -551,7 +551,7 @@ export default function OrdersPage() {
                                         <div className="relative overflow-hidden rounded-2xl border-2 border-emerald-500/20 bg-muted">
                                           <img
                                             src={order.podImageUrl}
-                                            alt="Proof of Delivery"
+                                            alt={`Proof of Delivery for order #${order._id.slice(-8).toUpperCase()}`}
                                             className="w-full h-auto aspect-[4/3] object-cover hover:scale-105 transition-transform duration-500"
                                           />
                                           <div className="absolute top-2 right-2 flex gap-1">

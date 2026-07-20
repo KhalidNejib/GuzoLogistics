@@ -35,23 +35,19 @@ mongoose.connection.on('error', (err) => {
 /**
  * Cleanly closes the database connection when the app is stopped.
  * This prevents "hanging" connections and data corruption.
+ *
+ * NOTE: this used to self-register on SIGINT/SIGTERM and call process.exit()
+ * directly. That meant three independent shutdown handlers (this one,
+ * redis.ts's, and index.ts's) all raced on every deploy/restart — whichever
+ * finished first killed the process, possibly before the HTTP server had
+ * drained connections. This is now a plain exported function with no exit
+ * call; index.ts's single gracefulShutdown calls it in the correct order
+ * (HTTP server drained → Mongo closed → Redis closed → exit once).
  */
-const gracefulExit = async () => {
-  if (mongoose.connection.readyState === 0) {
-    process.exit(0);
-  }
-
-  try {
-    await mongoose.connection.close();
-    logger.info('📡 MongoDB connection closed cleanly via app termination');
-    process.exit(0);
-  } catch (err) {
-    logger.error({ err }, '⚠️ Error during MongoDB disconnection');
-    process.exit(1);
-  }
+export const closeDB = async () => {
+  if (mongoose.connection.readyState === 0) return;
+  await mongoose.connection.close();
+  logger.info('📡 MongoDB connection closed cleanly via app termination');
 };
-// Listen for process signals
-process.on('SIGINT', gracefulExit);
-process.on('SIGTERM', gracefulExit);
 
 export default connectDB;

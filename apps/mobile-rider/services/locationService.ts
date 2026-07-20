@@ -4,7 +4,10 @@ import * as TaskManager from 'expo-task-manager';
 import * as Notifications from 'expo-notifications';
 import * as Haptics from 'expo-haptics';
 import * as SecureStore from 'expo-secure-store';
+import * as Battery from 'expo-battery';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { socketService } from './socketService';
+import { API_URL } from './apiConfig';
 
 
 const LOCATION_TASK_NAME = 'background-location-task';
@@ -150,27 +153,73 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
         bgToken = await SecureStore.getItemAsync('bg_auth_token');
 
         if (bgToken) {
-          const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://guzo-api.onrender.com';
+          // Was hardcoded to 100 — battery level was never actually read,
+          // so any low-battery alerting on the dashboard was meaningless.
+          let batteryLevel: number | null = null;
+          try {
+            const level = await Battery.getBatteryLevelAsync();
+            if (typeof level === 'number' && level >= 0) {
+              batteryLevel = Math.round(level * 100);
+            }
+          } catch (batteryErr) {
+            console.warn('[Background Task] Battery read failed, reporting null as fallback:', batteryErr);
+          }
+
           const payload = {
             orderId: bgOrderId === 'global' ? undefined : bgOrderId,
             lat,
             lng,
             speed,
-            battery: 100,
+            battery: batteryLevel,
             riderName: bgRiderName,
           };
 
-          await fetch(`${API_URL}/api/v1/user/location`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${bgToken}`,
-            },
-            body: JSON.stringify(payload),
-          });
+          let success = false;
+          try {
+            const res = await fetch(`${API_URL}/api/v1/user/location`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${bgToken}`,
+              },
+              body: JSON.stringify(payload),
+            });
+            if (res.ok) {
+              success = true;
+            } else {
+              console.warn('[Background Task] API location POST returned non-ok status:', res.status);
+            }
+          } catch (postErr) {
+            console.error('[Background Task] Failed API location POST request:', postErr);
+          }
+
+          if (!success) {
+            console.info('[Background Task] Buffering failed background location update');
+            try {
+              const OFFLINE_BUFFER_KEY = 'rider_offline_location_buffer';
+              const stored = await AsyncStorage.getItem(OFFLINE_BUFFER_KEY);
+              let buffer = stored ? JSON.parse(stored) : [];
+              if (!Array.isArray(buffer)) buffer = [];
+              
+              const socketPayload = {
+                orderId: bgOrderId,
+                lat,
+                lng,
+                speed,
+                battery: batteryLevel || undefined,
+                riderName: bgRiderName,
+              };
+
+              buffer.push(socketPayload);
+              if (buffer.length > 100) buffer.shift();
+              await AsyncStorage.setItem(OFFLINE_BUFFER_KEY, JSON.stringify(buffer));
+            } catch (bufErr) {
+              console.error('[Background Task] Failed to buffer offline location:', bufErr);
+            }
+          }
         }
-      } catch (postErr) {
-        console.error('[Background Task] Failed API location POST:', postErr);
+      } catch (err) {
+        console.error('[Background Task] Unexpected error in background location payload prep:', err);
       }
 
       // ── 2. Local OS-level Geofence Checks ──

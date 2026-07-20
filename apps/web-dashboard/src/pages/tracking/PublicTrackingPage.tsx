@@ -610,7 +610,7 @@ export default function PublicTrackingPage() {
                     <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-500/10 shadow-lg">
                       <img 
                         src={order.podImageUrl} 
-                        alt="Proof of Delivery" 
+                        alt={`Proof of Delivery — verified photo for order #${order.trackingUrlToken?.slice(-6)?.toUpperCase() || ''}`}
                         className="w-full h-auto aspect-video object-cover"
                       />
                       <div className="absolute top-3 right-3">

@@ -40,19 +40,23 @@ const riderProfileSchema = new Schema(
     },
     rejectionReason: { type: String, default: null },
     isAvailable: { type: Boolean, default: false },
-    
-    // 📍 Real-time Telemetry
-    currentLocation: {
-      type: { type: String, enum: ['Point'], default: 'Point' },
-      coordinates: { type: [Number], default: [0, 0] },
-    },
     rating: { type: Number, default: 5 },
   },
   { timestamps: true }
 );
 
-// Geospatial Index for tracking
-riderProfileSchema.index({ currentLocation: '2dsphere' });
+// NOTE: this schema previously had a `currentLocation` GeoJSON field with a
+// 2dsphere index, signaling it was meant for geo queries like "find nearby
+// riders". It was removed: nothing in the codebase ever ran a $near query
+// against it, and the only write to it (rider-onboarding, in userRoutes.ts)
+// set it once to a hardcoded Addis Ababa point and never updated it again —
+// so every rider was permanently stacked at the same coordinates. Real-time
+// rider position lives in Redis (`rider_location:*`, written on every
+// location update) instead. If a future feature needs geospatial "nearby
+// riders" queries against MongoDB, add this field back and wire it up to
+// that live Redis stream on a periodic sync (see syncRouteHistory.ts for
+// the existing job pattern) rather than reintroducing a field nothing keeps
+// current.
 
 type RiderProfile = InferSchemaType<typeof riderProfileSchema>;
 export type RiderProfileDocument = HydratedDocument<RiderProfile>;

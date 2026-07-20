@@ -9,7 +9,7 @@ import { redis } from '../lib/redis.js';
 import { broadcastNotificationToRiders, notifyOrderUpdate, sendPushNotification } from '../lib/notifications.js';
 import { sendSMS } from '../lib/sms.js';
 import { v2 as cloudinary } from 'cloudinary';
-import { cloudinaryConfig } from '../lib/env.js';
+import { cloudinaryConfig, orsConfig } from '../lib/env.js';
 import { logger } from '../lib/logger.js';
 import mongoose from 'mongoose';
 import RiderProfile from '../models/RiderProfile.js';
@@ -57,7 +57,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     const io = req.app.get('socketio');
     if (io) io.to('riders:fleet').emit('new-order-nearby', newOrder);
 
-    broadcastNotificationToRiders('🚀 New Mission Available', `New pickup at ${newOrder.pickupAddress.addressText}.`, { orderId: newOrder._id, type: 'NEW_ORDER' });
+    broadcastNotificationToRiders('🚀 New Mission Available', `New pickup at ${newOrder.pickupAddress.addressText}.`, { orderId: newOrder._id, type: 'NEW_ORDER' }, req.user?.serviceCity);
 
     return res.status(201).json({ message: 'Order created', orderId: newOrder._id, trackingToken: trackingUrlToken });
   } catch (error) {
@@ -221,12 +221,32 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Invalid code' });
     }
 
+    // Idempotency guard: a retried/duplicated "mark as DELIVERED" request
+    // (double-tap, network retry, etc.) must not re-enter the settlement
+    // flow below. If the order is already DELIVERED, treat this as a
+    // no-op success rather than running the update+settlement again.
+    if (status === 'DELIVERED' && order.status === 'DELIVERED') {
+      return res.status(200).json(order);
+    }
+
     const updateData: any = { status, updatedAt: new Date() };
     if (status === 'DELIVERED') updateData.deliveredAt = new Date();
     if (status === 'PICKED_UP') updateData['itemDetails.isPickedUp'] = true;
 
-    const updated = await Order.findOneAndUpdate({ _id: orderId, rider: riderId }, { $set: updateData }, { new: true }).populate('rider');
-    if (!updated) return res.status(500).json({ error: 'Update failed' });
+    const findFilter: any = { _id: orderId, rider: riderId };
+    if (status === 'DELIVERED') findFilter.status = { $ne: 'DELIVERED' };
+
+    const updated = await Order.findOneAndUpdate(findFilter, { $set: updateData }, { new: true }).populate('rider');
+    if (!updated) {
+      // Someone else (a concurrent duplicate request) won the race and
+      // already flipped this order to DELIVERED between our check above
+      // and this update — treat it the same way: no-op success.
+      if (status === 'DELIVERED') {
+        const current = await Order.findById(orderId).populate('rider');
+        if (current) return res.status(200).json(current);
+      }
+      return res.status(500).json({ error: 'Update failed' });
+    }
 
     setImmediate(async () => {
       const io = req.app.get('socketio');
@@ -672,6 +692,13 @@ export const snatchOrder = async (req: AuthRequest, res: Response) => {
     const order = await Order.findOne({ _id: orderId, merchant: merchantId });
     if (!order) return res.status(404).json({ error: 'Order not found or unauthorized' });
 
+    if (order.status === 'DELIVERED') {
+      return res.status(400).json({ error: 'Cannot snatch an order that is already delivered.' });
+    }
+    if (order.status === 'CANCELLED') {
+      return res.status(400).json({ error: 'Cannot snatch an order that is cancelled.' });
+    }
+
     const previousRiderId = order.rider;
 
     order.status = 'PENDING';
@@ -707,7 +734,11 @@ export const getRouteGeometry = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'At least two coordinates are required' });
     }
 
-    const orsKey = process.env.ORS_API_KEY || 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImU2MDYyYWJmMWU5NjRlNjViMDc2ZmI1YjhjODc3YzcwIiwiaCI6Im11cm11cjY0In0=';
+    const orsKey = orsConfig.apiKey;
+    if (!orsKey) {
+      logger.error('[Routing] ORS_API_KEY is not set — refusing to call OpenRouteService without it');
+      return res.status(500).json({ error: 'Routing service is not configured.' });
+    }
     const orsUrl = `https://api.openrouteservice.org/v2/directions/driving-car/geojson`;
 
     const response = await fetch(orsUrl, {
@@ -732,6 +763,12 @@ export const getRouteGeometry = async (req: Request, res: Response) => {
 };
 
 export const debugSendSMS = async (req: AuthRequest, res: Response) => {
+  // Same hard block as debugClearAllOrders: this endpoint should not exist in a
+  // live environment at all, regardless of role. 404 instead of 403 so it doesn't
+  // confirm the route exists to anyone probing for it.
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Not found' });
+  }
   try {
     const { to, message } = req.body;
     if (!to || !message) {

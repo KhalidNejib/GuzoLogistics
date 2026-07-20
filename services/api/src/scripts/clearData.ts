@@ -14,12 +14,27 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
+// ── Safety guardrails ────────────────────────────────────────────────────────
+if (process.env.NODE_ENV === 'production') {
+  throw new Error(
+    'clearData: refused to run in production. Set NODE_ENV to development or test before running this script.'
+  );
+}
+if (!process.argv.includes('--confirm')) {
+  console.error('Aborted. This script permanently deletes data. Pass --confirm to proceed.');
+  process.exit(1);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function clearData() {
   try {
     console.log('Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI!);
     console.log('Connected effectively to host:', mongoose.connection.host);
-    console.log('Database Name:', mongoose.connection.name);
+    const dbName = mongoose.connection.name;
+    console.log('⚠️  Database name that WILL be modified:', dbName);
+    console.log('Proceeding with data clear in 1 second…');
+    await new Promise(r => setTimeout(r, 1000));
 
     const collections = await mongoose.connection.db!.listCollections().toArray();
     console.log('Available collections:', collections.map(c => c.name));
