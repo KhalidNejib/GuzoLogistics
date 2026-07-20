@@ -17,6 +17,7 @@ const TrackingPage = lazy(() => import('@/pages/tracking/TrackingPage'));
 const PublicTrackingPage = lazy(() => import('@/pages/tracking/PublicTrackingPage'));
 const FleetPage = lazy(() => import('@/pages/fleet/FleetPage'));
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'));
+const AdminPage = lazy(() => import('@/pages/admin/AdminPage'));
 
 function PageLoader() {
   return (
@@ -122,6 +123,7 @@ function ProtectedApp() {
           <Route path="tracking" element={<TrackingPage />} />
           <Route path="fleet" element={<FleetPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="admin" element={<AdminPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

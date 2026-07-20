@@ -16,6 +16,7 @@ import {
   Moon,
   CheckCircle2,
   Clock,
+  Shield,
 } from 'lucide-react';
 import { UserButton, useUser, useClerk } from '@clerk/clerk-react';
 import {
@@ -50,6 +51,16 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = React.useState(() => localStorage.getItem('theme') === 'dark');
   const [notifications, setNotifications] = React.useState<any[]>([]);
   const [showNotifications, setShowNotifications] = React.useState(false);
+
+  const isAdmin = (user?.publicMetadata?.role as string)?.toUpperCase() === 'ADMIN';
+
+  const menuItems = React.useMemo(() => {
+    const items = [...navItems];
+    if (isAdmin) {
+      items.push({ name: 'Admin Panel', icon: Shield, path: '/admin' });
+    }
+    return items;
+  }, [isAdmin]);
 
   // Theme Logic
   React.useEffect(() => {
@@ -142,7 +153,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
           <SidebarContent className="py-4 px-2">
             <SidebarMenu>
-              {navItems.map((item) => (
+              {menuItems.map((item) => (
                 <SidebarMenuItem key={item.name} className="px-1">
                   <NavLink to={item.path} className="block w-full">
                     {({ isActive }) => (
@@ -290,7 +301,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     {user?.fullName || 'User'}
                   </p>
                   <p className="text-[11px] text-primary font-bold mt-1 uppercase tracking-tight">
-                    Verified Merchant
+                    {isAdmin ? 'System Administrator' : 'Verified Merchant'}
                   </p>
                 </div>
                 <UserButton afterSignOutUrl="/sign-in" />
