@@ -67,9 +67,10 @@ export default function LoginScreen() {
     try {
       if (setFunc) {
         await setFunc({ session: sessionId });
-        Alert.alert('Identity Verified', 'Welcome back! Mission parameters synchronized.', [
-          { text: 'Launch Terminal', onPress: () => router.replace('/(tabs)') },
-        ]);
+        // Navigate immediately — don't block behind an Alert.
+        // The useEffect watching isSignedIn also does this, but calling it
+        // explicitly here ensures snappy navigation without a race condition.
+        router.replace('/(tabs)');
       }
     } catch (err) {
       setLoading(false);
@@ -110,8 +111,14 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
+      // Do NOT pass a hardcoded scheme here.
+      // In Expo Go the custom scheme (guzorider://) is not registered, so the
+      // WebBrowser redirect arrives but nothing handles it — the spinner just
+      // disappears. Omitting the scheme lets expo-linking auto-select:
+      //   • exp://... in Expo Go
+      //   • guzorider://... in development builds & production APKs
       const { createdSessionId, setActive: setOAuthActive } = await startOAuthFlow({
-        redirectUrl: Linking.createURL('/', { scheme: 'guzorider' }),
+        redirectUrl: Linking.createURL('/'),
       });
 
       if (createdSessionId && setOAuthActive) {
