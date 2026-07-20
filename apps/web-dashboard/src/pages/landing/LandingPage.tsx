@@ -7,6 +7,10 @@ import { SignedIn, SignedOut } from '@clerk/clerk-react';
  * Theme:    SaaS Modern Grid & Blocks System (Accents: Rose, Violet, Amber, Blue, Emerald, Cyan)
  * Palette:  bg #030408 · grid-border white/5 · core blue #2563eb
  *           sky #0ea5e9 · neon-cyan #06b6d4 · dark-card #08090f
+ * Signature: a live "route line" — a dashed path with a traveling rider dot —
+ *           behind the hero headline, standing in for Guzo's live-tracking core.
+ *           A thin three-stripe gradient (green/yellow/red) bookends the page
+ *           in the nav and footer as a quiet nod to the product's home market.
  * Type:     Display  → 'Space Grotesk'
  *           Body     → 'Inter'
  *           Data     → 'JetBrains Mono'
@@ -68,6 +72,58 @@ function GridLines() {
 function GridDot() {
   return (
     <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.012)_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
+  );
+}
+
+/** Signature element: a live dispatch route winding behind the headline, with a
+ *  rider dot animated along the path — a direct visual echo of Guzo's live tracking. */
+function RouteSignature() {
+  return (
+    <div
+      aria-hidden="true"
+      className="absolute inset-x-0 top-10 md:top-2 h-[420px] pointer-events-none select-none z-0"
+    >
+      <svg viewBox="0 0 1200 420" className="w-full h-full opacity-40" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="guzoRouteGradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0" />
+            <stop offset="18%" stopColor="#3b82f6" stopOpacity="0.55" />
+            <stop offset="50%" stopColor="#06b6d4" stopOpacity="0.55" />
+            <stop offset="82%" stopColor="#8b5cf6" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path
+          id="guzoRoutePath"
+          d="M -60 300 C 140 300, 210 60, 410 95 S 690 350, 890 205 S 1140 45, 1320 95"
+          stroke="url(#guzoRouteGradient)"
+          strokeWidth="1.5"
+          strokeDasharray="1.5 13"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <circle r="9" fill="#3b82f6" opacity="0.25">
+          <animateMotion dur="10s" repeatCount="indefinite" rotate="auto">
+            <mpath href="#guzoRoutePath" />
+          </animateMotion>
+        </circle>
+        <circle r="4" fill="#e2e8f0">
+          <animateMotion dur="10s" repeatCount="indefinite" rotate="auto">
+            <mpath href="#guzoRoutePath" />
+          </animateMotion>
+        </circle>
+      </svg>
+    </div>
+  );
+}
+
+/** Quiet three-stripe accent — a nod to Guzo's home market, used sparingly as a page bookend. */
+function TricolorRule({ className = '' }: { className?: string }) {
+  return (
+    <div
+      className={`h-[2px] w-full ${className}`}
+      style={{ background: 'linear-gradient(90deg, #0f9d58 0%, #0f9d58 33%, #fbbc04 33%, #fbbc04 66%, #da3b2f 66%, #da3b2f 100%)', opacity: 0.55 }}
+    />
   );
 }
 
@@ -266,17 +322,17 @@ export default function LandingPage() {
       {/* ── SaaS Structural Blocks Grid & Radial spots ────────────────── */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <GridLines />
-        <div className="absolute top-[#20px] left-[20%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute top-[20px] left-[20%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px] animate-pulse" style={{ animationDuration: '8s' }} />
         <div className="absolute top-[80px] right-[10%] w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-[130px] animate-pulse" style={{ animationDuration: '12s' }} />
         <div className="absolute top-[320px] left-[40%] w-[350px] h-[350px] bg-cyan-600/5 rounded-full blur-[90px]" />
         <GridDot />
       </div>
 
       {/* ── Navigation ────────────────────────────────────────────────────── */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-305 ${scrolled ? 'bg-[#02040a]/75 backdrop-blur-xl border-b border-white/5 shadow-xl shadow-black/80' : 'bg-transparent'}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#02040a]/80 backdrop-blur-xl border-b border-white/[0.06] shadow-2xl shadow-black/60' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <a href="#top" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 transition-transform group-hover:scale-[1.04]">
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 ring-1 ring-white/10 transition-transform duration-300 group-hover:scale-105">
               <img src="/favicon.png" alt="Guzo Logo" className="w-full h-full object-cover scale-[1.08]" />
             </div>
             <div className="flex flex-col">
@@ -284,18 +340,18 @@ export default function LandingPage() {
               <span className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold mt-0.5" lang="am">ጉዞ</span>
             </div>
           </a>
-          
-          <div className="hidden sm:flex items-center gap-4">
+
+          <div className="hidden sm:flex items-center gap-3">
             <SignedOut>
-              <Link to="/sign-in" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors duration-200 px-4 py-2 hover:bg-white/5 rounded-xl">
+              <Link to="/sign-in" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors duration-200 px-4 py-2.5 hover:bg-white/[0.06] rounded-xl">
                 Sign In
               </Link>
-              <Link to="/sign-up" className="relative group overflow-hidden text-sm font-bold bg-white text-slate-950 px-5 py-2.5 rounded-xl transition-all hover:bg-slate-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+              <Link to="/sign-up" className="relative overflow-hidden text-sm font-bold bg-white text-slate-950 px-5 py-2.5 rounded-xl transition-all duration-200 hover:bg-slate-100 hover:shadow-[0_0_24px_rgba(255,255,255,0.18)] hover:-translate-y-0.5">
                 Get Started
               </Link>
             </SignedOut>
             <SignedIn>
-              <Link to="/dashboard" className="text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-blue-600/20 hover:-translate-y-0.5">
+              <Link to="/dashboard" className="text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/25 hover:-translate-y-0.5">
                 Go to Dashboard
               </Link>
             </SignedIn>
@@ -304,7 +360,7 @@ export default function LandingPage() {
           <button
             onClick={() => setMenuOpen(v => !v)}
             aria-label="Toggle menu"
-            className="sm:hidden w-9 h-9 flex items-center justify-center rounded-lg border border-white/10 text-[#EEF0F4]"
+            className="sm:hidden w-9 h-9 flex items-center justify-center rounded-lg border border-white/10 text-slate-100"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               {menuOpen ? <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />}
@@ -312,10 +368,10 @@ export default function LandingPage() {
           </button>
         </div>
 
-        <div className={`sm:hidden overflow-hidden transition-[max-height] duration-300 border-b border-white/[0.05] ${menuOpen ? 'max-h-40' : 'max-h-0'}`}>
+        <div className={`sm:hidden overflow-hidden transition-[max-height] duration-300 border-b border-white/[0.06] ${menuOpen ? 'max-h-40' : 'max-h-0'}`}>
           <div className="px-6 py-4 flex flex-col gap-2 bg-[#02040a]/95 backdrop-blur-xl">
             <SignedOut>
-              <Link to="/sign-in" onClick={() => setMenuOpen(false)} className="text-sm text-slate-400 px-3 py-2.5 rounded-lg hover:bg-white/5">Sign In</Link>
+              <Link to="/sign-in" onClick={() => setMenuOpen(false)} className="text-sm text-slate-400 px-3 py-2.5 rounded-lg hover:bg-white/[0.06]">Sign In</Link>
               <Link to="/sign-up" onClick={() => setMenuOpen(false)} className="text-sm font-semibold bg-white text-slate-950 px-3 py-2.5 rounded-xl text-center">Get Started</Link>
             </SignedOut>
             <SignedIn>
@@ -323,29 +379,35 @@ export default function LandingPage() {
             </SignedIn>
           </div>
         </div>
+
+        <TricolorRule />
       </nav>
 
       {/* ── Hero Block Area ─────────────────────────────────────────────── */}
-      <section className="relative pt-36 pb-20 px-6 content-center text-center border-b border-white/[0.04]">
+      <section className="relative pt-36 pb-20 px-6 content-center text-center border-b border-white/[0.05] overflow-hidden">
+        <RouteSignature />
+
         <div
           ref={heroRef.ref}
-          className={`max-w-4xl mx-auto relative z-10 transition-all duration-1000 ${heroRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+          className={`max-w-4xl mx-auto relative z-10 transition-all duration-1000 ease-out ${heroRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
           {/* Animated Badge */}
-          <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-400 bg-blue-500/5 border border-blue-500/20 px-4 py-2 rounded-full mb-8 backdrop-blur-md shadow-inner shadow-white/5 animate-fade-in">
+          <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-400 bg-blue-500/[0.07] border border-blue-500/20 px-4 py-2 rounded-full mb-8 backdrop-blur-md shadow-inner shadow-white/5">
             <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-pulse" />
-            Empowering Modern Enterprises
+            Built for Ethiopia's Delivery Networks
           </div>
 
           {/* Headline */}
           <h1 className="text-5xl md:text-8xl font-black tracking-tight leading-[1.05] text-white max-w-4xl mx-auto mb-8 font-display">
             The Logistics<br />
-            <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-              Operating System
+            <span className="relative inline-block">
+              <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                Operating System
+              </span>
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-slate-450 max-w-2xl mx-auto mb-10 leading-relaxed font-sans">
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed font-sans">
             Manage drivers, automate order lifecycles, and gain real-time precision tracking routes inside one robust enterprise command center.
           </p>
 
@@ -354,21 +416,21 @@ export default function LandingPage() {
             <SignedOut>
               <Link
                 to="/sign-up"
-                className="group relative inline-flex items-center gap-2 bg-gradient-to-r from-blue-650 to-blue-500 hover:from-blue-600 hover:to-blue-400 text-white font-bold px-8 py-4 rounded-xl transition-all duration-200 shadow-xl shadow-blue-500/10 hover:shadow-blue-500/20 hover:-translate-y-0.5"
+                className="group relative inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold px-8 py-4 rounded-xl transition-all duration-200 shadow-xl shadow-blue-500/15 hover:shadow-blue-500/25 hover:-translate-y-0.5"
               >
                 Launch Startup Fleet
                 <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                 </svg>
               </Link>
-              <Link to="/sign-in" className="inline-flex items-center gap-2 text-slate-350 hover:text-white border border-slate-800 hover:border-slate-700 hover:bg-slate-900/40 px-8 py-4 rounded-xl transition-all duration-200 font-semibold backdrop-blur-md">
+              <Link to="/sign-in" className="inline-flex items-center gap-2 text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 hover:bg-slate-900/40 px-8 py-4 rounded-xl transition-all duration-200 font-semibold backdrop-blur-md">
                 Administrator Login
               </Link>
             </SignedOut>
             <SignedIn>
               <Link
                 to="/dashboard"
-                className="group inline-flex items-center gap-2 bg-white text-slate-950 font-extrabold px-8 py-4 rounded-xl transition-all duration-200 hover:bg-slate-205 shadow-xl shadow-white/5 hover:-translate-y-0.5"
+                className="group inline-flex items-center gap-2 bg-white text-slate-950 font-extrabold px-8 py-4 rounded-xl transition-all duration-200 hover:bg-slate-100 shadow-xl shadow-white/5 hover:-translate-y-0.5"
               >
                 Access Control Console
                 <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
@@ -379,20 +441,20 @@ export default function LandingPage() {
           </div>
 
           {/* Modern SaaS Keyboard command tags */}
-          <div className="mt-10 flex items-center justify-center gap-2 text-xs text-slate-655">
-            <span className="px-2 py-0.5 bg-white/[0.03] border border-white/[0.06] rounded font-mono">F1</span>
+          <div className="mt-10 flex items-center justify-center gap-2 text-xs text-slate-600">
+            <span className="px-2 py-0.5 bg-white/[0.04] border border-white/[0.08] rounded font-mono">F1</span>
             <span>Open live tracking guide</span>
             <span className="mx-2">•</span>
-            <span className="px-2 py-0.5 bg-white/[0.03] border border-white/[0.06] rounded font-mono">⌘ K</span>
+            <span className="px-2 py-0.5 bg-white/[0.04] border border-white/[0.08] rounded font-mono">⌘ K</span>
             <span>Search rider telemetry</span>
           </div>
 
           {/* Trusted Companies */}
-          <div className="mt-14 pt-10 border-t border-white/[0.04]">
+          <div className="mt-14 pt-10 border-t border-white/[0.05]">
             <p className="text-xs uppercase tracking-[0.25em] text-slate-500 font-bold mb-6">Powering Delivery Crews Across Ethiopia</p>
-            <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 opacity-45">
+            <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 opacity-50">
               {partners.map((p: any) => (
-                <div key={p.name} className="text-sm font-black text-slate-400 tracking-wider hover:opacity-100 transition-opacity duration-200 select-none cursor-default">
+                <div key={p.name} className="text-sm font-black text-slate-400 tracking-wider hover:opacity-100 hover:text-slate-200 transition-all duration-200 select-none cursor-default">
                   {p.logo}
                 </div>
               ))}
@@ -402,15 +464,15 @@ export default function LandingPage() {
       </section>
 
       {/* ── Stats block strip ───────────────────────────────────────────── */}
-      <section className="relative z-10 border-b border-white/[0.04]">
+      <section className="relative z-10 border-b border-white/[0.05]">
         <div ref={statsRef.ref} className="max-w-7xl mx-auto px-6 py-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/[0.06] rounded-2xl overflow-hidden border border-white/[0.07] shadow-xl">
-            {stats.map((s: any, i: number) => (
-              <div 
-                key={s.label} 
-                className="bg-[#02040a] px-6 py-8 flex flex-col gap-1 transition-all duration-300 hover:bg-[#0c0e18]"
+          <div className={`grid grid-cols-2 md:grid-cols-4 gap-px bg-white/[0.06] rounded-2xl overflow-hidden border border-white/[0.08] shadow-xl transition-all duration-1000 ${statsRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+            {stats.map((s: any) => (
+              <div
+                key={s.label}
+                className="bg-[#02040a] px-6 py-8 flex flex-col gap-1.5 transition-colors duration-300 hover:bg-[#0c0e18]"
               >
-                <span className="font-mono text-3xl font-semibold text-white tracking-tight">{s.value}</span>
+                <span className="font-display text-3xl font-bold text-white tracking-tight tabular-nums">{s.value}</span>
                 <span className="text-xs text-slate-400 font-semibold tracking-wide">{s.label}</span>
               </div>
             ))}
@@ -419,7 +481,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Interactive Live Simulation Demo ───────────────────────────────── */}
-      <section className="px-6 py-20 relative z-10 border-b border-white/[0.04]">
+      <section className="px-6 py-20 relative z-10 border-b border-white/[0.05]">
         <div className="max-w-5xl mx-auto">
           {/* Section label */}
           <div className="text-center mb-12">
@@ -429,10 +491,10 @@ export default function LandingPage() {
 
           <div
             ref={simRef.ref}
-            className={`relative rounded-3xl overflow-hidden border border-slate-800 bg-[#070b13]/85 backdrop-blur-2xl shadow-[0_30px_100px_rgba(0,0,0,0.8)] transition-all duration-1000 ${simRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+            className={`relative rounded-3xl overflow-hidden border border-slate-800 bg-[#070b13]/85 backdrop-blur-2xl shadow-[0_30px_100px_rgba(0,0,0,0.8)] transition-all duration-1000 ease-out ${simRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
           >
             {/* Header / Chrome Mock */}
-            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-900 bg-slate-950/30">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-900 bg-slate-950/40">
               <div className="flex items-center gap-2">
                 <div className="w-3.5 h-3.5 rounded-full bg-red-500/25 border border-red-500/40" />
                 <div className="w-3.5 h-3.5 rounded-full bg-amber-500/25 border border-amber-500/40" />
@@ -446,7 +508,7 @@ export default function LandingPage() {
 
             {/* Simulated Live View */}
             <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-4 gap-6">
-              
+
               {/* Simulator Controls Side */}
               <div className="lg:col-span-1 border border-slate-900 bg-slate-950/50 rounded-2xl p-5 flex flex-col justify-between">
                 <div>
@@ -457,12 +519,12 @@ export default function LandingPage() {
                   <p className="text-slate-400 text-xs leading-relaxed mb-6 font-sans">
                     Trigger a mock dispatch sequence to test routing logic, state transitions, and GPS updater intervals.
                   </p>
-                  
+
                   {/* Status Indicator Card */}
                   <div className="border border-slate-900/80 bg-slate-950/80 rounded-xl p-3.5 space-y-2 mb-4">
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block font-mono">Simulation State</span>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-350">{getStatusLabel()}</span>
+                      <span className="text-xs font-semibold text-slate-300">{getStatusLabel()}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                         dispatchStatus === 'idle' ? 'bg-slate-900 text-slate-500' :
                         dispatchStatus === 'assigned' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
@@ -478,7 +540,7 @@ export default function LandingPage() {
                 <button
                   onClick={runSimulation}
                   disabled={dispatchStatus === 'assigned' || dispatchStatus === 'transit'}
-                  className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-extrabold text-xs text-white transition-all shadow-md shadow-blue-500/15 disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0 text-center"
+                  className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-extrabold text-xs text-white transition-all duration-200 shadow-md shadow-blue-500/15 disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0 text-center"
                 >
                   {dispatchStatus === 'idle' ? '⚡ Dispatch Mock Order' :
                    dispatchStatus === 'delivered' ? '🔄 Reset Simulation' : '🚀 Processing Path...'}
@@ -487,14 +549,14 @@ export default function LandingPage() {
 
               {/* Fake Live Screen Side */}
               <div className="lg:col-span-3 grid grid-cols-2 gap-4">
-                
+
                 {/* Metrics top */}
                 <div className="bg-[#030712] border border-slate-900 rounded-2xl p-5 flex flex-col justify-between">
                   <div>
                     <span className="text-[10px] uppercase font-extrabold tracking-widest text-slate-500 block mb-1">Rider Fleet</span>
-                    <h4 className="text-3xl font-black text-white">{activeRiders} pilots</h4>
+                    <h4 className="font-display text-3xl font-black text-white">{activeRiders} pilots</h4>
                   </div>
-                  <span className="text-xs text-emerald-400 font-bold bg-emerald-500/5 border border-emerald-500/10 px-2.5 py-1.5 rounded-lg self-start mt-4">
+                  <span className="text-xs text-emerald-400 font-bold bg-emerald-500/[0.07] border border-emerald-500/15 px-2.5 py-1.5 rounded-lg self-start mt-4">
                     Active Handshake Connects
                   </span>
                 </div>
@@ -502,7 +564,7 @@ export default function LandingPage() {
                 <div className="bg-[#030712] border border-slate-900 rounded-2xl p-5 flex flex-col justify-between">
                   <div>
                     <span className="text-[10px] uppercase font-extrabold tracking-widest text-slate-500 block mb-1">Telemetry Status</span>
-                    <h4 className="text-3xl font-black text-amber-450">99.9% Uptime</h4>
+                    <h4 className="font-display text-3xl font-black text-amber-400">99.9% Uptime</h4>
                   </div>
                   <span className="text-xs text-slate-500 font-medium mt-4 font-mono">
                     Interval updates: 2s
@@ -524,7 +586,7 @@ export default function LandingPage() {
                         <span className="text-blue-400 font-mono">{progress}%</span>
                       </div>
                       <div className="h-3 bg-slate-900/60 border border-slate-800/80 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 rounded-full transition-all duration-700 ease-out"
                           style={{ width: `${progress}%` }}
                         />
@@ -538,11 +600,11 @@ export default function LandingPage() {
                         { label: '2. Pilot Dispatched', active: progress >= 15 },
                         { label: '3. Handed Off', active: progress >= 100 },
                       ].map(step => (
-                        <div 
+                        <div
                           key={step.label}
                           className={`p-2.5 rounded-lg border text-center text-[10px] font-bold transition-all duration-500 ${
-                            step.active 
-                              ? 'bg-blue-500/5 border-blue-500/20 text-blue-400 shadow-md shadow-blue-500/5' 
+                            step.active
+                              ? 'bg-blue-500/[0.07] border-blue-500/20 text-blue-400 shadow-md shadow-blue-500/5'
                               : 'bg-transparent border-slate-900 text-slate-600'
                           }`}
                         >
@@ -563,9 +625,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── Value Proposition / Bento Grid Block pack ───────────────────────── */}
-      <section className="px-6 py-28 border-t border-white/[0.04] bg-slate-950/20">
+      <section className="px-6 py-28 border-t border-white/[0.05] bg-slate-950/20">
         <div className="max-w-6xl mx-auto">
-          
+
           <div className="text-center mb-20">
             <p className="text-xs uppercase tracking-[0.25em] text-blue-400 font-extrabold mb-3">Enterprise Core Features</p>
             <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight font-display">
@@ -575,27 +637,27 @@ export default function LandingPage() {
 
           <div
             ref={bentoRef.ref}
-            className={`grid grid-cols-1 md:grid-cols-3 gap-0.5 bg-white/[0.06] rounded-3xl overflow-hidden border border-white/[0.08] shadow-2xl transition-all duration-1000 ${
+            className={`grid grid-cols-1 md:grid-cols-3 gap-px bg-white/[0.06] rounded-3xl overflow-hidden border border-white/[0.08] shadow-2xl transition-all duration-1000 ease-out ${
               bentoRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
             {features.map((f: any) => (
-              <div 
+              <div
                 key={f.title}
                 className={`group relative bg-[#02040a] p-8 flex flex-col justify-between gap-6 transition-all duration-300 hover:bg-[#0c0e18] ${f.glow}`}
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center mb-6 group-hover:scale-105 group-hover:border-white/[0.12] transition-transform">
-                    {f.icon}
+                  <div className="w-12 h-12 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center mb-6 text-slate-300 group-hover:scale-105 group-hover:border-white/[0.14] transition-transform duration-300">
+                    <span className={f.text}>{f.icon}</span>
                   </div>
                   <h3 className="font-extrabold text-lg text-white mb-2 tracking-tight">{f.title}</h3>
-                  <p className="text-slate-450 text-sm leading-relaxed font-sans">{f.desc}</p>
+                  <p className="text-slate-400 text-sm leading-relaxed font-sans">{f.desc}</p>
                 </div>
-                
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider group-hover:text-blue-400 transition-colors">
+
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider group-hover:text-blue-400 transition-colors duration-300">
                   Learn more →
                 </span>
-                
+
                 <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${f.color} rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
               </div>
             ))}
@@ -605,10 +667,10 @@ export default function LandingPage() {
       </section>
 
       {/* ── Animated How It Works Section ───────────────────────────────────── */}
-      <section className="px-6 py-28 border-t border-white/[0.04] relative">
+      <section className="px-6 py-28 border-t border-white/[0.05] relative">
         <div className="absolute right-0 top-1/4 w-[300px] h-[300px] bg-violet-600/5 rounded-full blur-[100px] pointer-events-none" />
         <div className="max-w-5xl mx-auto">
-          
+
           <div className="text-center mb-20">
             <p className="text-xs uppercase tracking-[0.25em] text-violet-400 font-extrabold mb-3">Getting Started</p>
             <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight">Setup takes under 10 minutes</h2>
@@ -616,18 +678,18 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
             {steps.map((s: any, i: number) => (
-              <div key={s.n} className="flex flex-col items-center text-center group p-6 bg-white/[0.012] border border-white/[0.04] rounded-2xl hover:border-white/[0.1] transition-all duration-300">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600/10 via-violet-600/5 to-transparent border border-slate-800 flex items-center justify-center text-blue-400 font-black text-xl mb-6 group-hover:border-blue-500/30 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.1)] transition-all">
+              <div key={s.n} className="flex flex-col items-center text-center group p-6 bg-white/[0.015] border border-white/[0.05] rounded-2xl hover:border-white/[0.12] hover:-translate-y-1 transition-all duration-300">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600/10 via-violet-600/5 to-transparent border border-slate-800 flex items-center justify-center text-blue-400 font-display font-black text-xl mb-6 group-hover:border-blue-500/30 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.12)] transition-all duration-300">
                   {s.n}
                 </div>
                 <h3 className="font-bold text-lg text-white mb-2">{s.title}</h3>
-                <p className="text-slate-450 text-sm leading-relaxed max-w-xs font-sans">{s.desc}</p>
-                
+                <p className="text-slate-400 text-sm leading-relaxed max-w-xs font-sans">{s.desc}</p>
+
                 {/* Horizontal line connector for desktop */}
                 {i < steps.length - 1 && (
-                  <div 
+                  <div
                     style={{ left: `calc(${33.3 * (i + 1)}% - 50px)` }}
-                    className="hidden md:block absolute top-14 w-[100px] h-0.5 bg-slate-800" 
+                    className="hidden md:block absolute top-14 w-[100px] border-t border-dashed border-slate-800"
                   />
                 )}
               </div>
@@ -637,9 +699,9 @@ export default function LandingPage() {
         </div>
       </section>
       {/* ── FAQ Accordion Section ───────────────────────────────────────────── */}
-      <section className="px-6 py-28 border-t border-white/[0.04] bg-slate-950/10">
+      <section className="px-6 py-28 border-t border-white/[0.05] bg-slate-950/10">
         <div className="max-w-3xl mx-auto">
-          
+
           <div className="text-center mb-16">
             <p className="text-xs uppercase tracking-[0.25em] text-cyan-400 font-extrabold mb-3">Frequently Asked Questions</p>
             <h2 className="text-3xl md:text-4xl font-extrabold text-white">Got Questions? We got answers.</h2>
@@ -647,25 +709,25 @@ export default function LandingPage() {
 
           <div className="space-y-4">
             {faqs.map((faq: any, i: number) => (
-              <div 
+              <div
                 key={faq.q}
-                className="border border-slate-900 bg-slate-950/60 rounded-xl overflow-hidden transition-all duration-300 hover:border-slate-800/80"
+                className="border border-slate-900 bg-slate-950/60 rounded-xl overflow-hidden transition-colors duration-300 hover:border-slate-800"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between p-5 text-left font-bold text-sm md:text-base text-white select-none hover:bg-slate-900/20 active:bg-slate-900/40 transition-colors"
+                  className="w-full flex items-center justify-between p-5 text-left font-bold text-sm md:text-base text-white select-none hover:bg-slate-900/25 active:bg-slate-900/40 transition-colors duration-200"
                 >
                   <span className="font-sans">{faq.q}</span>
-                  <svg 
-                    className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`}
-                    fill="none" 
-                    stroke="currentColor" 
+                  <svg
+                    className={`w-4 h-4 shrink-0 ml-4 text-slate-400 transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                   </svg>
                 </button>
-                <div 
+                <div
                   className={`transition-all duration-300 ease-in-out overflow-hidden ${
                     openFaq === i ? 'max-h-[220px] border-t border-slate-900/60 p-5' : 'max-h-0'
                   }`}
@@ -680,26 +742,26 @@ export default function LandingPage() {
       </section>
 
       {/* ── Ready to Scale Call to Action ───────────────────────────────────── */}
-      <section className="px-6 py-28 border-t border-white/[0.04]">
+      <section className="px-6 py-28 border-t border-white/[0.05]">
         <div className="max-w-4xl mx-auto">
-          
+
           <div className="relative rounded-[2.5rem] overflow-hidden border border-slate-800 bg-gradient-to-br from-[#060c18] via-[#040810] to-transparent p-12 text-center shadow-[0_30px_90px_rgba(0,0,0,0.6)]">
             <div className="absolute inset-0 bg-[#02040a]/40 backdrop-blur-3xl" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.1),transparent_75%)] pointer-events-none" />
             <GridDot />
-            
+
             <div className="relative z-10 space-y-6">
               <p className="text-xs uppercase tracking-[0.25em] text-blue-400 font-extrabold">Ready to begin?</p>
               <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">Start managing your<br />fleet today</h2>
-              <p className="text-[#8B93A7] text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+              <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
                 Connect your riders, automate COD bank paydowns, and get reliable delivery telemetry. Zero startup fee.
               </p>
-              
+
               <div className="pt-6 flex flex-col sm:flex-row gap-4 justify-center">
                 <SignedOut>
                   <Link
                     to="/sign-up"
-                    className="group inline-flex items-center justify-center gap-2 bg-white text-slate-950 font-bold px-8 py-4.5 rounded-xl hover:bg-slate-200 transition-all shadow-lg hover:-translate-y-0.5 active:translate-y-0"
+                    className="group inline-flex items-center justify-center gap-2 bg-white text-slate-950 font-bold px-8 py-[18px] rounded-xl hover:bg-slate-100 transition-all duration-200 shadow-lg hover:-translate-y-0.5 active:translate-y-0"
                   >
                     Setup Free Merchant
                     <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
@@ -708,7 +770,7 @@ export default function LandingPage() {
                   </Link>
                   <a
                     href="mailto:support@guzologistics.com"
-                    className="inline-flex items-center justify-center gap-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/20 text-slate-350 font-bold px-8 py-4.5 rounded-xl transition-all"
+                    className="inline-flex items-center justify-center gap-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/20 text-slate-300 font-bold px-8 py-[18px] rounded-xl transition-all duration-200"
                   >
                     Discuss Enterprise SLA
                   </a>
@@ -716,7 +778,7 @@ export default function LandingPage() {
                 <SignedIn>
                   <Link
                     to="/dashboard"
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4.5 rounded-xl transition-all shadow-lg shadow-blue-500/10 hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-[18px] rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/15 hover:-translate-y-0.5"
                   >
                     Navigate to Dashboard →
                   </Link>
@@ -729,36 +791,39 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-white/[0.04] bg-slate-950/45 px-6 py-16">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-650 flex items-center justify-center border border-white/[0.08] shadow-md shadow-blue-550/10">
-              <img src="/favicon.png" alt="Guzo Logo" className="w-full h-full object-cover scale-[1.08]" />
+      <footer className="border-t border-white/[0.05] bg-slate-950/45">
+        <TricolorRule />
+        <div className="px-6 py-16">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-600 flex items-center justify-center border border-white/[0.08] shadow-md shadow-blue-500/10">
+                <img src="/favicon.png" alt="Guzo Logo" className="w-full h-full object-cover scale-[1.08]" />
+              </div>
+              <div>
+                <p className="font-extrabold text-white text-base tracking-tight leading-tight">GUZO Logistics</p>
+                <p className="text-[10px] text-slate-500 tracking-wider">Enterprise-grade dispatch networks</p>
+              </div>
             </div>
-            <div>
-              <p className="font-extrabold text-white text-base tracking-tight leading-tight">GUZO Logistics</p>
-              <p className="text-[10px] text-slate-500 tracking-wider">Enterprise-grade dispatch networks</p>
+
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-xs font-semibold text-slate-400">
+              <a href="mailto:support@guzologistics.com" className="hover:text-white transition-colors">support@guzologistics.com</a>
+              <span className="font-mono">+251 900 11 22 33</span>
+              <Link to="/sign-up" className="hover:text-white transition-colors">Register Hub</Link>
+              <button
+                onClick={() => { throw new Error('Guzo Test Error: Sentry configuration verified.'); }}
+                className="hover:text-red-400 transition-colors text-[10px] uppercase tracking-wider font-bold border border-slate-900/60 bg-[#02040a] px-2.5 py-1 rounded-lg cursor-pointer"
+              >
+                Test Diagnostics
+              </button>
             </div>
-          </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-xs font-semibold text-slate-400">
-            <a href="mailto:support@guzologistics.com" className="hover:text-white transition-colors">support@guzologistics.com</a>
-            <span className="font-mono">+251 900 11 22 33</span>
-            <Link to="/sign-up" className="hover:text-white transition-colors">Register Hub</Link>
-            <button 
-              onClick={() => { throw new Error('Guzo Test Error: Sentry configuration verified.'); }} 
-              className="hover:text-red-400 transition-colors text-[10px] uppercase tracking-wider font-bold border border-slate-900/60 bg-[#02040a] px-2.5 py-1 rounded-lg cursor-pointer"
-            >
-              Test Diagnostics
-            </button>
-          </div>
+            <div className="flex flex-col items-center md:items-end gap-1.5 text-[11px] text-slate-500 font-medium">
+              <p>© 2026 Guzo Logistics. All rights reserved.</p>
+              <p>Built for scale in Addis Ababa, Ethiopia.</p>
+            </div>
 
-          <div className="flex flex-col items-center md:items-end gap-1.5 text-[11px] text-slate-500 font-medium">
-            <p>© 2026 Guzo Logistics. All rights reserved.</p>
-            <p>Built for scale in Addis Ababa, Ethiopia.</p>
           </div>
-
         </div>
       </footer>
 
