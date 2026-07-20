@@ -111,23 +111,54 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      // Do NOT pass a hardcoded scheme here.
-      // In Expo Go the custom scheme (guzorider://) is not registered, so the
-      // WebBrowser redirect arrives but nothing handles it — the spinner just
-      // disappears. Omitting the scheme lets expo-linking auto-select:
-      //   • exp://... in Expo Go
-      //   • guzorider://... in development builds & production APKs
-      const { createdSessionId, setActive: setOAuthActive } = await startOAuthFlow({
-        redirectUrl: Linking.createURL('/'),
-      });
+      // Linking.createURL('/') without a scheme auto-selects:
+      //   exp://... in Expo Go  |  guzorider://... in prod builds
+      const redirectUrl = Linking.createURL('/');
+      console.log('[OAuth] Starting Google flow, redirectUrl =', redirectUrl);
+
+      const result = await startOAuthFlow({ redirectUrl });
+      const { createdSessionId, setActive: setOAuthActive, signUp, signIn } = result;
+
+      // Log the full result so we can see exactly what Clerk returned
+      console.log('[OAuth] Result:', JSON.stringify({
+        createdSessionId: createdSessionId ?? null,
+        signUpStatus: signUp?.status ?? null,
+        signInStatus: signIn?.status ?? null,
+        missingFields: signUp?.missingFields ?? null,
+      }));
 
       if (createdSessionId && setOAuthActive) {
+        // ── Case 1: Returning user ─────────────────────────────────────
         await handleSuccess(createdSessionId, setOAuthActive);
-      } else {
+
+      } else if (signUp?.createdSessionId && setOAuthActive) {
+        // ── Case 2: Brand-new user — sign-up auto-completed ───────────
+        console.log('[OAuth] New user session created via signUp');
+        await handleSuccess(signUp.createdSessionId, setOAuthActive);
+
+      } else if (signUp?.status === 'missing_requirements') {
+        // ── Case 3: New user missing required fields (e.g. phone) ──────
         setLoading(false);
+        Alert.alert(
+          'Almost there',
+          `Your Google account is linked but we need a bit more info.\n\nMissing: ${signUp.missingFields?.join(', ') || 'some details'}.\n\nPlease register with email/password instead.`,
+        );
+
+      } else {
+        // ── Case 4: Flow was cancelled or redirect not received ────────
+        console.warn('[OAuth] Google sign-in did not complete. createdSessionId was null.');
+        console.warn('[OAuth] Make sure your Expo Go redirect URL is added to Clerk dashboard:');
+        console.warn('[OAuth] Redirect URL to add:', redirectUrl);
+        setLoading(false);
+        Alert.alert(
+          'Sign-in Incomplete',
+          `Google sign-in did not complete.\n\nIf this keeps happening, add this redirect URL to your Clerk dashboard:\n\n${redirectUrl}`,
+        );
       }
     } catch (err: any) {
+      console.error('[OAuth] Error:', err?.message || err);
       setLoading(false);
+      Alert.alert('Google Sign-in Failed', err?.message || 'Something went wrong. Please try again.');
     }
   }, [startOAuthFlow, loading]);
 
