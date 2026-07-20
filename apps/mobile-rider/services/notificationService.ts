@@ -1,4 +1,4 @@
-import * as Notifications from 'expo-notifications';
+import { Notifications } from './safeNotifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 

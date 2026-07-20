@@ -103,6 +103,23 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     elevation: 32, zIndex: 10,
   },
   dragger: { width: 44, height: 5, borderRadius: 3, backgroundColor: isDark ? '#475569' : '#f1f5f9' },
+
+  // Sheet cap: sits ABOVE the status card and tactical strip (zIndex 999/1000) so the
+  // collapse chevron is never hidden, no matter how the sheet or status card are positioned.
+  sheetCap: {
+    position: 'absolute', left: 0, right: 0, bottom: height * 0.42 - 10, height: 40,
+    backgroundColor: isDark ? '#0f172a' : 'white',
+    borderTopLeftRadius: 36, borderTopRightRadius: 36,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: isDark ? 0.2 : 0.05, shadowRadius: 10,
+    zIndex: 1002, elevation: 40,
+  },
+  sheetCapToggle: {
+    position: 'absolute', right: 20, top: 4, width: 32, height: 32, borderRadius: 16,
+    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)',
+  },
   tabs: { 
     flexDirection: 'row', paddingHorizontal: 24, paddingVertical: 16, gap: 8,
     backgroundColor: isDark ? '#0f172a' : 'white',
@@ -137,6 +154,13 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     width: '100%', height: 72, backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderRadius: 36,
     justifyContent: 'center', alignItems: 'center', position: 'relative',
     marginBottom: 24, paddingHorizontal: 4, borderWidth: 1, borderColor: isDark ? '#334155' : '#f1f5f9', overflow: 'hidden',
+  },
+  sliderHintRow: {
+    position: 'absolute', right: 24, flexDirection: 'row', alignItems: 'center', gap: 6,
+  },
+  sliderHintText: {
+    fontSize: 10, fontWeight: '900', letterSpacing: 1.5, textTransform: 'uppercase',
+    color: isDark ? '#475569' : '#cbd5e1',
   },
   sliderHandle: {
     position: 'absolute', left: 4, width: 64, height: 64, borderRadius: 32,

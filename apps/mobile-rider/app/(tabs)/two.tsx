@@ -10,6 +10,8 @@ import { BlurView } from 'expo-blur';
 import { socketService } from '../../services/socketService';
 import { useLanguage } from '../../services/i18n';
 import { settingService, RiderSettings } from '../../services/settingService';
+import { getTierInfo } from '../../services/tierService';
+import { activityService } from '../../services/activityService';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -34,6 +36,13 @@ export default function RiderProfile() {
   const isDark = preferences?.darkMode || false;
   const styles = getStyles(isDark);
 
+  const [unreadCount, setUnreadCount] = useState(0);
+  useEffect(() => {
+    return activityService.subscribe((entries) => {
+      setUnreadCount(entries.filter((e) => !e.read).length);
+    });
+  }, []);
+
   const [showSettleModal, setShowSettleModal] = useState(false);
   const [settleAmount, setSettleAmount] = useState('');
   const [settleRef, setSettleRef] = useState('');
@@ -42,6 +51,7 @@ export default function RiderProfile() {
   const [proofImageUrl, setProofImageUrl] = useState<string | null>(null);
   const [isUploadingProof, setIsUploadingProof] = useState(false);
   const [showProofFullscreen, setShowProofFullscreen] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const openSettleModal = () => {
     setSettleAmount(stats.cashHeld.toString());
@@ -93,6 +103,54 @@ export default function RiderProfile() {
         } catch { Alert.alert('Error', 'Upload failed'); } finally { setIsUploadingProof(false); }
       }
     }
+  };
+
+  const changeAvatarPhoto = async (source: 'camera' | 'gallery') => {
+    const permission = source === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permission.status !== 'granted') { Alert.alert('Permission needed', 'Please allow access to change your photo.'); return; }
+    const result = source === 'camera'
+      ? await ImagePicker.launchCameraAsync({ base64: true, quality: 0.7, allowsEditing: true, aspect: [1, 1] })
+      : await ImagePicker.launchImageLibraryAsync({ base64: true, quality: 0.7, allowsEditing: true, aspect: [1, 1] });
+    if (result.canceled || !result.assets[0]?.base64) return;
+
+    try {
+      setIsUploadingAvatar(true);
+      Haptics.selectionAsync();
+      const token = await getToken();
+      const uploadRes = await fetch(`${API_URL}/api/v1/merchant/upload-image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
+        body: JSON.stringify({ imageBase64: result.assets[0].base64, documentType: 'profile' }),
+      });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload failed');
+
+      const patchRes = await fetch(`${API_URL}/api/v1/user/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
+        body: JSON.stringify({ profilePhotoUrl: uploadData.url }),
+      });
+      if (!patchRes.ok) throw new Error('Failed to save photo');
+
+      setFullProfile((prev: any) => ({
+        ...prev,
+        riderProfile: { ...(prev?.riderProfile || {}), profilePhotoUrl: uploadData.url },
+      }));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err) {
+      console.error('Avatar update failed:', err);
+      Alert.alert('Error', 'Could not update your photo. Please try again.');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const pickAvatarSource = () => {
+    Alert.alert('Change Photo', 'Choose a source', [
+      { text: 'Take Photo', onPress: () => changeAvatarPhoto('camera') },
+      { text: 'Choose from Library', onPress: () => changeAvatarPhoto('gallery') },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   const handleSettleRequest = async () => {
@@ -160,10 +218,19 @@ export default function RiderProfile() {
 
   const onRefresh = useCallback(() => { setRefreshing(true); fetchProfileData(); }, [fetchProfileData]);
 
+  // Real per-rider rank, derived from the delivered-order count already
+  // fetched above — no more hardcoded "Gold status unlocked" for everyone.
+  const tierInfo = getTierInfo(stats.deliveries);
+
   const menuItems = [
+    { icon: 'user', label: 'Edit Profile', color: '#eef2ff', iconColor: '#6366f1', sub: 'Name, phone & photo', route: '/profile/edit' },
     { icon: 'trending-up', label: 'Earning Analytics', color: '#ecfdf5', iconColor: '#10b981', sub: 'View daily payouts', route: '/profile/earnings' },
+    { icon: 'clock', label: 'Mission History', color: '#fdf4ff', iconColor: '#a855f7', sub: 'Past deliveries & details', route: '/profile/history' },
+    { icon: 'bell', label: 'Activity', color: '#fff1f2', iconColor: '#f43f5e', sub: unreadCount > 0 ? `${unreadCount} unread` : 'Alerts & updates', route: '/profile/activity' },
     { icon: 'shield', label: 'Trust & Safety', color: '#eff6ff', iconColor: '#3b82f6', sub: 'Guidelines & metrics', route: '/profile/safety' },
-    { icon: 'award', label: 'Rider Tier', color: '#fffbeb', iconColor: '#f59e0b', sub: 'Gold status unlocked', route: '/profile/tier' },
+    { icon: 'file-text', label: 'Documents', color: '#f0f9ff', iconColor: '#0284c7', sub: 'License, ID & vehicle', route: '/profile/documents' },
+    { icon: 'award', label: 'Rider Tier', color: '#fffbeb', iconColor: '#f59e0b', sub: `${tierInfo.tier.label} status \u2022 ${tierInfo.points} pts`, route: '/profile/tier' },
+    { icon: 'life-buoy', label: 'Help & Support', color: '#f0fdfa', iconColor: '#0ea5a3', sub: 'Call, chat & FAQs', route: '/profile/support' },
     { icon: 'settings', label: 'Terminal Settings', color: '#f8fafc', iconColor: '#64748b', sub: 'Preferences & sound', route: '/profile/settings' },
   ];
 
@@ -192,13 +259,13 @@ export default function RiderProfile() {
                 <Feather name="refresh-cw" size={12} color="#6366f1" />
              </TouchableOpacity>
 
-             <TouchableOpacity style={styles.backBtn}>
+             <TouchableOpacity style={styles.backBtn} onPress={() => router.push('/profile/edit')} accessibilityLabel="Edit profile" accessibilityRole="button">
                 <Feather name="more-vertical" size={20} color={isDark ? "#f8fafc" : "#0f172a"} />
              </TouchableOpacity>
           </View>
 
           <View style={styles.profileInfo}>
-            <View style={styles.avatarContainer}>
+            <TouchableOpacity style={styles.avatarContainer} onPress={pickAvatarSource} disabled={isUploadingAvatar} accessibilityLabel="Change profile photo" accessibilityRole="button">
               <View style={styles.avatarWrapper}>
                 <Image
                   source={{ uri: fullProfile?.riderProfile?.profilePhotoUrl || user?.imageUrl || 'https://via.placeholder.com/150' }}
@@ -206,9 +273,9 @@ export default function RiderProfile() {
                 />
               </View>
               <View style={styles.cameraBtn}>
-                <Feather name="camera" size={16} color="white" />
+                {isUploadingAvatar ? <ActivityIndicator size="small" color="white" /> : <Feather name="camera" size={16} color="white" />}
               </View>
-            </View>
+            </TouchableOpacity>
             <Text style={styles.roleText}>Authenticated Pilot</Text>
             <Text style={styles.userName}>{fullProfile?.fullName || user?.fullName || 'Operative'}</Text>
             <View style={styles.verifiedBadge}>

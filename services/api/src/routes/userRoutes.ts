@@ -183,13 +183,132 @@ router.get('/me', requireUser, async (req: AuthRequest, res: Response) => {
     const user = await User.findById(userId).select('-clerkId').lean() as any;
     
     if (user?.role === 'RIDER') {
-      const riderProfile = await RiderProfile.findOne({ user: userId }).lean();
+      const riderProfile: any = await RiderProfile.findOne({ user: userId }).lean();
       (user as unknown as { riderProfile: any }).riderProfile = riderProfile;
+
+      // Attach basic merchant contact info so the app can offer a real
+      // "Contact Fleet Manager" action (call/email) instead of a dead label,
+      // e.g. on the pending-review / rejected / deactivated gate screens.
+      if (riderProfile?.merchant) {
+        const merchant = await User.findById(riderProfile.merchant)
+          .select('fullName businessName phoneNumber supportEmail email')
+          .lean() as any;
+        if (merchant) {
+          (user as unknown as { fleetContact: any }).fleetContact = {
+            name: merchant.businessName || merchant.fullName,
+            phoneNumber: merchant.phoneNumber,
+            email: merchant.supportEmail || merchant.email,
+          };
+        }
+      }
     }
 
     return res.json(user);
   } catch (_error) {
     return res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+/**
+ * @route   PATCH /api/user/profile
+ * @desc    Self-service profile edit: name, phone, avatar, emergency contact.
+ *          Deliberately separate from /rider-onboarding — that route resets
+ *          onboardingStatus to IN_REVIEW and requires the full vehicle form,
+ *          which is wrong for "I just want to change my photo/phone number."
+ *          This route never touches onboardingStatus, fleetKey, or vehicle
+ *          fields, so an already-APPROVED rider stays approved.
+ * @access  Private
+ */
+router.patch('/profile', requireUser, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { fullName, phoneNumber, profilePhotoUrl, emergencyContact } = req.body;
+
+    const userUpdate: Record<string, unknown> = {};
+    if (typeof fullName === 'string' && fullName.trim()) userUpdate.fullName = fullName.trim();
+    if (typeof phoneNumber === 'string' && phoneNumber.trim()) userUpdate.phoneNumber = phoneNumber.trim();
+
+    const updatedUser = Object.keys(userUpdate).length
+      ? await User.findByIdAndUpdate(userId, userUpdate, { new: true, runValidators: true }).select('-clerkId').lean() as any
+      : await User.findById(userId).select('-clerkId').lean() as any;
+
+    let updatedRiderProfile = null;
+    if (req.user?.role === 'RIDER') {
+      const profileUpdate: Record<string, unknown> = {};
+      if (typeof profilePhotoUrl === 'string' && profilePhotoUrl.trim()) {
+        profileUpdate.profilePhotoUrl = profilePhotoUrl.trim();
+      }
+      if (emergencyContact && typeof emergencyContact === 'object') {
+        const { name, phone, relationship } = emergencyContact;
+        profileUpdate.emergencyContact = {
+          name: typeof name === 'string' ? name.trim() : '',
+          phone: typeof phone === 'string' ? phone.trim() : '',
+          relationship: typeof relationship === 'string' ? relationship.trim() : '',
+        };
+      }
+      updatedRiderProfile = Object.keys(profileUpdate).length
+        ? await RiderProfile.findOneAndUpdate({ user: userId }, profileUpdate, { new: true, runValidators: true }).lean()
+        : await RiderProfile.findOne({ user: userId }).lean();
+    }
+
+    return res.json({
+      message: 'Profile updated.',
+      user: updatedUser,
+      riderProfile: updatedRiderProfile,
+    });
+  } catch (error: any) {
+    console.error('Error updating profile:', error);
+    return res.status(500).json({ error: error.message || 'Failed to update profile' });
+  }
+});
+
+/**
+ * @route   PATCH /api/user/documents
+ * @desc    Rider re-submits a single compliance document (license, ID, or
+ *          vehicle photo) after rejection or expiry. Unlike /profile, this
+ *          intentionally DOES flip the rider back to IN_REVIEW — compliance
+ *          documents need a human to re-check them — but it does so without
+ *          requiring the whole onboarding form again.
+ * @access  Private (Rider Only)
+ */
+router.patch('/documents', requireUser, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (req.user?.role !== 'RIDER') return res.status(403).json({ error: 'Riders only.' });
+
+    const { licensePhotoUrl, idPhotoUrl, faydaIdPhotoUrl, vehiclePhotoUrl } = req.body;
+    const update: Record<string, unknown> = {};
+    if (typeof licensePhotoUrl === 'string' && licensePhotoUrl.trim()) update.licensePhotoUrl = licensePhotoUrl.trim();
+    if (typeof idPhotoUrl === 'string' && idPhotoUrl.trim()) update.idPhotoUrl = idPhotoUrl.trim();
+    if (typeof faydaIdPhotoUrl === 'string' && faydaIdPhotoUrl.trim()) update.faydaIdPhotoUrl = faydaIdPhotoUrl.trim();
+    if (typeof vehiclePhotoUrl === 'string' && vehiclePhotoUrl.trim()) update.vehiclePhotoUrl = vehiclePhotoUrl.trim();
+
+    if (!Object.keys(update).length) {
+      return res.status(400).json({ error: 'No document provided.' });
+    }
+
+    update.onboardingStatus = 'IN_REVIEW';
+    update.rejectionReason = null;
+
+    const profile = await RiderProfile.findOneAndUpdate({ user: userId }, update, { new: true, runValidators: true });
+    if (!profile) return res.status(404).json({ error: 'Rider profile not found.' });
+
+    const io = req.app.get('socketio');
+    if (io && profile.merchant) {
+      io.to(`merchant:${profile.merchant.toString()}`).emit('pilot_document_resubmitted', {
+        riderId: userId,
+        riderName: req.user?.fullName,
+        updatedFields: Object.keys(update).filter((k) => k !== 'onboardingStatus' && k !== 'rejectionReason'),
+      });
+    }
+
+    return res.json({ message: 'Document submitted for review.', profile });
+  } catch (error: any) {
+    console.error('Error updating documents:', error);
+    return res.status(500).json({ error: error.message || 'Failed to update documents' });
   }
 });
 

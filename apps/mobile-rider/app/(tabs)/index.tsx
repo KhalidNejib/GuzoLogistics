@@ -32,7 +32,7 @@ import { BlurView } from 'expo-blur';
 import { Audio } from 'expo-av';
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
-import * as Notifications from 'expo-notifications';
+import { Notifications } from '../../services/safeNotifications';
 import NetInfo from '@react-native-community/netinfo';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
@@ -1047,7 +1047,7 @@ export default function RiderDashboard() {
                   <View style={{ flexDirection: 'row', gap: 6 }}>
                      {focusedOrder.status === 'PICKED_UP' && (
                         <TouchableOpacity 
-                          style={{ backgroundColor: '#f59e0b', width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }} 
+                          style={{ backgroundColor: '#f59e0b', width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }} 
                           onPress={() => handleUpdateStatus('ARRIVED_DELIVERY', undefined, undefined, focusedOrder._id)}
                         >
                           <MaterialCommunityIcons name="map-marker-radius" size={18} color="white" />
@@ -1063,7 +1063,7 @@ export default function RiderDashboard() {
                   </View>
                 ) : (
                    <TouchableOpacity 
-                    style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9', width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }} 
+                    style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9', width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }} 
                     onPress={() => { setSelectedOrder(focusedOrder); setShowDetailModal(true); }}
                   >
                     <Feather name="chevron-right" size={18} color="#4f46e5" />
@@ -1077,44 +1077,45 @@ export default function RiderDashboard() {
 
       {/* BOTTOM PANEL */}
       {isOnline ? (
-        <Animated.View style={[styles.bottomSheet, { transform: [{ translateY: sheetTranslateY }], paddingBottom: Math.max(insets.bottom, 34) + 10 }]} {...sheetPanResponder.panHandlers}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12, marginBottom: 6, position: 'relative', width: '100%', height: 24 }}>
+        <>
+          {/* Sheet cap: dragger + collapse toggle, lifted onto its own top layer so the
+              floating status card (zIndex 999) can never paint over it. Shares the sheet's
+              transform and pan handlers so drag-to-collapse behaves exactly as before. */}
+          <Animated.View
+            style={[styles.sheetCap, { transform: [{ translateY: sheetTranslateY }] }]}
+            {...sheetPanResponder.panHandlers}
+          >
             <View style={styles.dragger} />
-            <TouchableOpacity 
-              style={{ 
-                position: 'absolute', 
-                right: 20, 
-                top: -4,
-                width: 32, 
-                height: 32, 
-                borderRadius: 16, 
-                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                borderWidth: 1,
-                borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                zIndex: 100
-              }}
+            <TouchableOpacity
+              style={styles.sheetCapToggle}
               onPress={() => {
                 const nextState = !isSheetCollapsed;
                 setIsSheetCollapsed(nextState);
                 snapSheet(nextState ? 'bottom' : 'middle');
               }}
             >
-              <Feather 
-                name={isSheetCollapsed ? "chevron-up" : "chevron-down"} 
-                size={16} 
-                color={isDark ? '#cbd5e1' : '#475569'} 
+              <Feather
+                name={isSheetCollapsed ? "chevron-up" : "chevron-down"}
+                size={16}
+                color={isDark ? '#cbd5e1' : '#475569'}
               />
             </TouchableOpacity>
-          </View>
+          </Animated.View>
+
+          <Animated.View style={[styles.bottomSheet, { transform: [{ translateY: sheetTranslateY }], paddingBottom: Math.max(insets.bottom, 34) + 10 }]} {...sheetPanResponder.panHandlers}>
+          <View style={{ height: 22 }} />
           <View style={styles.tabs}>
             {[
-              { id: 'PENDING', label: t('tabs.pending') },
-              { id: 'ACTIVE', label: t('tabs.active') },
-              { id: 'HISTORY', label: t('tabs.history') }
+              { id: 'PENDING', label: t('tabs.pending'), icon: 'time-outline' },
+              { id: 'ACTIVE', label: t('tabs.active'), icon: 'navigate-outline' },
+              { id: 'HISTORY', label: t('tabs.history'), icon: 'checkmark-done-outline' }
             ].map(tab => (
               <TouchableOpacity key={tab.id} style={[styles.tab, activeTab === tab.id && styles.tabActive]} onPress={() => setActiveTab(tab.id as any)}>
+                <Ionicons
+                  name={tab.icon as any}
+                  size={13}
+                  color={activeTab === tab.id ? 'white' : (isDark ? '#94a3b8' : '#64748b')}
+                />
                 <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>{tab.label}</Text>
               </TouchableOpacity>
             ))}
@@ -1146,6 +1147,7 @@ export default function RiderDashboard() {
             </View>
           </ScrollView>
         </Animated.View>
+        </>
       ) : (
         <View style={[styles.offlinePanel, { paddingBottom: Math.max(insets.bottom, 34) + 15 }]}>
           <View style={styles.offlineCenter}>
@@ -1153,6 +1155,13 @@ export default function RiderDashboard() {
             <Text style={styles.offlineSub}>{t('home.go_online')}</Text>
           </View>
           <View style={styles.sliderTrack}>
+            <View style={styles.sliderHintRow} pointerEvents="none">
+              <Text style={styles.sliderHintText}>{t('home.go_online')}</Text>
+              <View style={{ flexDirection: 'row', gap: 2 }}>
+                <Feather name="chevron-right" size={14} color={isDark ? '#334155' : '#cbd5e1'} />
+                <Feather name="chevron-right" size={14} color={isDark ? '#475569' : '#e2e8f0'} style={{ marginLeft: -8 }} />
+              </View>
+            </View>
             <Animated.View style={[styles.sliderHandle, { transform: [{ translateX: slideX }] }]} {...sliderPanResponder.panHandlers}>
               <MaterialCommunityIcons name="power" size={24} color="white" />
             </Animated.View>
