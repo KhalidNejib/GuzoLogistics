@@ -224,10 +224,10 @@ export default function SettingsPage() {
                     {formData.businessName || 'Business Name'}
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase font-black text-slate-400">
+                    <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500">
                       Operational Key:
                     </span>
-                    <code className="bg-slate-100 px-2 py-0.5 rounded font-bold text-xs text-slate-700 font-mono tracking-tighter">
+                    <code className="bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded font-bold text-xs text-slate-700 dark:text-slate-350 font-mono tracking-tighter">
                       {profile?.fleetKey || 'Generating...'}
                     </code>
                   </div>
@@ -350,21 +350,21 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="p-6 rounded-2xl border border-blue-100 bg-blue-50/20 space-y-4">
+              <div className="p-6 rounded-2xl border border-blue-100 dark:border-blue-900/50 bg-blue-50/20 dark:bg-blue-950/10 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Globe className="w-4 h-4 text-blue-600" />
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="space-y-0.5">
-                    <h4 className="font-bold text-sm text-blue-900">Dynamic Pricing Preview</h4>
-                    <p className="text-xs text-blue-700/60 font-medium">
+                    <h4 className="font-bold text-sm text-blue-900 dark:text-blue-300">Dynamic Pricing Preview</h4>
+                    <p className="text-xs text-blue-700/60 dark:text-blue-400/80 font-medium">
                       Estimated cost for a typical 10KM cross-city mission.
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between py-4 px-6 bg-white rounded-xl border border-blue-200/50 shadow-sm ring-1 ring-blue-500/5">
-                  <span className="text-sm font-bold text-slate-600">Sample 10KM Mission:</span>
-                  <span className="text-2xl font-black text-blue-600 italic">
+                <div className="flex items-center justify-between py-4 px-6 bg-white dark:bg-zinc-900 rounded-xl border border-blue-200/50 dark:border-blue-900/40 shadow-sm ring-1 ring-blue-500/5">
+                  <span className="text-sm font-bold text-slate-600 dark:text-slate-350">Sample 10KM Mission:</span>
+                  <span className="text-2xl font-black text-blue-600 dark:text-blue-400 italic">
                     ETB{' '}
                     {formData.deliveryPricing.baseFare + formData.deliveryPricing.perKmRate * 10}
                   </span>
@@ -423,14 +423,14 @@ export default function SettingsPage() {
               ].map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-5 rounded-2xl border border-slate-100 bg-slate-50/30 hover:bg-slate-50/60 transition-colors"
+                  className="flex items-center justify-between p-5 rounded-2xl border border-slate-100 dark:border-zinc-900 bg-slate-50/30 dark:bg-zinc-900/20 hover:bg-slate-50/60 dark:hover:bg-zinc-900/30 transition-colors"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="mt-1 p-2 bg-white rounded-lg border border-slate-100 shadow-sm">
+                    <div className="mt-1 p-2 bg-white dark:bg-zinc-900 rounded-lg border border-slate-150 dark:border-zinc-800 shadow-sm">
                       <item.icon className="w-4 h-4 text-slate-500" />
                     </div>
                     <div className="space-y-0.5">
-                      <Label className="font-black text-sm text-slate-800 tracking-tight">
+                      <Label className="font-black text-sm text-slate-800 dark:text-slate-200 tracking-tight">
                         {item.title}
                       </Label>
                       <p className="text-xs text-muted-foreground font-medium max-w-[400px] leading-relaxed">
@@ -476,12 +476,12 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-8 space-y-8">
-              <div className="flex items-center justify-between p-6 rounded-2xl border border-indigo-100 bg-indigo-50/20 ring-1 ring-indigo-500/5">
+              <div className="flex items-center justify-between p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/20 dark:bg-indigo-950/10 ring-1 ring-indigo-500/5">
                 <div className="space-y-1">
-                  <h4 className="font-bold text-slate-900 tracking-tight text-sm">
+                  <h4 className="font-bold text-slate-900 dark:text-slate-200 tracking-tight text-sm">
                     Federated Identity Management
                   </h4>
-                  <p className="text-xs text-slate-500 max-w-sm font-medium leading-relaxed">
+                  <p className="text-xs text-slate-550 dark:text-slate-400 max-w-sm font-medium leading-relaxed">
                     Authentication is strictly guarded by{' '}
                     <span className="font-bold">Ethio Logistics Cloud Auth</span>. Credentials
                     reside in your global SSO vault.
@@ -489,42 +489,42 @@ export default function SettingsPage() {
                 </div>
                 <Button
                   variant="outline"
-                  className="font-bold text-xs h-9 border-indigo-200 text-indigo-700 bg-white hover:bg-indigo-50 shadow-sm"
+                  className="font-bold text-xs h-9 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-white dark:bg-zinc-900 hover:bg-indigo-50 dark:hover:bg-zinc-800 shadow-sm"
                 >
                   Change Password
                 </Button>
               </div>
 
               <div className="grid gap-6 sm:grid-cols-2">
-                <div className="p-5 rounded-2xl border border-slate-100 bg-slate-50/30 space-y-3">
-                  <Label className="text-[9px] font-black uppercase tracking-[2px] text-slate-400">
+                <div className="p-5 rounded-2xl border border-slate-100 dark:border-zinc-900 bg-slate-50/30 dark:bg-zinc-900/20 space-y-3">
+                  <Label className="text-[9px] font-black uppercase tracking-[2px] text-slate-400 dark:text-slate-500">
                     Primary Recovery Phone
                   </Label>
                   <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-emerald-100 rounded-md">
-                      <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
+                    <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-md">
+                      <Smartphone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <span className="font-bold text-sm tabular-nums text-slate-800">
+                    <span className="font-bold text-sm tabular-nums text-slate-800 dark:text-slate-200">
                       {clerkUser?.primaryPhoneNumber?.phoneNumber || 'Unlinked'}
                     </span>
                   </div>
                 </div>
-                <div className="p-5 rounded-2xl border border-slate-100 bg-slate-50/30 space-y-3">
-                  <Label className="text-[9px] font-black uppercase tracking-[2px] text-slate-400">
+                <div className="p-5 rounded-2xl border border-slate-100 dark:border-zinc-900 bg-slate-50/30 dark:bg-zinc-900/20 space-y-3">
+                  <Label className="text-[9px] font-black uppercase tracking-[2px] text-slate-400 dark:text-slate-500">
                     Fleet Status
                   </Label>
                   <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-blue-100 rounded-md">
-                      <Shield className="w-3.5 h-3.5 text-blue-600" />
+                    <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
+                      <Shield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <span className="font-bold text-sm text-slate-800">
+                    <span className="font-bold text-sm text-slate-800 dark:text-slate-200">
                       Verified Operating License
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-8 mt-8 border-t border-slate-100 space-y-6">
+              <div className="pt-8 mt-8 border-t border-slate-100 dark:border-zinc-800 space-y-6">
                 <div className="space-y-2">
                   <h4 className="font-black text-[10px] uppercase tracking-[3px] text-destructive/70">
                     Danger Zone
@@ -533,7 +533,7 @@ export default function SettingsPage() {
                     <CardContent className="p-6">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="space-y-1">
-                          <h4 className="font-bold text-sm text-slate-900">
+                          <h4 className="font-bold text-sm text-slate-900 dark:text-slate-200">
                             Terminate Merchant Account
                           </h4>
                           <p className="text-xs text-muted-foreground font-medium max-w-md">
@@ -571,9 +571,9 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
-              <div className="p-6 rounded-2xl border border-indigo-100 bg-indigo-50/20 space-y-4">
-                <h4 className="font-bold text-sm text-indigo-900">How to test SMS delivery correctly:</h4>
-                <p className="text-xs text-indigo-700 leading-relaxed">
+              <div className="p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/20 dark:bg-indigo-950/10 space-y-4">
+                <h4 className="font-bold text-sm text-indigo-900 dark:text-indigo-305">How to test SMS delivery correctly:</h4>
+                <p className="text-xs text-indigo-750 dark:text-indigo-400 leading-relaxed">
                   1. Put in your real Ethiopian mobile number (e.g. <code>+2519XXXXXXXX</code> or <code>09XXXXXXXX</code>).<br />
                   2. Make sure you set the <code>AFRO_SMS_TOKEN</code> on your Render backend environment variables.<br />
                   3. Send a test message. You will see the live diagnostic API response from the AfroMessage gateway immediately.
@@ -619,7 +619,7 @@ export default function SettingsPage() {
               </div>
 
               {testSmsResponse && (
-                <div className="mt-6 border-t border-slate-100 pt-6 space-y-3">
+                <div className="mt-6 border-t border-slate-100 dark:border-zinc-800 pt-6 space-y-3">
                   <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     Live Gateway Diagnostic Response
                   </Label>
@@ -640,7 +640,7 @@ export default function SettingsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20 pt-4">
       <div className="animate-in fade-in slide-in-from-top-4 duration-600">
-        <h2 className="text-4xl font-black tracking-tighter text-slate-900 text-shadow-sm">
+        <h2 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white text-shadow-sm">
           Terminal Settings
         </h2>
         <p className="text-slate-500 font-medium text-lg mt-1 tracking-tight">
@@ -668,21 +668,21 @@ export default function SettingsPage() {
               onClick={() => setActiveTab(item.id as any)}
               className={`flex-none lg:w-full group text-left px-4 py-3 rounded-2xl transition-all border-2 flex items-center gap-3 shrink-0 ${
                 activeTab === item.id
-                  ? 'bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-200'
-                  : 'bg-white border-transparent text-slate-500 hover:bg-slate-50 hover:border-slate-100'
-              } ${item.id === 'billing' ? 'opacity-40 cursor-not-allowed border-dashed border-slate-200' : ''}`}
+                  ? 'bg-slate-900 dark:bg-zinc-900 border-slate-900 dark:border-zinc-800 text-white shadow-xl shadow-slate-200 dark:shadow-none'
+                  : 'bg-white dark:bg-zinc-950 border-transparent dark:border-transparent text-slate-500 hover:bg-slate-50 dark:hover:bg-zinc-900 hover:border-slate-100 dark:hover:border-zinc-800'
+              } ${item.id === 'billing' ? 'opacity-40 cursor-not-allowed border-dashed border-slate-200 dark:border-zinc-900' : ''}`}
             >
               <item.icon
                 className={`w-5 h-5 ${activeTab === item.id ? 'text-primary' : 'text-slate-400 group-hover:text-slate-900 transition-colors'}`}
               />
               <div className="flex flex-col">
                 <span
-                  className={`text-[13px] md:text-sm font-black tracking-tight ${activeTab === item.id ? 'text-white' : 'text-slate-900'}`}
+                  className={`text-[13px] md:text-sm font-black tracking-tight ${activeTab === item.id ? 'text-white' : 'text-slate-900 dark:text-white'}`}
                 >
                   {item.name}
                 </span>
                 <span
-                  className={`text-[9px] font-bold uppercase tracking-wider ${activeTab === item.id ? 'text-slate-400' : 'text-slate-400'}`}
+                  className={`text-[9px] font-bold uppercase tracking-wider ${activeTab === item.id ? 'text-slate-400' : 'text-slate-450'}`}
                 >
                   {item.id === 'billing' ? 'Pending' : item.desc}
                 </span>

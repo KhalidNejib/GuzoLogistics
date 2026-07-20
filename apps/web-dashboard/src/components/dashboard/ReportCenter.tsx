@@ -52,8 +52,6 @@ export default function ReportCenter({ orders, riders = [] }: ReportCenterProps)
     const successRate = closedOrders > 0 ? (completedOrders.length / closedOrders) * 100 : 0;
 
     // ── Average Delivery Latency ──────────────────────────────────
-    // Use avgDeliveryTimeMs from rider leaderboard data when available.
-    // Fall back to computing from order.createdAt → order.updatedAt on delivered orders.
     let avgLatencyMinutes: number | null = null;
 
     const riderTimings = riders
@@ -64,11 +62,10 @@ export default function ReportCenter({ orders, riders = [] }: ReportCenterProps)
       const avgMs = riderTimings.reduce((a, b) => a + b, 0) / riderTimings.length;
       avgLatencyMinutes = Math.round(avgMs / 60_000);
     } else {
-      // Fallback: compute from delivered orders with both createdAt + updatedAt
       const orderDurations = completedOrders
         .filter(o => o.createdAt && o.updatedAt && o.updatedAt !== o.createdAt)
         .map(o => new Date(o.updatedAt).getTime() - new Date(o.createdAt).getTime())
-        .filter(ms => ms > 0 && ms < 24 * 60 * 60 * 1000); // sanity: < 24h
+        .filter(ms => ms > 0 && ms < 24 * 60 * 60 * 1000);
 
       if (orderDurations.length > 0) {
         const avgMs = orderDurations.reduce((a, b) => a + b, 0) / orderDurations.length;
@@ -76,7 +73,6 @@ export default function ReportCenter({ orders, riders = [] }: ReportCenterProps)
       }
     }
 
-    // Benchmark: <30m = great, <45m = good, <60m = ok, >60m = slow
     const latencyBenchmark = avgLatencyMinutes === null 
       ? 'No data' 
       : avgLatencyMinutes < 30 ? '🏆 Excellent'
@@ -86,14 +82,13 @@ export default function ReportCenter({ orders, riders = [] }: ReportCenterProps)
 
     const latencyBarWidth = avgLatencyMinutes === null 
       ? 0 
-      : Math.min(100, Math.max(0, 100 - (avgLatencyMinutes / 90) * 100)); // 90m = 0%, 0m = 100%
+      : Math.min(100, Math.max(0, 100 - (avgLatencyMinutes / 90) * 100));
 
     // ── Fleet Status ──────────────────────────────────────────────
     const approvedRiders = riders.filter(r => r.onboardingStatus === 'APPROVED');
     const activeRiders = approvedRiders.filter(r => !r.disabled);
     const totalRiders = approvedRiders.length;
 
-    // Fleet load: active orders / total approved rider count
     const fleetLoadPct = totalRiders > 0 ? Math.min(100, Math.round((activeOrders.length / totalRiders) * 100)) : 0;
     const fleetStatusLabel = activeRiders.length === 0 
       ? 'Offline' 
@@ -101,14 +96,13 @@ export default function ReportCenter({ orders, riders = [] }: ReportCenterProps)
       ? 'Reduced' 
       : 'Active';
 
-    // ── Compliance: riders with Fayda ID + License on file ────────
+    // ── Compliance ────────────────────────────────────────────────
     const ridersWithDocs = approvedRiders.filter(r => 
       (r.faydaIdPhotoUrl || r.idPhotoUrl) && r.licensePhotoUrl
     ).length;
     const compliancePct = totalRiders > 0 ? ((ridersWithDocs / totalRiders) * 100).toFixed(1) : '0.0';
 
     // ── Projected Growth ─────────────────────────────────────────
-    // Compare revenue this month vs last month
     const now = new Date();
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
@@ -250,51 +244,51 @@ export default function ReportCenter({ orders, riders = [] }: ReportCenterProps)
            <div className="space-y-1">
               <Button 
                 variant="outline" 
-                className="w-full justify-start h-12 gap-3 font-bold border-slate-100 hover:bg-slate-50 transition-all rounded-xl shadow-xs"
+                className="w-full justify-start h-12 gap-3 font-bold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all rounded-xl"
                 onClick={handleOrderExport}
                 disabled={isExporting !== null}
               >
                  <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
                  Missions History (.CSV)
-                 <ChevronRight className="ml-auto w-4 h-4 text-slate-300" />
+                 <ChevronRight className="ml-auto w-4 h-4 text-muted-foreground" />
               </Button>
               <Button 
                 variant="outline" 
-                className="w-full justify-start h-12 gap-3 font-bold border-slate-100 hover:bg-slate-50 transition-all rounded-xl shadow-xs"
+                className="w-full justify-start h-12 gap-3 font-bold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all rounded-xl"
                 onClick={handleFinancialExport}
                 disabled={isExporting !== null}
               >
                  <FileText className="w-4 h-4 text-blue-500" />
                  Yield Analytics (.CSV)
-                 <ChevronRight className="ml-auto w-4 h-4 text-slate-300" />
+                 <ChevronRight className="ml-auto w-4 h-4 text-muted-foreground" />
               </Button>
               <Button 
                 variant="outline" 
-                className="w-full justify-start h-12 gap-3 font-bold border-slate-100 hover:bg-slate-50 transition-all rounded-xl shadow-xs"
+                className="w-full justify-start h-12 gap-3 font-bold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all rounded-xl"
                 onClick={handleRiderExport}
                 disabled={isExporting !== null}
               >
                  <UserCheck className="w-4 h-4 text-indigo-500" />
                  Pilot Lifecycle (.CSV)
-                 <ChevronRight className="ml-auto w-4 h-4 text-slate-300" />
+                 <ChevronRight className="ml-auto w-4 h-4 text-muted-foreground" />
               </Button>
               <Button 
                 variant="outline" 
-                className="w-full justify-start h-12 gap-3 font-bold border-slate-100 hover:bg-slate-50 transition-all rounded-xl shadow-xs"
+                className="w-full justify-start h-12 gap-3 font-bold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all rounded-xl"
                 onClick={() => toast.info('Advanced PDF rendering...', { description: 'Generating high-fidelity tactical report.' })}
               >
                  <Printer className="w-4 h-4 text-orange-500" />
                  Print Shift Summary
-                 <ChevronRight className="ml-auto w-4 h-4 text-slate-300" />
+                 <ChevronRight className="ml-auto w-4 h-4 text-muted-foreground" />
               </Button>
            </div>
 
            <div className="pt-4 mt-auto">
-              <div className="rounded-xl border border-slate-100 p-4 bg-muted/20">
-                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-relaxed mb-3">Compliance Ready</p>
+              <div className="rounded-xl border border-border/50 p-4 bg-muted/30">
+                 <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest leading-relaxed mb-3">Compliance Ready</p>
                  <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="text-xs font-bold text-slate-600">
+                    <span className="text-xs font-bold text-foreground">
                       {metrics.ridersWithDocs} of {metrics.totalRiders} pilots fully verified
                     </span>
                  </div>
@@ -303,16 +297,16 @@ export default function ReportCenter({ orders, riders = [] }: ReportCenterProps)
         </CardContent>
       </Card>
 
-      {/* 📈 CORPORATE WELL-BEING */}
+      {/* 📈 CORPORATE HEALTH MONITOR */}
       <Card className="md:col-span-2 border-border/40 shadow-sm overflow-hidden">
          <CardHeader className="py-5 border-b border-border/40 bg-slate-50/50 dark:bg-zinc-900/50 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-indigo-600" /> Corporate Health Monitor
+                <TrendingUp className="w-5 h-5 text-indigo-500" /> Corporate Health Monitor
               </CardTitle>
               <CardDescription>Visualizing operational growth and risk levels.</CardDescription>
             </div>
-            <Badge variant="secondary" className="font-black text-[10px] uppercase tracking-widest px-3 py-1 bg-indigo-100 text-indigo-700 border-indigo-200">
+            <Badge variant="secondary" className="font-black text-[10px] uppercase tracking-widest px-3 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800">
                {getCurrentQuarterLabel()}
             </Badge>
          </CardHeader>
@@ -321,21 +315,21 @@ export default function ReportCenter({ orders, riders = [] }: ReportCenterProps)
                {/* Stat 1: Success Rate */}
                <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
-                        <PieChart className="w-5 h-5 text-emerald-600" />
+                     <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/40 flex items-center justify-center">
+                        <PieChart className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                      </div>
                      <div className="space-y-0.5">
-                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Success Rate</p>
-                        <h4 className="text-2xl font-black text-slate-900">{metrics.successRate.toFixed(1)}%</h4>
+                        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Success Rate</p>
+                        <h4 className="text-2xl font-black text-foreground">{metrics.successRate.toFixed(1)}%</h4>
                      </div>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                  <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                      <div 
                         className="bg-emerald-500 h-full rounded-full transition-all duration-1000 origin-left"
                         style={{ width: `${metrics.successRate}%` }}
                      />
                   </div>
-                  <p className="text-[10px] text-slate-400 font-bold italic">
+                  <p className="text-[10px] text-muted-foreground font-bold italic">
                     Calculated from {metrics.completedOrders.length} completed missions
                   </p>
                </div>
@@ -343,23 +337,23 @@ export default function ReportCenter({ orders, riders = [] }: ReportCenterProps)
                {/* Stat 2: Avg Latency */}
                <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center">
-                        <Clock className="w-5 h-5 text-orange-600" />
+                     <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/40 flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                      </div>
                      <div className="space-y-0.5">
-                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Avg Latency</p>
-                        <h4 className="text-2xl font-black text-slate-900">
+                        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Avg Latency</p>
+                        <h4 className="text-2xl font-black text-foreground">
                           {metrics.avgLatencyMinutes !== null ? `${metrics.avgLatencyMinutes}m` : '—'}
                         </h4>
                      </div>
                   </div>
                   <div className="flex items-center justify-between text-[11px] font-bold">
-                     <span className="text-slate-400 uppercase tracking-widest">Efficiency</span>
-                     <span className="text-orange-600 flex items-center gap-1">
+                     <span className="text-muted-foreground uppercase tracking-widest">Efficiency</span>
+                     <span className="text-orange-600 dark:text-orange-400 flex items-center gap-1">
                         {metrics.latencyBenchmark} <ArrowUpRight className="w-3 h-3" />
                      </span>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                  <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                      <div 
                        className="bg-orange-400 h-full rounded-full transition-all duration-1000"
                        style={{ width: `${metrics.latencyBarWidth}%` }} 
@@ -370,22 +364,22 @@ export default function ReportCenter({ orders, riders = [] }: ReportCenterProps)
                {/* Stat 3: Fleet Status */}
                <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
-                        <UserCheck className="w-5 h-5 text-indigo-600" />
+                     <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/40 flex items-center justify-center">
+                        <UserCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                      </div>
                      <div className="space-y-0.5">
-                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Fleet Status</p>
-                        <h4 className="text-2xl font-black text-slate-900">{metrics.fleetStatusLabel}</h4>
+                        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Fleet Status</p>
+                        <h4 className="text-2xl font-black text-foreground">{metrics.fleetStatusLabel}</h4>
                      </div>
                   </div>
                   <div className="space-y-2">
                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-slate-500">
+                        <span className="text-[10px] font-bold text-muted-foreground">
                           Missions vs Capacity ({metrics.activeOrders.length} active / {metrics.totalRiders} pilots)
                         </span>
-                        <span className="text-[10px] font-black text-indigo-600">{metrics.fleetLoadPct}% Load</span>
+                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400">{metrics.fleetLoadPct}% Load</span>
                      </div>
-                     <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                     <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                         <div 
                           className="bg-indigo-500 h-full rounded-full transition-all duration-1000"
                           style={{ width: `${metrics.fleetLoadPct}%` }}
@@ -399,31 +393,31 @@ export default function ReportCenter({ orders, riders = [] }: ReportCenterProps)
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                {/* Yield Outlook */}
-               <div className="group p-5 rounded-2xl border border-slate-100 hover:border-indigo-100 hover:bg-indigo-50/10 transition-all">
+               <div className="group p-5 rounded-2xl border border-border/50 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/10 dark:hover:bg-indigo-900/10 transition-all">
                   <div className="flex items-center justify-between mb-4">
-                     <div className="p-2 bg-slate-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                        <Calendar className="w-4 h-4 text-slate-500 group-hover:text-indigo-600" />
+                     <div className="p-2 bg-muted rounded-lg group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">
+                        <Calendar className="w-4 h-4 text-muted-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400" />
                      </div>
-                     <span className="text-[10px] font-black text-slate-300 group-hover:text-indigo-300 tracking-[2px] uppercase">Yield Outlook</span>
+                     <span className="text-[10px] font-black text-muted-foreground group-hover:text-indigo-500 dark:group-hover:text-indigo-400 tracking-[2px] uppercase">Yield Outlook</span>
                   </div>
-                  <h5 className="font-bold text-slate-900 text-sm mb-1 uppercase tracking-tight">
+                  <h5 className="font-bold text-foreground text-sm mb-1 uppercase tracking-tight">
                     Projected {metrics.nextQuarter} Growth
                   </h5>
-                  <p className="text-xs text-slate-500 leading-relaxed max-w-[280px]">
+                  <p className="text-xs text-muted-foreground leading-relaxed max-w-[280px]">
                     {metrics.growthLabel}
                   </p>
                </div>
 
                {/* Compliance / Risk */}
-               <div className="group p-5 rounded-2xl border border-slate-100 hover:border-emerald-100 hover:bg-emerald-50/10 transition-all">
+               <div className="group p-5 rounded-2xl border border-border/50 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/10 dark:hover:bg-emerald-900/10 transition-all">
                   <div className="flex items-center justify-between mb-4">
-                     <div className="p-2 bg-slate-50 rounded-lg group-hover:bg-emerald-100 transition-colors">
-                        <ShieldCheck className="w-4 h-4 text-slate-500 group-hover:text-emerald-600" />
+                     <div className="p-2 bg-muted rounded-lg group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/40 transition-colors">
+                        <ShieldCheck className="w-4 h-4 text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
                      </div>
-                     <span className="text-[10px] font-black text-slate-300 group-hover:text-emerald-300 tracking-[2px] uppercase">Compliance</span>
+                     <span className="text-[10px] font-black text-muted-foreground group-hover:text-emerald-500 dark:group-hover:text-emerald-400 tracking-[2px] uppercase">Compliance</span>
                   </div>
-                  <h5 className="font-bold text-slate-900 text-sm mb-1 uppercase tracking-tight">Risk Integrity Level</h5>
-                  <p className="text-xs text-slate-500 leading-relaxed max-w-[280px]">
+                  <h5 className="font-bold text-foreground text-sm mb-1 uppercase tracking-tight">Risk Integrity Level</h5>
+                  <p className="text-xs text-muted-foreground leading-relaxed max-w-[280px]">
                     Fleet integrity is at {metrics.compliancePct}%. {metrics.ridersWithDocs} of {metrics.totalRiders} active pilot{metrics.totalRiders !== 1 ? 's have' : ' has'} verified primary documentation on file.
                   </p>
                </div>
