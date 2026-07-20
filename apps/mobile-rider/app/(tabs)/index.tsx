@@ -1077,7 +1077,7 @@ export default function RiderDashboard() {
 
       {/* BOTTOM PANEL */}
       {isOnline ? (
-        <Animated.View style={[styles.bottomSheet, { transform: [{ translateY: sheetTranslateY }], paddingBottom: Math.max(insets.bottom, 20) + 10 }]} {...sheetPanResponder.panHandlers}>
+        <Animated.View style={[styles.bottomSheet, { transform: [{ translateY: sheetTranslateY }], paddingBottom: Math.max(insets.bottom, 34) + 10 }]} {...sheetPanResponder.panHandlers}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12, marginBottom: 6, position: 'relative', width: '100%', height: 24 }}>
             <View style={styles.dragger} />
             <TouchableOpacity 
@@ -1147,7 +1147,7 @@ export default function RiderDashboard() {
           </ScrollView>
         </Animated.View>
       ) : (
-        <View style={[styles.offlinePanel, { paddingBottom: Math.max(insets.bottom, 20) + 15 }]}>
+        <View style={[styles.offlinePanel, { paddingBottom: Math.max(insets.bottom, 34) + 15 }]}>
           <View style={styles.offlineCenter}>
             <Text style={styles.offlineTitle}>{t('home.go_offline')}</Text>
             <Text style={styles.offlineSub}>{t('home.go_online')}</Text>
