@@ -190,6 +190,10 @@ app.get('/', (_req, res) => {
   });
 });
 
+app.get('/debug-sentry', (_req, res) => {
+  throw new Error('Guzo Test API Error: Sentry configuration verified.');
+});
+
 const PORT = appConfig.port || 5000;
 
 // 👉 ROUTE HISTORY SYNC (Redis → MongoDB, every 5 minutes)
