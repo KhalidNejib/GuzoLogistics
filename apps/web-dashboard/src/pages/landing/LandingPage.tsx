@@ -587,6 +587,12 @@ export default function LandingPage() {
             <a href="mailto:support@guzologistics.com" className="hover:text-white transition-colors">support@guzologistics.com</a>
             <span>+251 900 11 22 33</span>
             <Link to="/sign-up" className="hover:text-white transition-colors">Register Hub</Link>
+            <button 
+              onClick={() => { throw new Error('Guzo Test Error: Sentry configuration verified.'); }} 
+              className="hover:text-red-400 transition-colors text-[10px] uppercase tracking-wider font-bold border border-slate-900/60 bg-slate-950/40 px-2.5 py-1 rounded-lg"
+            >
+              Test Diagnostics
+            </button>
           </div>
 
           <div className="flex flex-col items-center md:items-end gap-1.5 text-[11px] text-slate-600 font-medium">
