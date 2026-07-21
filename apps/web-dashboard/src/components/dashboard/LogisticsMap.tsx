@@ -247,8 +247,14 @@ export default function LogisticsMap({
   }, [fleet, activeOrder?._id, propLocation]);
 
   const fleetIsEmpty = Object.keys(fleet).length === 0;
+  // Status-aware fallback: once the rider has picked up the package they are
+  // travelling toward delivery, so seeding at the pickup pin is misleading.
+  const isPostPickup = ['PICKED_UP', 'IN_TRANSIT', 'ARRIVED_DELIVERY', 'DELIVERED'].includes(activeOrder?.status || '');
+  const fallbackCoords = isPostPickup
+    ? (delivery ? [delivery[1], delivery[0]] as [number, number] : null)
+    : (pickup   ? [pickup[1],   pickup[0]]   as [number, number] : null);
   const liveRider: [number, number] | null = fleetIsEmpty
-    ? (propLocation ?? (pickup ? [pickup[1], pickup[0]] : null))
+    ? (propLocation ?? fallbackCoords)
     : (focusId ? fleet[focusId] : (fleet['global'] || propLocation || null));
 
   useEffect(() => {

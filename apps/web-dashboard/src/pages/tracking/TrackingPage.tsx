@@ -6,7 +6,9 @@ import { useSocket } from '@/hooks/useSocket';
 import { useFetchOrders } from '@/hooks/useFetchOrders';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { cn, getApiUrl } from '@/lib/utils';
+
+const API_URL = getApiUrl();
 
 export default function TrackingPage() {
   const [searchParams] = useSearchParams();
@@ -67,10 +69,27 @@ export default function TrackingPage() {
     if (!activeOrder) setIsFocusedView(false);
   }, [activeOrder]);
 
-  const handleOrderClick = (orderId: string) => {
+  const handleOrderClick = async (orderId: string) => {
     setActiveOrder(orderId);
+    setRiderLocation(null); // clear stale location from previous selection
     joinOrder(orderId);
     if (window.innerWidth < 1024) setIsFocusedView(true);
+
+    // Seed rider position from Redis cache immediately (before first socket event)
+    try {
+      const order = orders?.find((o: any) => o._id === orderId);
+      if (order?.trackingUrlToken) {
+        const res = await fetch(`${API_URL}/api/v1/orders/track/${order.trackingUrlToken}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.order?.lastRiderLocation) {
+            const { lat, lng } = data.order.lastRiderLocation;
+            setRiderLocation([lat, lng]);
+            setFleet(prev => ({ ...prev, [orderId]: [lat, lng] }));
+          }
+        }
+      }
+    } catch { /* silent — socket will fill position on first ping */ }
   };
 
   const visibleOrders = (orders || []).filter((o: any) => {
