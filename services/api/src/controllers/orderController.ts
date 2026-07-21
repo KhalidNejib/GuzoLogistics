@@ -386,6 +386,24 @@ export const getOrderByToken = async (req: Request, res: Response) => {
   
   const order = raw as any;
 
+  // Retrieve rider's last known location from Redis cache for instant load
+  try {
+    const orderId = order._id.toString();
+    const cachedLoc = await redis.get(`order:location:${orderId}`);
+    if (cachedLoc) {
+      const parsed = JSON.parse(cachedLoc);
+      order.lastRiderLocation = { lat: parsed.lat, lng: parsed.lng };
+    } else if (order.rider?._id) {
+      const riderLoc = await redis.get(`rider_location:${order.rider._id.toString()}`);
+      if (riderLoc) {
+        const parsed = JSON.parse(riderLoc);
+        order.lastRiderLocation = { lat: parsed[0], lng: parsed[1] };
+      }
+    }
+  } catch (err: any) {
+    logger.error({ err: err.message }, 'Failed to fetch cached location from Redis in getOrderByToken');
+  }
+
   if (order.status === 'CANCELLED') {
     return res.status(410).json({ error: 'Tracking link has expired.' });
   }

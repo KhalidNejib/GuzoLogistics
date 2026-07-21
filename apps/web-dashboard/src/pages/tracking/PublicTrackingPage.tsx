@@ -191,14 +191,19 @@ export default function PublicTrackingPage() {
     if (token) fetchOrder();
   }, [token]);
 
-  // ── Seed scooter at pickup before live GPS arrives ────────────────────────
+  // ── Seed scooter before live GPS arrives ────────────────────────
   useEffect(() => {
     if (!order || riderLocation) return;
-    const coords =
-      order.pickupAddress?.coordinates ||
-      order.pickupAddress?.location?.coordinates;
-    if (coords) setRiderLocation([coords[1], coords[0]]); // GeoJSON [lng,lat] → Leaflet [lat,lng]
-  }, [order]);
+    if (order.lastRiderLocation) {
+      setRiderLocation([order.lastRiderLocation.lat, order.lastRiderLocation.lng]);
+    } else {
+      const isPostPickup = ['PICKED_UP', 'IN_TRANSIT', 'ARRIVED_DELIVERY', 'DELIVERED'].includes(order.status);
+      const coords = isPostPickup
+        ? (order.deliveryAddress?.coordinates || order.deliveryAddress?.location?.coordinates)
+        : (order.pickupAddress?.coordinates || order.pickupAddress?.location?.coordinates);
+      if (coords) setRiderLocation([coords[1], coords[0]]); // GeoJSON [lng,lat] → Leaflet [lat,lng]
+    }
+  }, [order, riderLocation]);
 
   // ── Socket: live rider position ───────────────────────────────────────────
   useEffect(() => {
@@ -398,7 +403,7 @@ export default function PublicTrackingPage() {
         </button>
 
         {/* Sheet Body */}
-        <div className="bg-white px-5 pb-10 space-y-6 max-h-[65vh] overflow-y-auto">
+        <div className="bg-white px-5 pb-10 space-y-6 max-h-[45vh] overflow-y-auto">
 
           {/* Order ID + Status badge */}
           <div className="flex items-center justify-between pt-1">
