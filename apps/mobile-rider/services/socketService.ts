@@ -99,7 +99,17 @@ class SocketService {
     this.socket = io(API_URL, {
       auth: async (cb) => {
         try {
-          const token = await getToken();
+          let token = null;
+          let retries = 3;
+          while (retries > 0) {
+            token = await getToken();
+            if (token) break;
+            console.warn(`🔑 [Socket] Token is null, retries left: ${retries - 1}`);
+            if (retries > 1) {
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+            retries--;
+          }
           cb({ token });
         } catch (err) {
           cb({ token: null });

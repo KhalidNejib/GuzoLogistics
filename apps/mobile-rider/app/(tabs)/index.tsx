@@ -998,80 +998,7 @@ export default function RiderDashboard() {
 
           <SOSButton onPress={handleSOS} />
 
-          {focusedOrder && (
-            <Animated.View style={[styles.compactCard, { 
-              bottom: (height * 0.26) + (insets.bottom > 20 ? insets.bottom + 48 : 108),
-              transform: [{ translateY: sheetTranslateY }],
-              height: 64, // Sleek, small height
-              paddingHorizontal: 16,
-              borderRadius: 20,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.98)' : 'rgba(255, 255, 255, 0.98)',
-              borderWidth: 1.5,
-              borderColor: isDark ? 'rgba(79, 70, 229, 0.4)' : 'rgba(79, 70, 229, 0.15)',
-            }]}>
-              {/* Identity Hub */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-                <View style={{ backgroundColor: isPickedUp ? '#10b981' : '#4f46e5', width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
-                  <MaterialCommunityIcons name={isPickedUp ? "truck-fast" : "package-variant-closed"} size={16} color="white" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 7, fontWeight: '900', color: isPickedUp ? '#10b981' : '#4f46e5', textTransform: 'uppercase', letterSpacing: 0.5 }}>{isPickedUp ? 'DELIVERY' : 'PICKUP'}</Text>
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: isDark ? '#f1f5f9' : '#0f172a' }} numberOfLines={1}>
-                    {isPickedUp ? focusedOrder.deliveryAddress?.addressText : focusedOrder.pickupAddress?.addressText}
-                  </Text>
-                </View>
-              </View>
 
-              {/* Side-by-Side Action Pills */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                {focusedOrder.status === 'ACCEPTED' ? (
-                  <TouchableOpacity 
-                    style={{ backgroundColor: '#4f46e5', paddingHorizontal: 12, height: 36, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }} 
-                    onPress={() => handleUpdateStatus('ARRIVED_PICKUP', undefined, undefined, focusedOrder._id)}
-                  >
-                    <MaterialCommunityIcons name="map-marker-check" size={16} color="white" />
-                    <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>ARRIVE</Text>
-                  </TouchableOpacity>
-                ) : focusedOrder.status === 'ARRIVED_PICKUP' ? (
-                  <TouchableOpacity 
-                    style={{ backgroundColor: '#10b981', paddingHorizontal: 12, height: 36, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }} 
-                    onPress={() => handleUpdateStatus('PICKED_UP', undefined, undefined, focusedOrder._id)}
-                  >
-                    <MaterialCommunityIcons name="package-variant-closed" size={16} color="white" />
-                    <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>PICKUP</Text>
-                  </TouchableOpacity>
-                ) : (focusedOrder.status === 'PICKED_UP' || focusedOrder.status === 'ARRIVED_DELIVERY') ? (
-                  <View style={{ flexDirection: 'row', gap: 6 }}>
-                     {focusedOrder.status === 'PICKED_UP' && (
-                        <TouchableOpacity 
-                          style={{ backgroundColor: '#f59e0b', width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }} 
-                          onPress={() => handleUpdateStatus('ARRIVED_DELIVERY', undefined, undefined, focusedOrder._id)}
-                        >
-                          <MaterialCommunityIcons name="map-marker-radius" size={18} color="white" />
-                        </TouchableOpacity>
-                     )}
-                     <TouchableOpacity 
-                        style={{ backgroundColor: '#4f46e5', paddingHorizontal: 12, height: 36, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }} 
-                        onPress={() => { setSelectedOrder(focusedOrder); setShowDetailModal(true); }}
-                      >
-                        <MaterialCommunityIcons name="shield-check" size={16} color="white" />
-                        <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>VERIFY</Text>
-                      </TouchableOpacity>
-                  </View>
-                ) : (
-                   <TouchableOpacity 
-                    style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9', width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }} 
-                    onPress={() => { setSelectedOrder(focusedOrder); setShowDetailModal(true); }}
-                  >
-                    <Feather name="chevron-right" size={18} color="#4f46e5" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </Animated.View>
-          )}
         </View>
       ) : <View style={styles.noGps}><ActivityIndicator size="large" color="#4f46e5" /><Text style={styles.noGpsText}>{t('home.acquiring_signal')}</Text></View>}
 
@@ -1167,6 +1094,83 @@ export default function RiderDashboard() {
             </Animated.View>
           </View>
         </View>
+      )}
+
+      {/* Active Order Status Card */}
+      {isOnline && focusedOrder && (
+        <Animated.View style={[styles.compactCard, { 
+          bottom: (height * 0.26) + (insets.bottom > 20 ? insets.bottom + 48 : 108),
+          transform: [{ translateY: sheetTranslateY }],
+          height: 64, // Sleek, small height
+          paddingHorizontal: 16,
+          borderRadius: 20,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: isDark ? 'rgba(15, 23, 42, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+          borderWidth: 1.5,
+          borderColor: isDark ? 'rgba(79, 70, 229, 0.4)' : 'rgba(79, 70, 229, 0.15)',
+          zIndex: 1001,
+        }]}>
+          {/* Identity Hub */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+            <View style={{ backgroundColor: isPickedUp ? '#10b981' : '#4f46e5', width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+              <MaterialCommunityIcons name={isPickedUp ? "truck-fast" : "package-variant-closed"} size={16} color="white" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 7, fontWeight: '900', color: isPickedUp ? '#10b981' : '#4f46e5', textTransform: 'uppercase', letterSpacing: 0.5 }}>{isPickedUp ? 'DELIVERY' : 'PICKUP'}</Text>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: isDark ? '#f1f5f9' : '#0f172a' }} numberOfLines={1}>
+                {isPickedUp ? focusedOrder.deliveryAddress?.addressText : focusedOrder.pickupAddress?.addressText}
+              </Text>
+            </View>
+          </View>
+
+          {/* Side-by-Side Action Pills */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {focusedOrder.status === 'ACCEPTED' ? (
+              <TouchableOpacity 
+                style={{ backgroundColor: '#4f46e5', paddingHorizontal: 12, height: 36, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }} 
+                onPress={() => handleUpdateStatus('ARRIVED_PICKUP', undefined, undefined, focusedOrder._id)}
+              >
+                <MaterialCommunityIcons name="map-marker-check" size={16} color="white" />
+                <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>ARRIVE</Text>
+              </TouchableOpacity>
+            ) : focusedOrder.status === 'ARRIVED_PICKUP' ? (
+              <TouchableOpacity 
+                style={{ backgroundColor: '#10b981', paddingHorizontal: 12, height: 36, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }} 
+                onPress={() => handleUpdateStatus('PICKED_UP', undefined, undefined, focusedOrder._id)}
+              >
+                <MaterialCommunityIcons name="package-variant-closed" size={16} color="white" />
+                <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>PICKUP</Text>
+              </TouchableOpacity>
+            ) : (focusedOrder.status === 'PICKED_UP' || focusedOrder.status === 'ARRIVED_DELIVERY') ? (
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                 {focusedOrder.status === 'PICKED_UP' && (
+                    <TouchableOpacity 
+                      style={{ backgroundColor: '#f59e0b', width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }} 
+                      onPress={() => handleUpdateStatus('ARRIVED_DELIVERY', undefined, undefined, focusedOrder._id)}
+                    >
+                      <MaterialCommunityIcons name="map-marker-radius" size={18} color="white" />
+                    </TouchableOpacity>
+                 )}
+                 <TouchableOpacity 
+                    style={{ backgroundColor: '#4f46e5', paddingHorizontal: 12, height: 36, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }} 
+                    onPress={() => { setSelectedOrder(focusedOrder); setShowDetailModal(true); }}
+                  >
+                    <MaterialCommunityIcons name="shield-check" size={16} color="white" />
+                    <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>VERIFY</Text>
+                  </TouchableOpacity>
+              </View>
+            ) : (
+               <TouchableOpacity 
+                style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9', width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }} 
+                onPress={() => { setSelectedOrder(focusedOrder); setShowDetailModal(true); }}
+              >
+                <Feather name="chevron-right" size={18} color="#4f46e5" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </Animated.View>
       )}
 
       {/* MODALS */}
