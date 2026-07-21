@@ -1099,7 +1099,7 @@ export default function RiderDashboard() {
       {/* Active Order Status Card */}
       {isOnline && focusedOrder && (
         <Animated.View style={[styles.compactCard, { 
-          bottom: (height * 0.26) + (insets.bottom > 20 ? insets.bottom + 48 : 108),
+          bottom: (height * 0.42) + 45,
           transform: [{ translateY: sheetTranslateY }],
           height: 64, // Sleek, small height
           paddingHorizontal: 16,
