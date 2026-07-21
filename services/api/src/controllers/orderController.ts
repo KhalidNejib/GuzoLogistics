@@ -374,13 +374,10 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
 
 export const getOrderByToken = async (req: Request, res: Response) => {
   const token = req.params.token;
-  let query: any = { trackingUrlToken: token };
-  if (mongoose.Types.ObjectId.isValid(token)) {
-    query = { $or: [{ trackingUrlToken: token }, { _id: token }] };
-  }
 
-  const raw = await Order.findOne(query)
-    .populate('rider', 'fullName phoneNumber')
+  // Strict check: Only query by tracking token, never by enumerable _id
+  const raw = await Order.findOne({ trackingUrlToken: token })
+    .populate('rider', 'fullName phoneNumber rating vehicleType')
     .lean();
   if (!raw) return res.status(404).json({ error: 'Invalid tracking token.' });
   
@@ -418,7 +415,37 @@ export const getOrderByToken = async (req: Request, res: Response) => {
     }
   }
 
-  return res.json({ order });
+  // Slim down projection to hide internal sensitive details (margin data, profit figures, customer details)
+  const safeOrder = {
+    _id: order._id,
+    status: order.status,
+    trackingUrlToken: order.trackingUrlToken,
+    pickupAddress: {
+      addressText: order.pickupAddress?.addressText,
+      coordinates: order.pickupAddress?.coordinates || order.pickupAddress?.location?.coordinates,
+    },
+    deliveryAddress: {
+      addressText: order.deliveryAddress?.addressText,
+      coordinates: order.deliveryAddress?.coordinates || order.deliveryAddress?.location?.coordinates,
+    },
+    rider: order.rider ? {
+      _id: order.rider._id,
+      fullName: order.rider.fullName,
+      phoneNumber: order.rider.phoneNumber,
+      rating: order.rider.rating || 5.0,
+      vehicleType: order.rider.vehicleType || 'Scooter',
+    } : null,
+    verificationCode: order.verificationCode,
+    customerRating: order.customerRating,
+    podImageUrl: order.podImageUrl,
+    routeHistory: order.routeHistory,
+    createdAt: order.createdAt,
+    deliveredAt: order.deliveredAt,
+    updatedAt: order.updatedAt,
+    lastRiderLocation: order.lastRiderLocation || null,
+  };
+
+  return res.json({ order: safeOrder });
 };
 
 export const rateOrder = async (req: Request, res: Response) => {
@@ -430,12 +457,8 @@ export const rateOrder = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Rating must be a number between 1 and 5.' });
     }
 
-    let query: any = { trackingUrlToken: token };
-    if (mongoose.Types.ObjectId.isValid(token)) {
-      query = { $or: [{ trackingUrlToken: token }, { _id: token }] };
-    }
-
-    const order = await Order.findOne(query);
+    // Strict check: Only query by tracking token, never by enumerable _id
+    const order = await Order.findOne({ trackingUrlToken: token });
     if (!order) {
       return res.status(404).json({ error: 'Order not found.' });
     }

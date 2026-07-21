@@ -27,7 +27,7 @@ const acceptOrderLimiter = rateLimit({
 
 const router: Router = Router();
 
-router.post('/route-geom', getRouteGeometry);
+router.post('/route-geom', requireUser, getRouteGeometry);
 
 // 🛠️ DEBUG ONLY — not registered in production; the controller also hard-blocks
 // them, but keeping them out of the route table is cleaner.
