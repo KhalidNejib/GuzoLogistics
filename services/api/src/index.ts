@@ -2,9 +2,11 @@ import { Blob, File } from 'node:buffer';
 
 // 👉 NODE 18 COMPATIBILITY POLYFILL
 if (typeof global.File === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (global as any).File = File;
 }
 if (typeof global.Blob === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (global as any).Blob = Blob;
 }
 
