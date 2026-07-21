@@ -37,6 +37,23 @@ const processPayoutSchema = z.object({
   notes: z.string().optional(),
 });
 
+const renameRiderSchema = z.object({
+  fullName: z.string().min(1, 'Valid full name is required.'),
+});
+
+const verifySettlementSchema = z.object({
+  status: z.enum(['COMPLETED', 'FAILED'], {
+    errorMap: () => ({ message: 'status must be COMPLETED or FAILED' }),
+  }),
+});
+
+const approvePilotSchema = z.object({
+  status: z.enum(['APPROVED', 'REJECTED'], {
+    errorMap: () => ({ message: 'status must be APPROVED or REJECTED' }),
+  }),
+  rejectionReason: z.string().optional().nullable(),
+});
+
 if (cloudinaryConfig.apiKey) {
   cloudinary.config({
     cloud_name: cloudinaryConfig.cloudName,
@@ -128,10 +145,11 @@ export const renameRider = async (req: AuthRequest, res: Response) => {
     const merchantId = req.user?._id;
     if (!merchantId) return res.status(401).json({ error: 'Unauthorized user.' });
 
-    const { fullName } = req.body;
-    if (!fullName || typeof fullName !== 'string' || fullName.trim().length === 0) {
-      return res.status(400).json({ error: 'Valid full name is required.' });
+    const parsed = renameRiderSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     }
+    const { fullName } = parsed.data;
 
     const riderId = req.params.id;
     if (req.user?.role !== 'ADMIN') {
@@ -567,7 +585,10 @@ export const getPendingSettlements = async (req: AuthRequest, res: Response) => 
       type: 'SETTLEMENT',
       status: 'PENDING',
       user: { $in: myRiderIds },
-    }).populate('user', 'fullName phoneNumber').sort({ createdAt: -1 });
+    })
+      .populate('user', 'fullName phoneNumber')
+      .sort({ createdAt: -1 })
+      .limit(50);
 
     return res.status(200).json(settlements);
   } catch (error) {
@@ -584,7 +605,12 @@ export const verifySettlement = async (req: AuthRequest, res: Response) => {
   session.startTransaction();
   try {
     const merchantId = req.user?._id;
-    const { status } = req.body;
+    const parsed = verifySettlementSchema.safeParse(req.body);
+    if (!parsed.success) {
+      await session.abortTransaction();
+      return res.status(400).json({ error: parsed.error.errors[0].message });
+    }
+    const { status } = parsed.data;
     const transactionId = req.params.id;
 
     const transaction = await Transaction.findById(transactionId).session(session);
@@ -692,11 +718,11 @@ export const getPendingPilots = async (req: AuthRequest, res: Response) => {
 export const approvePilot = async (req: AuthRequest, res: Response) => {
   try {
     const merchantId = req.user?._id;
-    const { status, rejectionReason } = req.body;
-
-    if (!['APPROVED', 'REJECTED'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status update.' });
+    const parsed = approvePilotSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     }
+    const { status, rejectionReason } = parsed.data;
 
     const profile = await RiderProfile.findOneAndUpdate(
       { user: req.params.id, merchant: merchantId },
@@ -848,6 +874,6 @@ export const deletePilot = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json({ message: 'Pilot successfully removed from fleet.', riderId });
   } catch (error: any) {
-    return res.status(500).json({ error: 'Failed to remove pilot from fleet.' });
+    return res.status(500).json({ error: 'Failed to remove pilot.' });
   }
 };

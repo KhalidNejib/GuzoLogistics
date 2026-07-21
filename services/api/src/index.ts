@@ -127,12 +127,6 @@ if (!process.env.CLERK_JWT_LEEWAY) {
   process.env.CLERK_JWT_LEEWAY = '60';
 }
 
-// ─── PUBLIC ENDPOINTS (registered BEFORE clerkMiddleware) ────────────────────
-// These routes do not require authentication and must bypass Clerk's dev-browser
-// check which would otherwise 403 requests from Vercel/browser with no session cookie.
-import { getRouteGeometry } from './controllers/orderController.js';
-app.post('/api/v1/orders/route-geom', getRouteGeometry);
-app.post('/api/orders/route-geom', getRouteGeometry); // legacy alias
 
 app.use(
   clerkMiddleware({
@@ -171,14 +165,16 @@ app.use('/api/v1/incidents', incidentRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/admin', adminRoutes);
 
-// 👉 Legacy aliases (temporary — keep mobile app working during migration)
-// TODO: Remove once mobile-rider confirms /api/v1/* is stable across all installs
-app.use('/api/webhooks', webhookRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/merchant', merchantRoutes);
-app.use('/api/incidents', incidentRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/admin', adminRoutes);
+// 👉 Legacy /api/* aliases — dev/staging only
+// Remove once mobile-rider confirms /api/v1/* is stable across all installs.
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api/webhooks', webhookRoutes);
+  app.use('/api/orders', orderRoutes);
+  app.use('/api/merchant', merchantRoutes);
+  app.use('/api/incidents', incidentRoutes);
+  app.use('/api/user', userRoutes);
+  app.use('/api/admin', adminRoutes);
+}
 
 app.get('/', (_req, res) => {
   res.json({
