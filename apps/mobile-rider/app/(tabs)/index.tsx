@@ -525,7 +525,7 @@ export default function RiderDashboard() {
         (global as any).riderName = me.fullName || user?.fullName || 'Rider';
       }
 
-      socketService.connect(getToken);
+      socketService.connect(() => getToken());
       const savedOnline = await SecureStore.getItemAsync('rider_online_state');
       if (savedOnline !== null) setIsOnline(savedOnline === 'true');
 

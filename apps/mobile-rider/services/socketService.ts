@@ -111,7 +111,8 @@ class SocketService {
             retries--;
           }
           cb({ token });
-        } catch (err) {
+        } catch (err: any) {
+          console.error('❌ [Socket Auth] Error in getToken:', err?.message || err);
           cb({ token: null });
         }
       },

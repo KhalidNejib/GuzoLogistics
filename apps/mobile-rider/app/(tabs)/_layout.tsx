@@ -147,7 +147,7 @@ export default function TabLayout() {
   // ─── Socket Connection ──────────────────────────────────────────────────────
   useEffect(() => {
     if (isSignedIn) {
-      socketService.connect(getToken);
+      socketService.connect(() => getToken());
     }
   }, [isSignedIn, getToken]);
 
