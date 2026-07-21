@@ -67,8 +67,10 @@ export default function SettingsPage() {
     },
   });
 
+  const [hasInitializedForm, setHasInitializedForm] = useState(false);
+
   useEffect(() => {
-    if (profile) {
+    if (profile && !hasInitializedForm) {
       setFormData({
         businessName: profile.businessName || '',
         supportEmail: profile.supportEmail || '',
@@ -88,8 +90,9 @@ export default function SettingsPage() {
           language: 'EN',
         },
       });
+      setHasInitializedForm(true);
     }
-  }, [profile]);
+  }, [profile, hasInitializedForm]);
 
   const handleSave = async () => {
     try {

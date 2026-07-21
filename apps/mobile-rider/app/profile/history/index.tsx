@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
-import { settingService, RiderSettings } from '../../services/settingService';
+import { settingService, RiderSettings } from '../../../services/settingService';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -44,8 +44,6 @@ export default function HistoryScreen() {
         headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
       });
       const data = res.ok ? await res.json() : [];
-      // "History" means missions that have concluded one way or another —
-      // not still-open PENDING/ACCEPTED/IN_TRANSIT ones (those live on the map tab).
       const concluded = Array.isArray(data)
         ? data.filter((o: any) => o.status === 'DELIVERED' || o.status === 'CANCELLED')
         : [];

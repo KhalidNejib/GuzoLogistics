@@ -34,6 +34,8 @@ export default function EditProfileScreen() {
   const isDark = preferences?.darkMode || false;
   const styles = getStyles(isDark);
 
+  const [hasInitialized, setHasInitialized] = useState(false);
+
   const fetchProfile = useCallback(async () => {
     try {
       const token = await getToken();
@@ -56,8 +58,11 @@ export default function EditProfileScreen() {
   }, [getToken]);
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (!hasInitialized) {
+      fetchProfile();
+      setHasInitialized(true);
+    }
+  }, [fetchProfile, hasInitialized]);
 
   const pickPhoto = async (source: 'camera' | 'gallery') => {
     const permission = source === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -145,14 +150,18 @@ export default function EditProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Go back" accessibilityRole="button">
-          <Feather name="arrow-left" size={20} color={isDark ? '#e2e8f0' : '#0f172a'} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-      </View>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Go back" accessibilityRole="button">
+            <Feather name="arrow-left" size={20} color={isDark ? '#e2e8f0' : '#0f172a'} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Edit Profile</Text>
+        </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={styles.avatarSection}>
             <TouchableOpacity

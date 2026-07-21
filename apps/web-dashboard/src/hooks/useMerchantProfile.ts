@@ -58,8 +58,10 @@ export function useMerchantProfile() {
   };
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (isLoaded && isSignedIn) {
+      fetchProfile();
+    }
+  }, [isLoaded, isSignedIn]);
 
   return { profile, isLoading, isUpdating, error, updateProfile, refetch: fetchProfile };
 }

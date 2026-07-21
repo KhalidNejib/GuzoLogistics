@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Map as MapIcon, Wifi, WifiOff, Search, Navigation, Phone, Eye, EyeOff } from 'lucide-react';
+import { Map as MapIcon, Wifi, WifiOff, Search, Navigation, Phone, Eye, EyeOff, Info, MapPin, Truck, User, Tag } from 'lucide-react';
 import LogisticsMap from '@/components/dashboard/LogisticsMap';
 import { useSocket } from '@/hooks/useSocket';
 import { useFetchOrders } from '@/hooks/useFetchOrders';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, Separator, Badge } from '@/components/ui';
 import { toast } from 'sonner';
 import { cn, getApiUrl } from '@/lib/utils';
 
@@ -150,6 +150,162 @@ export default function TrackingPage() {
             >
               <Phone className="h-3.5 w-3.5" /> Call Rider
             </a>
+          )}
+          {activeOrderObj && (
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-4 rounded-xl border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-slate-200 font-extrabold text-[10.5px] uppercase tracking-wider hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-all flex items-center gap-2 shadow-sm"
+                >
+                  <Info className="w-4 h-4 text-primary animate-pulse" /> View Details
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="sm:max-w-[500px] overflow-y-auto">
+                <SheetHeader className="pb-6">
+                  <SheetTitle className="text-2xl font-bold flex items-center gap-2">
+                    Order Details
+                    <span className="text-xs font-mono font-normal text-muted-foreground ml-2">
+                      #{activeOrderObj._id.toUpperCase()}
+                    </span>
+                  </SheetTitle>
+                  <SheetDescription>
+                    Detailed live view of the active delivery mission.
+                  </SheetDescription>
+                </SheetHeader>
+
+                <div className="space-y-8 pt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-muted/50 border border-border/50">
+                      <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest">
+                        Status
+                      </p>
+                      <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-none shadow-none font-bold uppercase text-[10px]">
+                        {activeOrderObj.status}
+                      </Badge>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-primary/5 dark:bg-primary/10 border border-primary/20">
+                      <p className="text-[10px] font-black uppercase text-primary dark:text-primary-foreground/80 mb-1 tracking-widest">
+                        POD Code
+                      </p>
+                      <p className="font-mono font-black text-lg text-primary dark:text-white tracking-widest">
+                        {activeOrderObj.verificationCode}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                      <MapPin className="w-3 h-3 text-primary" /> Delivery Routing
+                    </h4>
+                    <div className="relative pl-6 space-y-6 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border before:dashed">
+                      <div className="relative">
+                        <div className="absolute -left-[23px] top-1 w-4 h-4 rounded-full bg-emerald-500 ring-4 ring-emerald-500/10 border-2 border-background" />
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          Pickup Point
+                        </p>
+                        <p className="text-sm font-bold text-foreground mt-0.5">
+                          {activeOrderObj.pickupAddress?.addressText}
+                        </p>
+                      </div>
+                      <div className="relative">
+                        <div className="absolute -left-[23px] top-1 w-4 h-4 rounded-full bg-red-500 ring-4 ring-red-500/10 border-2 border-background" />
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          Drop-off Destination
+                        </p>
+                        <p className="text-sm font-bold text-foreground mt-0.5">
+                          {activeOrderObj.deliveryAddress?.addressText}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {activeOrderObj.rider && (
+                    <div className="p-4 rounded-2xl bg-indigo-50/20 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/20 space-y-2">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
+                        <Truck className="w-3.5 h-3.5" /> Assigned Rider
+                      </h4>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-black text-slate-800 dark:text-slate-200">
+                            {activeOrderObj.rider.fullName || 'Patrol Pilot'}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            Operating live transport
+                          </p>
+                        </div>
+                        {activeOrderObj.rider.phoneNumber && (
+                          <a
+                            href={`tel:${activeOrderObj.rider.phoneNumber}`}
+                            className="h-8 px-3 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 font-extrabold text-[10.5px] uppercase tracking-wider hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all flex items-center gap-1.5"
+                          >
+                            <Phone className="w-3 h-3" /> {activeOrderObj.rider.phoneNumber}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <Separator className="opacity-40" />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                      <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-1.5">
+                        <User className="w-3 h-3" /> Recipient Info
+                      </h4>
+                      <div>
+                        <p className="font-bold text-sm text-foreground">
+                          {activeOrderObj.customerName || activeOrderObj.recipientName || 'Customer'}
+                        </p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
+                          <Phone className="w-3 h-3" />{' '}
+                          {activeOrderObj.customerPhone || activeOrderObj.recipientPhone || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-1.5">
+                        <Tag className="w-3 h-3" /> Item Specs
+                      </h4>
+                      <div>
+                        <p className="font-bold text-sm text-foreground">
+                          {activeOrderObj.itemDetails?.name || 'Package'}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {activeOrderObj.itemDetails?.quantity || 1} unit • {activeOrderObj.itemDetails?.weight || 0}kg
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 flex justify-between items-center shadow-inner">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-xl bg-primary/10">
+                        <Truck className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-sm block">
+                          Total Collection
+                        </span>
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">
+                          Item + Delivery ({activeOrderObj.paymentMethod})
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-2xl font-black text-primary block">
+                        ETB{' '}
+                        {(
+                          (activeOrderObj.priceInfo?.itemPrice || 0) +
+                          (activeOrderObj.priceInfo?.amount || 0)
+                        ).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           )}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-zinc-900 rounded-full border border-border shadow-inner">
             <div className={`h-2 w-2 rounded-full ${status === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]'}`} />

@@ -239,6 +239,12 @@ export default function LogisticsMap({
   const pickup = activeOrder?.pickupAddress?.coordinates || activeOrder?.pickupAddress?.location?.coordinates;
   const delivery = activeOrder?.deliveryAddress?.coordinates || activeOrder?.deliveryAddress?.location?.coordinates;
 
+  // Reset route path and distance whenever the active order changes to avoid displaying stale paths
+  useEffect(() => {
+    setRoutePath(null);
+    setRouteDistance(null);
+  }, [activeOrder?._id]);
+
   useEffect(() => {
     const id = activeOrder?._id;
     if (id && fleet[id]) setFocusId(id);
@@ -271,9 +277,14 @@ export default function LogisticsMap({
     orsCoords.push([delivery[0], delivery[1]]); // delivery is [lng,lat]
     if (orsCoords.length < 2) return;
 
-    // ── 1. Instant straight-line fallback so map always shows something ────────
-    const straightLine: [number, number][] = orsCoords.map(([lng, lat]) => [lat, lng]);
-    setRoutePath(straightLine);
+    // ── 1. Straight-line fallback only on first load (routePath is null) ────────
+    // On subsequent rider GPS updates routePath already has the correct ORS
+    // geometry — overwriting it with a straight line causes the visible flicker
+    // before the new fetch completes. Only seed it when nothing is drawn yet.
+    if (!routePath) {
+      const straightLine: [number, number][] = orsCoords.map(([lng, lat]) => [lat, lng]);
+      setRoutePath(straightLine);
+    }
 
     // ── 2. Fetch real routed geometry from our backend proxy ──────────────────
     const controller = new AbortController();
