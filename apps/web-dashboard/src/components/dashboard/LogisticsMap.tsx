@@ -304,7 +304,11 @@ export default function LogisticsMap({
           signal: controller.signal,
         });
 
-        if (!res.ok) { console.warn('🛰️ [ORS Proxy] Non-OK status:', res.status); return; }
+        if (!res.ok) { 
+          console.warn('🛰️ [ORS Proxy] Non-OK status:', res.status);
+          setRoutePath(orsCoords.map(([lng, lat]) => [lat, lng]));
+          return; 
+        }
 
         const data = await res.json();
         if (data.features?.[0]) {
@@ -315,8 +319,11 @@ export default function LogisticsMap({
           onRouteMetrics?.(feature.properties.summary.distance / 1000, feature.properties.summary.duration / 60);
         }
       } catch (err: any) {
-        if (err.name !== 'AbortError') console.error('🛰️ [ORS Routing] Failed:', err);
-        // straight-line fallback is already visible — do nothing
+        if (err.name !== 'AbortError') {
+          console.error('🛰️ [ORS Routing] Failed:', err);
+          // straight-line fallback if routing fails so it still follows the rider
+          setRoutePath(orsCoords.map(([lng, lat]) => [lat, lng]));
+        }
       } finally {
         clearTimeout(timeout);
       }
