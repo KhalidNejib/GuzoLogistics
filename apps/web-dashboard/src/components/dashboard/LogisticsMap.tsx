@@ -297,9 +297,19 @@ export default function LogisticsMap({
         else if (baseUrl.endsWith('/api')) baseUrl = baseUrl.slice(0, -4);
         const proxyUrl = `${baseUrl.replace(/\/$/, '')}/api/v1/orders/route-geom`;
 
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        try {
+          // If the window has Clerk initialized, try to grab the token (for protected dashboard view)
+          // We use window.Clerk instead of useAuth hook to avoid breaking the component if rendered outside ClerkProvider
+          const token = await (window as any).Clerk?.session?.getToken();
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+        } catch (e) {
+          // Ignore
+        }
+
         const res = await fetch(proxyUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ coordinates: orsCoords }),
           signal: controller.signal,
         });
