@@ -1,4 +1,4 @@
-c: \Users\HP\Downloads\socket.tsimport * as Sentry from '@sentry/node';
+import * as Sentry from '@sentry/node';
 
 const dsn = process.env.SENTRY_DSN;
 if (dsn) {
