@@ -48,12 +48,30 @@ export const requireUser = async (req: AuthRequest, res: Response, next: NextFun
         const email = clerkUser.emailAddresses?.[0]?.emailAddress || `${userId}@ethio-logistics.com`;
         const phoneNumber = clerkUser.phoneNumbers?.[0]?.phoneNumber || '+251900000000';
         const rawRole = (clerkUser.publicMetadata?.role as string)?.toUpperCase();
+        const rawUnsafeRole = (clerkUser.unsafeMetadata?.role as string)?.toUpperCase();
         // hasExplicitRoleHint distinguishes "Clerk told us the role" from "we
         // fell back to a default" — see the role-assignment note below for
         // why that distinction matters.
         const hasExplicitRoleHint = ['MERCHANT', 'RIDER', 'ADMIN'].includes(rawRole);
+        // unsafeMetadata is client-writable at Clerk signUp.create() time (the
+        // web dashboard stamps { role: 'MERCHANT' } there, the mobile rider
+        // app stamps { role: 'RIDER' } there — see clerkWebhook.ts for the
+        // matching logic on the webhook side). We only trust it for MERCHANT
+        // and RIDER, never ADMIN.
+        //
+        // This check used to be missing entirely, which meant a brand-new
+        // merchant could get created HERE — by this synchronous auto-sync,
+        // firing on their very first authenticated API call right after
+        // sign-up — before Clerk's async user.created webhook had a chance
+        // to land. This fallback only ever looked at publicMetadata (which
+        // the web dashboard never sets — it only sets unsafeMetadata), so it
+        // always defaulted new merchants to RIDER. By the time the webhook
+        // did arrive, the user already existed, so the webhook's (correct,
+        // deliberate) "never silently overwrite an existing role from an
+        // untrusted hint" rule left them stuck as RIDER permanently.
+        const hasTrustedUnsafeRoleHint = ['MERCHANT', 'RIDER'].includes(rawUnsafeRole);
         // Default to RIDER — merchants are created via the web dashboard only
-        const role = hasExplicitRoleHint ? rawRole : 'RIDER';
+        const role = hasExplicitRoleHint ? rawRole : hasTrustedUnsafeRoleHint ? rawUnsafeRole : 'RIDER';
 
         // SMARTER SYNC: First try to find by clerkId, then by email
         user = await User.findOne({ $or: [{ clerkId: userId }, { email }] });

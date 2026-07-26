@@ -37,7 +37,7 @@ function PageLoader() {
 
 
 function ProtectedApp() {
-  const { onboardingCompleted, isApproved, isChecking, markCompleted, statusError, retry } = useOnboardingStatus();
+  const { onboardingCompleted, isApproved, isChecking, markCompleted, statusError, wrongRole, retry } = useOnboardingStatus();
   const { signOut } = useClerk();
 
   // Fullscreen loading while we check onboarding status
@@ -59,6 +59,37 @@ function ProtectedApp() {
   // New merchant — show wizard fullscreen
   if (onboardingCompleted === false) {
     return <OnboardingWizard onComplete={markCompleted} />;
+  }
+
+  // This account isn't a merchant account at all (e.g. a rider account signed
+  // in here) — retrying won't help, so say so plainly instead of showing the
+  // generic "couldn't reach server" or "pending verification" screens.
+  if (wrongRole) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500 mb-6">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-3">Not a Merchant Account</h2>
+          <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+            This account isn't registered as a merchant, so it can't access the merchant dashboard.
+            If you meant to sign in with a different account, sign out below and try again. If you're
+            a rider, use the Guzo mobile app instead.
+          </p>
+          <div className="w-full flex flex-col gap-3">
+            <button
+              onClick={() => signOut()}
+              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold text-white transition-colors duration-200"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Merchant pending verification — show gorgeous locked screen
