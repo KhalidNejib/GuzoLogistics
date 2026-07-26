@@ -26,13 +26,13 @@ import { getApiUrl, formatStatus } from '@/lib/utils';
 const API_URL = getApiUrl();
 
 const STATUS_STEPS = [
-  { key: 'PENDING',          label: 'Order Placed',    icon: Package },
-  { key: 'ACCEPTED',         label: 'Rider Assigned',  icon: Navigation },
-  { key: 'ARRIVED_PICKUP',   label: 'Rider at Pickup', icon: MapPin },
-  { key: 'PICKED_UP',        label: 'Picked Up',       icon: Truck },
-  { key: 'IN_TRANSIT',       label: 'In Transit',      icon: Truck },
-  { key: 'ARRIVED_DELIVERY', label: 'Near You',        icon: MapPin },
-  { key: 'DELIVERED',        label: 'Delivered',       icon: CheckCircle2 },
+  { key: 'PENDING', label: 'Order Placed', icon: Package },
+  { key: 'ACCEPTED', label: 'Rider Assigned', icon: Navigation },
+  { key: 'ARRIVED_PICKUP', label: 'Rider at Pickup', icon: MapPin },
+  { key: 'PICKED_UP', label: 'Picked Up', icon: Truck },
+  { key: 'IN_TRANSIT', label: 'In Transit', icon: Truck },
+  { key: 'ARRIVED_DELIVERY', label: 'Near You', icon: MapPin },
+  { key: 'DELIVERED', label: 'Delivered', icon: CheckCircle2 },
 ];
 
 function getStepIndex(status: string) {
@@ -61,7 +61,7 @@ function StarRating({
     if (submitted || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/api/orders/track/${token}/rate`, {
+      const res = await fetch(`${API_URL}/api/v1/orders/track/${token}/rate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating }),
@@ -118,11 +118,10 @@ function StarRating({
             aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
           >
             <Star
-              className={`w-9 h-9 transition-colors duration-150 ${
-                star <= (hovered || selected)
+              className={`w-9 h-9 transition-colors duration-150 ${star <= (hovered || selected)
                   ? 'fill-amber-400 text-amber-400'
                   : 'text-slate-300 fill-slate-100'
-              }`}
+                }`}
             />
           </button>
         ))}
@@ -178,7 +177,7 @@ export default function PublicTrackingPage() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/orders/track/${token}`);
+        const res = await fetch(`${API_URL}/api/v1/orders/track/${token}`);
         if (!res.ok) throw new Error('Tracking link invalid or expired.');
         const data = await res.json();
         setOrder(data.order);
@@ -229,7 +228,7 @@ export default function PublicTrackingPage() {
 
     socket.on('order_status_changed', (data: any) => {
       console.info('📡 [Tracking] Live update:', data);
-      
+
       const newStatus = data.status || data.order?.status;
       if (newStatus) {
         toast.info(`Order Status updated: ${formatStatus(newStatus)}`, {
@@ -326,16 +325,14 @@ export default function PublicTrackingPage() {
         <div className="flex items-center gap-2">
           {/* Live socket badge */}
           <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg ${
-              socketStatus === 'connected'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg ${socketStatus === 'connected'
                 ? 'bg-emerald-500/90 text-white'
                 : 'bg-slate-700/90 text-slate-300'
-            }`}
+              }`}
           >
             <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                socketStatus === 'connected' ? 'bg-white animate-ping' : 'bg-slate-500'
-              }`}
+              className={`h-1.5 w-1.5 rounded-full ${socketStatus === 'connected' ? 'bg-white animate-ping' : 'bg-slate-500'
+                }`}
             />
             {socketStatus === 'connected' ? 'Live' : 'Offline'}
           </div>
@@ -360,7 +357,7 @@ export default function PublicTrackingPage() {
                   title: 'Track my Guzo delivery',
                   text: `I'm tracking my order #${order?._id.slice(-8).toUpperCase()} live!`,
                   url: window.location.href,
-                }).catch(() => {});
+                }).catch(() => { });
               }}
               className="bg-blue-600 p-2 rounded-xl text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
               title="Share tracking link"
@@ -385,9 +382,8 @@ export default function PublicTrackingPage() {
 
       {/* ── BOTTOM SHEET ────────────────────────────────────────────────── */}
       <div
-        className={`absolute left-0 right-0 bottom-0 z-20 transition-transform duration-500 ease-out ${
-          sheetOpen ? 'translate-y-0' : 'translate-y-[calc(100%-72px)]'
-        }`}
+        className={`absolute left-0 right-0 bottom-0 z-20 transition-transform duration-500 ease-out ${sheetOpen ? 'translate-y-0' : 'translate-y-[calc(100%-72px)]'
+          }`}
       >
         {/* Sheet Handle / Toggle */}
         <button
@@ -414,11 +410,10 @@ export default function PublicTrackingPage() {
               </h2>
             </div>
             <Badge
-              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                isDelivered
+              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${isDelivered
                   ? 'bg-emerald-100 text-emerald-700'
                   : 'bg-blue-100 text-blue-700'
-              }`}
+                }`}
             >
               {formatStatus(order.status)}
             </Badge>
@@ -442,22 +437,20 @@ export default function PublicTrackingPage() {
               return (
                 <div key={step.key} className="flex flex-col items-center gap-1.5 z-10" style={{ width: `${100 / STATUS_STEPS.length}%` }}>
                   <div
-                    className={`h-8 w-8 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
-                      done
+                    className={`h-8 w-8 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${done
                         ? active
                           ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-200'
                           : 'bg-emerald-500 border-emerald-500'
                         : 'bg-white border-slate-200'
-                    }`}
+                      }`}
                   >
                     <Icon
                       className={`w-4 h-4 ${done ? 'text-white' : 'text-slate-300'}`}
                     />
                   </div>
                   <p
-                    className={`text-center text-[9px] font-black uppercase leading-tight ${
-                      done ? (active ? 'text-blue-600' : 'text-emerald-600') : 'text-slate-400'
-                    }`}
+                    className={`text-center text-[9px] font-black uppercase leading-tight ${done ? (active ? 'text-blue-600' : 'text-emerald-600') : 'text-slate-400'
+                      }`}
                   >
                     {step.label}
                   </p>
@@ -471,7 +464,7 @@ export default function PublicTrackingPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-4 bg-slate-50 border border-slate-100 p-4 rounded-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:opacity-10 transition-opacity">
-                   <ShieldCheck size={48} className="text-blue-900" />
+                  <ShieldCheck size={48} className="text-blue-900" />
                 </div>
                 <div className="h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-black shadow-md shadow-blue-200 shrink-0">
                   {riderName.charAt(0).toUpperCase()}
@@ -518,27 +511,27 @@ export default function PublicTrackingPage() {
                   </div>
                 </div>
               )}
-              
+
               {/* 🛡️ VANGUARD BIO 🛡️ */}
               {!isDelivered && (
                 <div className="bg-blue-50/50 border border-blue-100/50 p-4 rounded-2xl">
-                   <div className="flex items-center gap-2 mb-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                      <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Verified Vanguard</span>
-                   </div>
-                   <p className="text-xs text-slate-600 italic leading-relaxed">
-                      "Committed to delivering your package safely and on time. I'm currently 
-                      navigating the best route to reach you. Thank you for choosing Guzo!"
-                   </p>
-                   <div className="flex items-center gap-3 mt-3">
-                     <button 
-                       onClick={() => window.dispatchEvent(new CustomEvent('focus-rider'))}
-                       className="text-[9px] font-black text-blue-600 uppercase tracking-wider flex items-center gap-1 hover:underline"
-                     >
-                       <Navigation className="w-2.5 h-2.5" /> Center Map
-                     </button>
-                     <div className="h-1 w-1 bg-slate-300 rounded-full" />
-                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Mission in Progress</p>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Verified Vanguard</span>
+                  </div>
+                  <p className="text-xs text-slate-600 italic leading-relaxed">
+                    "Committed to delivering your package safely and on time. I'm currently
+                    navigating the best route to reach you. Thank you for choosing Guzo!"
+                  </p>
+                  <div className="flex items-center gap-3 mt-3">
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent('focus-rider'))}
+                      className="text-[9px] font-black text-blue-600 uppercase tracking-wider flex items-center gap-1 hover:underline"
+                    >
+                      <Navigation className="w-2.5 h-2.5" /> Center Map
+                    </button>
+                    <div className="h-1 w-1 bg-slate-300 rounded-full" />
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Mission in Progress</p>
                   </div>
                 </div>
               )}
@@ -556,9 +549,9 @@ export default function PublicTrackingPage() {
           )}
 
           {/* ── VERTICAL TIMELINE ────────────────────────────────────── */}
-          <JourneyTimeline 
-            status={order.status} 
-            history={order.routeHistory} 
+          <JourneyTimeline
+            status={order.status}
+            history={order.routeHistory}
             createdAt={order.createdAt}
             deliveredAt={order.deliveredAt}
           />
@@ -589,7 +582,7 @@ export default function PublicTrackingPage() {
             <div className="space-y-6">
               <div className="bg-linear-to-br from-emerald-500 to-teal-600 rounded-3xl p-6 text-center text-white shadow-xl shadow-emerald-200 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
-                   <ShieldCheck size={80} />
+                  <ShieldCheck size={80} />
                 </div>
                 <CheckCircle2 className="w-12 h-12 mx-auto mb-3 opacity-90" />
                 <h3 className="text-2xl font-black italic tracking-tighter">MISSION ACCOMPLISHED! 🎉</h3>
@@ -613,8 +606,8 @@ export default function PublicTrackingPage() {
                   <div className="relative group">
                     <div className="absolute inset-0 bg-emerald-500/10 rounded-2xl blur-xl opacity-20" />
                     <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-500/10 shadow-lg">
-                      <img 
-                        src={order.podImageUrl} 
+                      <img
+                        src={order.podImageUrl}
                         alt={`Proof of Delivery — verified photo for order #${order.trackingUrlToken?.slice(-6)?.toUpperCase() || ''}`}
                         className="w-full h-auto aspect-video object-cover"
                       />

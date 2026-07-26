@@ -18,7 +18,7 @@ export function useCreateOrder() {
     try {
       const token = await getToken();
 
-      const response = await fetch(`${API_URL}/api/orders`, {
+      const response = await fetch(`${API_URL}/api/v1/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -31,13 +31,13 @@ export function useFetchOrders() {
         if (retryCount.current < maxRetries) {
           retryCount.current++;
           await new Promise((r) => setTimeout(r, 1000));
-          return fetchOrders(); 
+          return fetchOrders();
         }
         setIsLoading(false);
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/orders?limit=500&t=${Date.now()}`, {
+      const response = await fetch(`${API_URL}/api/v1/orders?limit=500&t=${Date.now()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -60,14 +60,14 @@ export function useFetchOrders() {
       retryCount.current = 0;
     } catch (err: any) {
       console.error('Fetch Orders Error:', err);
-      
+
       // If it's a network error (Failed to fetch), retry
       if (err.message === 'Failed to fetch' && retryCount.current < maxRetries) {
         retryCount.current++;
         await new Promise((r) => setTimeout(r, 1500));
         return fetchOrders();
       }
-      
+
       setError(err.message);
     } finally {
       // Only set loading to false if we are not retrying
@@ -75,7 +75,7 @@ export function useFetchOrders() {
         setIsLoading(false);
       }
     }
-  }, [getToken, isLoaded, isSignedIn]); 
+  }, [getToken, isLoaded, isSignedIn]);
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
@@ -84,7 +84,7 @@ export function useFetchOrders() {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, isSignedIn]); 
+  }, [isLoaded, isSignedIn]);
 
   return {
     orders,

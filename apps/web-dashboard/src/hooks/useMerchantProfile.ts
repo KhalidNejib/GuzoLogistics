@@ -18,7 +18,7 @@ export function useMerchantProfile() {
 
     try {
       const token = await getToken();
-      const response = await fetch(`${API_URL}/api/merchant/profile`, {
+      const response = await fetch(`${API_URL}/api/v1/merchant/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -36,7 +36,7 @@ export function useMerchantProfile() {
     setIsUpdating(true);
     try {
       const token = await getToken();
-      const response = await fetch(`${API_URL}/api/merchant/profile`, {
+      const response = await fetch(`${API_URL}/api/v1/merchant/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -799,7 +799,7 @@ export default function RiderDashboard() {
   const handleSOS = useCallback(async (description: string) => {
     try {
       const t = await getToken();
-      const res = await fetch(`${API_URL}/api/incidents`, {
+      const res = await fetch(`${API_URL}/api/v1/incidents`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1180,4 +1180,4 @@ export default function RiderDashboard() {
       <OnboardingModal visible={showOnboarding} initialData={riderProfile} getToken={getToken} onComplete={handleOnboardingSubmit} />
     </View>
   );
-} 
+}
