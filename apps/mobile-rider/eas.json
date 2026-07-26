@@ -15,7 +15,7 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://guzo-api.onrender.com",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuZ3V6by1sb2dpc3RpY3MuZHVja2Rucy5vcmck",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c2FmZS1nb29zZS0zOC5jbGVyay5hY2NvdW50cy5kZXYk",
         "EXPO_PUBLIC_MAPTILER_API_KEY": "4ru8MR6SRMv3o0icmzFm",
         "EXPO_PUBLIC_ORS_API_KEY": "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImU2MDYyYWJmMWU5NjRlNjViMDc2ZmI1YjhjODc3YzcwIiwiaCI6Im11cm11cjY0In0="
       }
@@ -27,7 +27,7 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://guzo-api.onrender.com",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuZ3V6by1sb2dpc3RpY3MuZHVja2Rucy5vcmck",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c2FmZS1nb29zZS0zOC5jbGVyay5hY2NvdW50cy5kZXYk",
         "EXPO_PUBLIC_MAPTILER_API_KEY": "4ru8MR6SRMv3o0icmzFm",
         "EXPO_PUBLIC_ORS_API_KEY": "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImU2MDYyYWJmMWU5NjRlNjViMDc2ZmI1YjhjODc3YzcwIiwiaCI6Im11cm11cjY0In0="
       }
