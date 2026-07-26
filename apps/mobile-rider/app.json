@@ -25,7 +25,7 @@
       "package": "com.guzo.rider",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#4f46e5"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,

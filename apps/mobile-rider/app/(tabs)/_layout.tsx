@@ -70,7 +70,7 @@ export default function TabLayout() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       const token = await getTokenRef.current();
-      const res = await fetch(`${API_URL}/api/user/me`, {
+      const res = await fetch(`${API_URL}/api/v1/user/me`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'localtunnel-skip-clearing-house': 'true'

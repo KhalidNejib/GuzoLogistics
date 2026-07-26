@@ -82,6 +82,13 @@ export const initializeSocket = (io: Server) => {
         // placeholder full names.
         user = await User.create({
           clerkId: decoded.sub,
+          // 'email' is required+unique on the User schema. The Clerk webhook (clerkWebhook.ts)
+          // is what fills in the real address; it runs async and can land after this socket
+          // connects (e.g. right after Google sign-in), so we need a valid placeholder here
+          // or User.create() throws "email: Path `email` is required." and the socket
+          // connection is rejected, which is what caused the rider app's connect/retry loop.
+          // Mirrors the same placeholder pattern used in middleware/auth.ts.
+          email: `${decoded.sub}@ethio-logistics.com`,
           fullName: decoded.name || 'Rider',
           role: 'RIDER',
           phoneNumber: `+251${Math.floor(100000000 + Math.random() * 900000000)}`,

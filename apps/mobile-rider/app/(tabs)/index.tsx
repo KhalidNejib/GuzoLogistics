@@ -509,7 +509,7 @@ export default function RiderDashboard() {
     try {
       const token = await getToken();
       if (!token) { setIsLoading(false); return; }
-      const meRes = await fetch(`${API_URL}/api/user/me`, { 
+      const meRes = await fetch(`${API_URL}/api/v1/user/me`, { 
         headers: { 
           Authorization: `Bearer ${token}`,
           'localtunnel-skip-clearing-house': 'true'
@@ -640,7 +640,7 @@ export default function RiderDashboard() {
       ];
 
       registerForPushNotificationsAsync().then(t => {
-        if (t) fetch(`${API_URL}/api/user/push-token`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ token: t }) }).catch(() => {});
+        if (t) fetch(`${API_URL}/api/v1/user/push-token`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ token: t }) }).catch(() => {});
       });
       fetchData();
       
