@@ -248,7 +248,16 @@ export default function RiderDashboard() {
     }).catch(() => { });
     return () => {
       mounted = false;
-      soundObject.current?.unloadAsync();
+      // "Player does not exist" (Sentry REACT-NATIVE-2): on low-RAM devices,
+      // Android can kill the native player while the app is backgrounded
+      // under memory pressure. unloadAsync() then rejects because there's
+      // nothing left to unload — .catch() here (matching the pattern
+      // already used for replayAsync() elsewhere in this file) turns that
+      // into a no-op instead of an unhandled promise rejection. Clearing
+      // the ref also stops any later replayAsync() call from targeting a
+      // player that's already gone.
+      soundObject.current?.unloadAsync().catch(() => { });
+      soundObject.current = null;
     };
   }, []);
 
