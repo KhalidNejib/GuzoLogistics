@@ -138,7 +138,7 @@ export default function AdminPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Shield className="w-6 h-6 text-amber-500" />
@@ -148,7 +148,7 @@ export default function AdminPage() {
         </div>
         <button
           onClick={fetchUsers}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/60 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-border/60 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors self-start sm:self-auto"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -249,11 +249,10 @@ export default function AdminPage() {
                       {u.serviceCity && <p className="text-xs text-muted-foreground mt-0.5">{u.serviceCity}</p>}
                     </td>
                     <td className="px-5 py-4">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                        u.role === 'ADMIN' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
-                        u.role === 'MERCHANT' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                        'bg-slate-500/10 text-slate-400 border border-slate-500/20'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${u.role === 'ADMIN' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                          u.role === 'MERCHANT' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                            'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+                        }`}>
                         {u.role}
                       </span>
                     </td>

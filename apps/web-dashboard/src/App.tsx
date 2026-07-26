@@ -26,7 +26,7 @@ function PageLoader() {
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center animate-pulse">
           <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z"/>
+            <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
           </svg>
         </div>
         <p className="text-white/60 text-sm font-bold animate-pulse">Loading...</p>
@@ -37,7 +37,7 @@ function PageLoader() {
 
 
 function ProtectedApp() {
-  const { onboardingCompleted, isApproved, isChecking, markCompleted } = useOnboardingStatus();
+  const { onboardingCompleted, isApproved, isChecking, markCompleted, statusError, retry } = useOnboardingStatus();
   const { signOut } = useClerk();
 
   // Fullscreen loading while we check onboarding status
@@ -47,7 +47,7 @@ function ProtectedApp() {
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center animate-pulse">
             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24">
-              <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z"/>
+              <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
             </svg>
           </div>
           <p className="text-white/60 text-sm font-bold animate-pulse">Initializing your account...</p>
@@ -73,9 +73,13 @@ function ProtectedApp() {
             </svg>
           </div>
 
-          <h2 className="text-2xl font-bold text-white mb-3">Pending Verification</h2>
+          <h2 className="text-2xl font-bold text-white mb-3">
+            {statusError ? "Couldn't Check Your Status" : 'Pending Verification'}
+          </h2>
           <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-            Thank you for completing your onboarding! Our administrative team is currently verifying your business documents. We will notify you by email once your merchant account is active.
+            {statusError
+              ? "We couldn't reach the server to confirm your account status. This is usually temporary — please try again in a moment."
+              : 'Thank you for completing your onboarding! Our administrative team is currently verifying your business documents. We will notify you by email once your merchant account is active.'}
           </p>
 
           {/* Contact Details Card */}
@@ -96,13 +100,13 @@ function ProtectedApp() {
 
           {/* Action Buttons */}
           <div className="w-full flex flex-col gap-3">
-            <button 
-              onClick={() => window.location.reload()}
+            <button
+              onClick={() => retry()}
               className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold text-white transition-colors duration-200"
             >
               Refresh Status
             </button>
-            <button 
+            <button
               onClick={() => signOut()}
               className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 font-semibold text-slate-300 transition-colors duration-200"
             >

@@ -25,7 +25,7 @@ export const requireUser = async (req: AuthRequest, res: Response, next: NextFun
         const token = authHeader.split(' ')[1];
         const decoded = await verifyToken(token, {
           secretKey: clerkConfig.secretKey,
-          clockSkewInMs: 300000, 
+          clockSkewInMs: 300000,
         });
         userId = decoded.sub;
       } catch (e: any) {
@@ -117,9 +117,15 @@ export const requireRole = (allowedRole: 'MERCHANT' | 'RIDER' | 'ADMIN') => {
 
     if (userRole === 'ADMIN') return next();
     if (userRole === allowedRole) {
+      // Gate every merchant route behind admin approval — not just the ones reached
+      // after onboarding. This used to also require `req.user?.onboardingCompleted`,
+      // which meant a brand-new merchant (isApproved: false, onboardingCompleted: false,
+      // i.e. someone who just signed up and never even opened the onboarding wizard)
+      // sailed straight past this check and got full merchant-dashboard access.
+      // /onboarding and /onboarding/status stay exempt so an unapproved merchant can
+      // still submit their business details and poll their own approval status.
       if (
         allowedRole === 'MERCHANT' &&
-        req.user?.onboardingCompleted &&
         !req.user?.isApproved &&
         !req.path.endsWith('/onboarding') &&
         !req.path.endsWith('/onboarding/status')

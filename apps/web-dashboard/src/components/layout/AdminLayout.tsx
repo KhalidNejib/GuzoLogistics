@@ -99,9 +99,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         type: isSOS ? 'critical' : 'info',
       };
       setNotifications((prev) => [newNotif, ...prev].slice(0, 10));
-      
+
       if (isSOS) {
-        toast.error(`SOS ACTIVATED: ${data.riderName}`, { 
+        toast.error(`SOS ACTIVATED: ${data.riderName}`, {
           description: data.description,
           duration: 20000,
         });
@@ -128,7 +128,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     socket.on('order_status_changed', handleStatusChange);
     socket.on('emergency_sos', handleSOS);
     socket.on('notification', handleNotification);
-    
+
     return () => {
       socket.off('order_status_changed', handleStatusChange);
       socket.off('emergency_sos', handleSOS);
@@ -160,11 +160,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                       <SidebarMenuButton
                         tooltip={item.name}
                         isActive={isActive}
-                        className={`h-11 transition-all duration-200 rounded-lg ${
-                          isActive
-                            ? 'bg-primary/10 text-primary font-bold border-l-4 border-primary rounded-l-none'
-                            : 'hover:bg-primary/5 text-muted-foreground'
-                        }`}
+                        className={`h-11 transition-all duration-200 rounded-lg ${isActive
+                          ? 'bg-primary/10 text-primary font-bold border-l-4 border-primary rounded-l-none'
+                          : 'hover:bg-primary/5 text-muted-foreground'
+                          }`}
                       >
                         <item.icon
                           className={`h-5 w-5 min-w-[20px] ${isActive ? 'text-primary' : ''}`}
@@ -230,7 +229,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 </Button>
 
                 {showNotifications && (
-                  <div className="absolute right-0 mt-4 w-80 bg-background border border-border rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute right-0 mt-4 w-[calc(100vw-2rem)] max-w-80 bg-background border border-border rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="p-4 border-b border-border/40 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-between">
                       <h4 className="font-bold text-sm">Notifications</h4>
                       <Badge variant="outline" className="text-[10px] font-black">
@@ -252,13 +251,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                             className="p-4 hover:bg-muted/30 transition-colors border-b border-border/40 last:border-0 flex gap-3"
                           >
                             <div
-                              className={`mt-1 h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
-                                n.type === 'success'
-                                  ? 'bg-green-100 text-green-600 dark:bg-emerald-500/20 dark:text-emerald-400'
-                                  : n.type === 'critical'
+                              className={`mt-1 h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${n.type === 'success'
+                                ? 'bg-green-100 text-green-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                : n.type === 'critical'
                                   ? 'bg-red-100 text-red-600 dark:bg-rose-500/20 dark:text-rose-400'
                                   : 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
-                              }`}
+                                }`}
                             >
                               {n.type === 'success' ? (
                                 <CheckCircle2 size={16} />

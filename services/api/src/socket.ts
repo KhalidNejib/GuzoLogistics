@@ -24,9 +24,9 @@ const calculateDistance = (coords1: [number, number], coords2: [number, number])
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(coords1[1] * (Math.PI / 180)) *
-      Math.cos(coords2[1] * (Math.PI / 180)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos(coords2[1] * (Math.PI / 180)) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
@@ -104,7 +104,7 @@ export const initializeSocket = (io: Server) => {
           logger.warn({ clerkId: decoded.sub }, '🔒 [Socket Auth] Blocked connection: User is deleted');
           return next(new Error('account-deactivated'));
         }
-        
+
         // Allowed to connect in restricted mode for real-time activation alerts
         (socket.data as SocketData).userId = decoded.sub;
         (socket.data as SocketData).mongoId = user._id.toString();
@@ -142,7 +142,7 @@ export const initializeSocket = (io: Server) => {
         socket.join(`city:fleet:${city}`); // Merchants listen to their city fleet
         logger.info({ userId: user._id, city }, `🔑 [Socket] Merchant joined ${city} radar`);
       }
-      
+
       (socket.data as any).city = city;
       next();
     } catch (error: any) {
@@ -169,8 +169,8 @@ export const initializeSocket = (io: Server) => {
           // 🛡️ Security Check: Only Riders can join the global tracking fleet
           const user = await User.findById(mongoId).select('role').lean() as any;
           if (user?.role !== 'RIDER') {
-             console.warn(`[Security] Blocked global join: ${mongoId} is not a rider`);
-             return;
+            console.warn(`[Security] Blocked global join: ${mongoId} is not a rider`);
+            return;
           }
           socket.join('riders:global');
           socket.emit('joined_room', { room: 'riders:global' });
@@ -238,34 +238,34 @@ export const initializeSocket = (io: Server) => {
 
         // 📡 FLEET RADAR: Broadcast to specific merchant (if on mission) OR city fleet (if idle)
         const city = (socket.data as any).city || 'Default';
-        
-        if (isGlobal) {
-            // 🌍 Idle rider -> Notify city-wide radar
-            // Use the server-verified name (from our DB) — not the client payload
-            const verifiedName = (socket.data as SocketData).riderName || riderName || 'Rider';
-            io.to(`city:fleet:${city}`).emit('fleet_radar_update', {
-                riderId: mongoId,
-                orderId: 'IDLE',
-                lat,
-                lng,
-                speed,
-                riderName: verifiedName
-            });
-        } else if (isValidObjectId(orderId)) {
-           // 🔒 Active rider -> Notify specific merchant.
-           const merchantId = orderMerchantId;
-           const verifiedName = (socket.data as SocketData).riderName || riderName || 'Rider';
 
-           if (merchantId) {
-              io.to(`merchant:${merchantId}`).emit('fleet_radar_update', {
-                 riderId: mongoId,
-                 orderId,
-                 lat,
-                 lng,
-                 speed,
-                 riderName: verifiedName
-              });
-           }
+        if (isGlobal) {
+          // 🌍 Idle rider -> Notify city-wide radar
+          // Use the server-verified name (from our DB) — not the client payload
+          const verifiedName = (socket.data as SocketData).riderName || riderName || 'Rider';
+          io.to(`city:fleet:${city}`).emit('fleet_radar_update', {
+            riderId: mongoId,
+            orderId: 'IDLE',
+            lat,
+            lng,
+            speed,
+            riderName: verifiedName
+          });
+        } else if (isValidObjectId(orderId)) {
+          // 🔒 Active rider -> Notify specific merchant.
+          const merchantId = orderMerchantId;
+          const verifiedName = (socket.data as SocketData).riderName || riderName || 'Rider';
+
+          if (merchantId) {
+            io.to(`merchant:${merchantId}`).emit('fleet_radar_update', {
+              riderId: mongoId,
+              orderId,
+              lat,
+              lng,
+              speed,
+              riderName: verifiedName
+            });
+          }
         }
 
         // 📏 NEARBY TRIGGER: Notify when rider is within 500m of the active target
@@ -274,40 +274,40 @@ export const initializeSocket = (io: Server) => {
           const isAlreadyNotified = await redis.get(proximityKey);
 
           if (!isAlreadyNotified) {
-             const order = await Order.findById(orderId).select('status pickupAddress deliveryAddress merchant itemDetails').lean() as any;
-             if (order && !['DELIVERED', 'CANCELLED'].includes(order.status)) {
-                const isTransit = order.itemDetails?.isPickedUp || order.status === 'IN_TRANSIT';
-                const target = isTransit ? order.deliveryAddress : order.pickupAddress;
-                const dist = calculateDistance([lng, lat], [target.location.coordinates[0], target.location.coordinates[1]]);
+            const order = await Order.findById(orderId).select('status pickupAddress deliveryAddress merchant itemDetails').lean() as any;
+            if (order && !['DELIVERED', 'CANCELLED'].includes(order.status)) {
+              const isTransit = order.itemDetails?.isPickedUp || order.status === 'IN_TRANSIT';
+              const target = isTransit ? order.deliveryAddress : order.pickupAddress;
+              const dist = calculateDistance([lng, lat], [target.location.coordinates[0], target.location.coordinates[1]]);
 
-                if (dist <= 0.5) { // 500 meters
-                   const location = isTransit ? 'your address' : 'pickup point';
-                   logger.info({ orderId, dist }, '🎯 [Nearby] Triggering proximity alert');
-                   
-                   // Notify Merchant
-                   await notifyOrderUpdate(order.merchant.toString(), 'RIDER_NEARBY', { location }, { orderId, type: 'NEARBY' }, io);
-                   
-                   // Notify Customer via socket
-                   io.to(`order:${orderId}`).emit('notification', {
-                      title: 'Rider is Nearby!',
-                      body: `Your rider is less than 500m away from the ${location}.`,
-                   });
+              if (dist <= 0.5) { // 500 meters
+                const location = isTransit ? 'your address' : 'pickup point';
+                logger.info({ orderId, dist }, '🎯 [Nearby] Triggering proximity alert');
 
-                   // Mark as notified for 15 mins to avoid spam
-                   await redis.set(proximityKey, 'true', 'EX', 900);
-                }
-             }
+                // Notify Merchant
+                await notifyOrderUpdate(order.merchant.toString(), 'RIDER_NEARBY', { location }, { orderId, type: 'NEARBY' }, io);
+
+                // Notify Customer via socket
+                io.to(`order:${orderId}`).emit('notification', {
+                  title: 'Rider is Nearby!',
+                  body: `Your rider is less than 500m away from the ${location}.`,
+                });
+
+                // Mark as notified for 15 mins to avoid spam
+                await redis.set(proximityKey, 'true', 'EX', 900);
+              }
+            }
           }
         }
 
         // 📍 Update Redis cache (per-order telemetry)
         const locationKey = `order:location:${orderId}`;
         const historyKey = `order:history:points:${orderId}`;
-        
+
         const telemetry = JSON.stringify({ lat, lng, battery, speed, riderName, lastSeen: Date.now() });
-        
+
         await redis.set(locationKey, telemetry, 'EX', 60);
-        
+
         // Push to history list for background sync to MongoDB
         if (!isGlobal) {
           await redis.lpush(historyKey, telemetry);

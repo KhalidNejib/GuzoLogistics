@@ -71,7 +71,7 @@ export default function TabLayout() {
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       const token = await getTokenRef.current();
       const res = await fetch(`${API_URL}/api/v1/user/me`, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'localtunnel-skip-clearing-house': 'true'
         },
@@ -194,13 +194,13 @@ export default function TabLayout() {
         <Text style={{ color: '#94a3b8', fontSize: 14, textAlign: 'center', marginBottom: 10 }}>
           {t('startup.offline_warning')}
         </Text>
-        
+
         <View style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 12, marginBottom: 30, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
           <Text style={{ color: '#6366f1', fontSize: 10, fontWeight: '900', textTransform: 'uppercase', marginBottom: 4 }}>Target Uplink</Text>
           <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>{API_URL}</Text>
         </View>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           onPress={() => {
             checkVerification();
           }}
@@ -209,7 +209,7 @@ export default function TabLayout() {
           <Text style={{ color: 'white', fontWeight: '900' }}>Retry Connection</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => setNetworkStatus('STABLE')}
           style={{ marginTop: 20 }}
         >
@@ -283,22 +283,22 @@ export default function TabLayout() {
 
   // ─── BLOCKED: IN_REVIEW / REJECTED / WRONG_ROLE ──────────────────────────
   if (approvalStatus !== 'APPROVED') {
-    const isRejected  = approvalStatus === 'REJECTED';
+    const isRejected = approvalStatus === 'REJECTED';
     const isWrongRole = approvalStatus === 'WRONG_ROLE';
 
-    const iconName  = isWrongRole ? 'store-off' : isRejected ? 'alert-octagon' : 'account-clock';
+    const iconName = isWrongRole ? 'store-off' : isRejected ? 'alert-octagon' : 'account-clock';
     const iconColor = isWrongRole ? '#f59e0b' : isRejected ? '#ef4444' : '#6366f1';
-    const iconBg    = isWrongRole ? '#1c1700' : isRejected ? '#1c0000' : '#1e1b4b';
+    const iconBg = isWrongRole ? '#1c1700' : isRejected ? '#1c0000' : '#1e1b4b';
 
     const title = isWrongRole ? 'Wrong Terminal'
       : isRejected ? 'Application Rejected'
-      : 'Awaiting Clearance';
+        : 'Awaiting Clearance';
 
     const message = isWrongRole
       ? 'You are signed in as a Merchant. This app is for Logistics Pilots only.'
       : isRejected
-      ? 'Your pilot application was not approved. Contact your fleet manager for details.'
-      : 'Your registration was submitted and is being reviewed by your fleet manager.\n\nThe map, orders, profile, and all features are completely locked until you are approved.';
+        ? 'Your pilot application was not approved. Contact your fleet manager for details.'
+        : 'Your registration was submitted and is being reviewed by your fleet manager.\n\nThe map, orders, profile, and all features are completely locked until you are approved.';
 
     return (
       <View style={{ flex: 1, backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
@@ -395,7 +395,7 @@ export default function TabLayout() {
   return (
     <Tabs screenOptions={{ tabBarShowLabel: false, tabBarStyle: { display: 'none' }, headerShown: false }}>
       <Tabs.Screen name="index" options={{ href: null }} />
-      <Tabs.Screen name="two"   options={{ href: null }} />
+      <Tabs.Screen name="two" options={{ href: null }} />
     </Tabs>
   );
 }

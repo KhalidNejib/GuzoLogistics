@@ -105,7 +105,7 @@ export default function TrackingPage() {
   return (
     <div className="min-h-[calc(100vh-8rem)] lg:h-[calc(100vh-8rem)] flex flex-col gap-4">
       {/* 🔝 HEADER */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-4">
           {isFocusedView && (
             <Button
@@ -118,7 +118,7 @@ export default function TrackingPage() {
             </Button>
           )}
           <div>
-            <h2 className="text-3xl font-bold tracking-tight bg-linear-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight bg-linear-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
               {isFocusedView ? 'Rider Tactical View' : 'Live Fleet Command Center'}
             </h2>
             <p className="text-muted-foreground text-sm font-medium">
@@ -126,7 +126,7 @@ export default function TrackingPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {!isFocusedView && activeOrderObj && (
             <Button
               variant="outline"
@@ -363,8 +363,8 @@ export default function TrackingPage() {
                     </div>
                     <p className="text-xs font-bold truncate">{order.deliveryAddress.addressText}</p>
                     <div className="flex items-center justify-between mt-1">
-                       <p className="text-[10px] text-muted-foreground">ETB {order.priceInfo.amount.toLocaleString()}</p>
-                       <button onClick={(e) => { e.stopPropagation(); setIsFocusedView(true); handleOrderClick(order._id); }} className="text-[9px] font-black text-blue-600 uppercase tracking-tighter hover:underline">Track Full-Screen</button>
+                      <p className="text-[10px] text-muted-foreground">ETB {order.priceInfo.amount.toLocaleString()}</p>
+                      <button onClick={(e) => { e.stopPropagation(); setIsFocusedView(true); handleOrderClick(order._id); }} className="text-[9px] font-black text-blue-600 uppercase tracking-tighter hover:underline">Track Full-Screen</button>
                     </div>
                   </div>
                 ))}
@@ -375,48 +375,48 @@ export default function TrackingPage() {
 
         <Card className={cn("min-h-[480px] h-[550px] lg:h-full border-border/40 shadow-sm overflow-hidden relative flex flex-col", isFocusedView ? "lg:col-span-12" : "lg:col-span-8")}>
           {activeOrderObj && (
-             <div className="w-full bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800 p-4 shadow-sm z-10 shrink-0">
-               <div className="max-w-3xl mx-auto flex items-center justify-between relative">
-                 <div className="absolute left-[5%] right-[5%] top-4 -translate-y-1/2 h-1 bg-slate-200 dark:bg-zinc-800 rounded-full z-0" />
-                 <div 
-                   className="absolute left-[5%] top-4 -translate-y-1/2 h-1 bg-blue-500 rounded-full z-0 transition-all duration-700 shadow-[0_0_8px_rgba(59,130,246,0.5)]" 
-                   style={{ width: `${Math.max(0, ['PENDING', 'ACCEPTED', 'ARRIVED_PICKUP', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED_DELIVERY', 'DELIVERED'].indexOf(activeOrderObj.status) / 6 * 90)}%` }}
-                 />
-                 {['PENDING', 'ACCEPTED', 'ARRIVED_PICKUP', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED_DELIVERY', 'DELIVERED'].map((stage, index, arr) => {
-                   const currentIndex = arr.indexOf(activeOrderObj.status);
-                   const isCompleted = index < currentIndex;
-                   const isActive = index === currentIndex;
-                   
-                   const displayNames: Record<string, string> = {
-                     ARRIVED_PICKUP: 'Arrived @ Pickup',
-                     ARRIVED_DELIVERY: 'Arrived @ Dropoff',
-                     PICKED_UP: 'Collected',
-                     IN_TRANSIT: 'In Transit'
-                   };
- 
-                   return (
-                     <div key={stage} className="flex flex-col items-center gap-2 z-10 w-16">
-                       <div className={`w-7 h-7 rounded-full flex items-center justify-center border-4 border-white dark:border-zinc-900 shadow-sm transition-colors ${isActive ? 'bg-blue-600 text-white ring-4 ring-blue-600/20' : isCompleted ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-zinc-800 text-slate-400'}`}>
-                         {isCompleted ? '✓' : isActive ? '●' : '○'}
-                       </div>
-                       <span className={`text-[7px] font-black uppercase tracking-tight text-center leading-none ${isActive ? 'text-blue-700 dark:text-blue-400' : isCompleted ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400'}`}>
-                         {displayNames[stage] || stage.replace('_', ' ')}
-                       </span>
-                     </div>
-                   )
-                 })}
-               </div>
-             </div>
+            <div className="w-full bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800 p-4 shadow-sm z-10 shrink-0 overflow-x-auto">
+              <div className="max-w-3xl mx-auto flex items-center justify-between relative min-w-[420px] sm:min-w-0">
+                <div className="absolute left-[5%] right-[5%] top-4 -translate-y-1/2 h-1 bg-slate-200 dark:bg-zinc-800 rounded-full z-0" />
+                <div
+                  className="absolute left-[5%] top-4 -translate-y-1/2 h-1 bg-blue-500 rounded-full z-0 transition-all duration-700 shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                  style={{ width: `${Math.max(0, ['PENDING', 'ACCEPTED', 'ARRIVED_PICKUP', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED_DELIVERY', 'DELIVERED'].indexOf(activeOrderObj.status) / 6 * 90)}%` }}
+                />
+                {['PENDING', 'ACCEPTED', 'ARRIVED_PICKUP', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED_DELIVERY', 'DELIVERED'].map((stage, index, arr) => {
+                  const currentIndex = arr.indexOf(activeOrderObj.status);
+                  const isCompleted = index < currentIndex;
+                  const isActive = index === currentIndex;
+
+                  const displayNames: Record<string, string> = {
+                    ARRIVED_PICKUP: 'Arrived @ Pickup',
+                    ARRIVED_DELIVERY: 'Arrived @ Dropoff',
+                    PICKED_UP: 'Collected',
+                    IN_TRANSIT: 'In Transit'
+                  };
+
+                  return (
+                    <div key={stage} className="flex flex-col items-center gap-2 z-10 w-14 sm:w-16 shrink-0">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center border-4 border-white dark:border-zinc-900 shadow-sm transition-colors ${isActive ? 'bg-blue-600 text-white ring-4 ring-blue-600/20' : isCompleted ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-zinc-800 text-slate-400'}`}>
+                        {isCompleted ? '✓' : isActive ? '●' : '○'}
+                      </div>
+                      <span className={`text-[7px] font-black uppercase tracking-tight text-center leading-none ${isActive ? 'text-blue-700 dark:text-blue-400' : isCompleted ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400'}`}>
+                        {displayNames[stage] || stage.replace('_', ' ')}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           )}
           <CardContent className="p-0 h-full w-full bg-slate-50 flex-1">
             <LogisticsMap activeOrder={activeOrderObj} riderLocation={riderLocation} fleet={fleet} telemetry={telemetry} />
             {isFocusedView && (
-               <button 
-                 onClick={() => setIsFocusedView(false)}
-                 className="absolute top-24 left-4 z-1000 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white px-4 py-2 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-zinc-800/80 active:scale-95 transition-all"
-               >
-                 <Navigation className="w-3.5 h-3.5 -rotate-90" /> Return to Hub
-               </button>
+              <button
+                onClick={() => setIsFocusedView(false)}
+                className="absolute top-24 left-4 z-1000 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white px-4 py-2 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-zinc-800/80 active:scale-95 transition-all"
+              >
+                <Navigation className="w-3.5 h-3.5 -rotate-90" /> Return to Hub
+              </button>
             )}
           </CardContent>
         </Card>

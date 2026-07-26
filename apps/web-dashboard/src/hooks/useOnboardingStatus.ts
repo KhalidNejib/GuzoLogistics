@@ -9,6 +9,7 @@ export function useOnboardingStatus() {
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null); // null = loading
   const [isApproved, setIsApproved] = useState<boolean | null>(null); // null = loading
   const [isChecking, setIsChecking] = useState(true);
+  const [statusError, setStatusError] = useState(false); // true = the status check itself failed (network/5xx), not a real pending state
 
   const checkStatus = useCallback(async () => {
     if (!isSignedIn) {
@@ -17,6 +18,7 @@ export function useOnboardingStatus() {
     }
     try {
       setIsChecking(true);
+      setStatusError(false);
       const token = await getToken();
       const res = await fetch(`${API_URL}/api/v1/merchant/onboarding/status`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -26,14 +28,23 @@ export function useOnboardingStatus() {
         setOnboardingCompleted(data.onboardingCompleted);
         setIsApproved(data.isApproved);
       } else {
-        // If endpoint fails (e.g. server down), don't block the user
-        setOnboardingCompleted(true);
-        setIsApproved(true);
+        // FAIL CLOSED. This used to fail open (treat the merchant as
+        // onboarded + approved) whenever this request failed for any reason —
+        // a slow Render cold start, a transient 5xx, a CORS misconfig, etc.
+        // That meant an unregistered or unapproved merchant could get straight
+        // into the full dashboard just by having this one request fail, which
+        // is exactly the "anyone can enter the merchant dashboard" bug.
+        // Treating an unknown status as "not yet approved" is the safe default;
+        // the retry button below lets them recover from a real transient error.
+        setStatusError(true);
+        setOnboardingCompleted(null);
+        setIsApproved(false);
       }
     } catch {
-      // Network error — don't force onboarding, just let them in
-      setOnboardingCompleted(true);
-      setIsApproved(true);
+      // Network error — same reasoning as above: fail closed, don't grant access.
+      setStatusError(true);
+      setOnboardingCompleted(null);
+      setIsApproved(false);
     } finally {
       setIsChecking(false);
     }
@@ -48,5 +59,5 @@ export function useOnboardingStatus() {
     setIsApproved(false); // Once onboarding is completed, they enter review/not yet approved
   };
 
-  return { onboardingCompleted, isApproved, isChecking, markCompleted };
+  return { onboardingCompleted, isApproved, isChecking, markCompleted, statusError, retry: checkStatus };
 }

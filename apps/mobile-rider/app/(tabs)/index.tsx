@@ -126,7 +126,7 @@ export default function RiderDashboard() {
   useEffect(() => {
     const name = user?.fullName ?? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
     if (name) {
-      SecureStore.setItemAsync('rider_name', name).catch(() => {});
+      SecureStore.setItemAsync('rider_name', name).catch(() => { });
     }
   }, [user]);
 
@@ -170,9 +170,9 @@ export default function RiderDashboard() {
 
   useEffect(() => {
     if (focusedOrder?._id) {
-      SecureStore.setItemAsync('active_order_id', focusedOrder._id).catch(() => {});
+      SecureStore.setItemAsync('active_order_id', focusedOrder._id).catch(() => { });
     } else {
-      SecureStore.deleteItemAsync('active_order_id').catch(() => {});
+      SecureStore.deleteItemAsync('active_order_id').catch(() => { });
     }
   }, [focusedOrder?._id]);
 
@@ -245,7 +245,7 @@ export default function RiderDashboard() {
       uri: 'https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3',
     }).then(({ sound }) => {
       if (mounted) soundObject.current = sound;
-    }).catch(() => {});
+    }).catch(() => { });
     return () => {
       mounted = false;
       soundObject.current?.unloadAsync();
@@ -283,8 +283,8 @@ export default function RiderDashboard() {
       if (!token) return;
 
       const res = await fetch(`${API_URL}/api/v1/orders/my-orders`, {
-        headers: { 
-          Authorization: `Bearer ${token}`, 
+        headers: {
+          Authorization: `Bearer ${token}`,
           'ngrok-skip-browser-warning': 'true',
           'localtunnel-skip-clearing-house': 'true'
         },
@@ -316,8 +316,8 @@ export default function RiderDashboard() {
       }
 
       const profileRes = await fetch(`${API_URL}/api/v1/user/me`, {
-        headers: { 
-          Authorization: `Bearer ${token}`, 
+        headers: {
+          Authorization: `Bearer ${token}`,
           'ngrok-skip-browser-warning': 'true',
           'localtunnel-skip-clearing-house': 'true'
         },
@@ -423,9 +423,9 @@ export default function RiderDashboard() {
         // ✅ Send live location — socket is connected at this point
         socketService.sendLocation({
           orderId: order?._id ?? 'global',
-          lat, 
-          lng, 
-          battery: batteryLevel, 
+          lat,
+          lng,
+          battery: batteryLevel,
           speed: Math.round(spd ?? 0),
           riderName: user?.fullName ?? (global as any).riderName ?? 'Rider',
           riderPhone: user?.primaryPhoneNumber?.phoneNumber ?? '',
@@ -453,7 +453,7 @@ export default function RiderDashboard() {
           duration: feat.properties.summary.duration,
         };
       }
-    } catch {}
+    } catch { }
     return { coords: [{ latitude: from.lat, longitude: from.lng }, { latitude: to.lat, longitude: to.lng }], distance: calculateDistance(from.lat, from.lng, to.lat, to.lng), duration: 0 };
   }, []);
 
@@ -509,11 +509,11 @@ export default function RiderDashboard() {
     try {
       const token = await getToken();
       if (!token) { setIsLoading(false); return; }
-      const meRes = await fetch(`${API_URL}/api/v1/user/me`, { 
-        headers: { 
+      const meRes = await fetch(`${API_URL}/api/v1/user/me`, {
+        headers: {
           Authorization: `Bearer ${token}`,
           'localtunnel-skip-clearing-house': 'true'
-        } 
+        }
       });
       if (meRes.ok) {
         const me = await meRes.json();
@@ -535,13 +535,13 @@ export default function RiderDashboard() {
           if (p?.autoAccept && activeOrdersRef.current.length > 0) {
             handleAcceptOrder(order._id); return;
           }
-          if (p?.sound) soundObject.current?.replayAsync().catch(() => {});
+          if (p?.sound) soundObject.current?.replayAsync().catch(() => { });
           if (p?.haptics) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           setPendingOrders(prev => prev.find(o => o._id === order._id) ? prev : [order, ...prev]);
           setNewOrder(order);
           if (p?.notifications !== false) {
             setShowNewOrderModal(true);
-            
+
             // Present local notification tray banner if app is not in the foreground
             if (AppState.currentState !== 'active') {
               Notifications.scheduleNotificationAsync({
@@ -552,7 +552,7 @@ export default function RiderDashboard() {
                   sound: true,
                 },
                 trigger: null,
-              }).catch(() => {});
+              }).catch(() => { });
             }
           }
         }),
@@ -581,16 +581,16 @@ export default function RiderDashboard() {
         }),
         socketService.onNotification((data) => {
           setNotifications(prev => [
-            { 
-              id: Date.now().toString(), 
-              ...data, 
+            {
+              id: Date.now().toString(),
+              ...data,
               timestamp: new Date(),
-              timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-            }, 
+              timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            },
             ...prev
           ]);
-          if (preferencesRef.current?.sound) soundObject.current?.replayAsync().catch(() => {});
-          
+          if (preferencesRef.current?.sound) soundObject.current?.replayAsync().catch(() => { });
+
           // Present local notification tray banner if app is not in the foreground
           if (AppState.currentState !== 'active') {
             Notifications.scheduleNotificationAsync({
@@ -601,9 +601,9 @@ export default function RiderDashboard() {
                 sound: true,
               },
               trigger: null,
-            }).catch(() => {});
+            }).catch(() => { });
           }
-          
+
           if (data.type === 'MISSION_SUCCESS' || data.title?.includes('Mission Complete') || data.title?.includes('Success') || data.title?.includes('Delivered')) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert(
@@ -640,29 +640,29 @@ export default function RiderDashboard() {
       ];
 
       registerForPushNotificationsAsync().then(t => {
-        if (t) fetch(`${API_URL}/api/v1/user/push-token`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ token: t }) }).catch(() => {});
+        if (t) fetch(`${API_URL}/api/v1/user/push-token`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ token: t }) }).catch(() => { });
       });
       fetchData();
-      
+
       // ✅ Wait for socket to connect (up to 3s) before starting location tracking
       // This prevents the "Offline — buffering" flood on startup
       const startTrackingWhenReady = async () => {
         const has = await requestLocationPermissions();
         if (!has) return;
-        
+
         // Give socket time to authenticate
         let waited = 0;
         while (!socketService.isConnected() && waited < 3000) {
           await new Promise(r => setTimeout(r, 200));
           waited += 200;
         }
-        
+
         if (socketService.isConnected()) {
           console.info('✅ [Init] Socket ready — starting location tracking');
         } else {
           console.warn('⚠️ [Init] Socket not ready yet — starting tracking anyway (will buffer)');
         }
-        
+
         startLocationTracking(handleLocationUpdate);
         const l = await getCurrentLocation();
         if (l) setCurrentPosition(l);
@@ -684,7 +684,7 @@ export default function RiderDashboard() {
       if (next === 'active') {
         fetchData();
         // Refresh cached bg token whenever app comes to foreground
-        getToken().then(t => { if (t) SecureStore.setItemAsync('bg_auth_token', t); }).catch(() => {});
+        getToken().then(t => { if (t) SecureStore.setItemAsync('bg_auth_token', t); }).catch(() => { });
         if (currentPosition && mapRef.current) {
           setHeadingLocked(true);
           mapRef.current.animateCamera({ center: { latitude: currentPosition.lat, longitude: currentPosition.lng }, pitch: 70, heading: bearing, zoom: 19.0 }, { duration: 1000 });
@@ -697,7 +697,7 @@ export default function RiderDashboard() {
   const handleToggleOnline = useCallback(async (v: boolean) => {
     setIsOnline(v);
     SecureStore.setItemAsync('rider_online_state', String(v));
-    
+
     if (v) {
       console.info('🛰️ [Tracking] Activating Live Feed...');
 
@@ -720,7 +720,7 @@ export default function RiderDashboard() {
         try {
           const isStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME).catch(() => false);
           if (isStarted) {
-            await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME).catch(() => {});
+            await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME).catch(() => { });
           }
         } catch (e) { }
       })();
@@ -731,13 +731,13 @@ export default function RiderDashboard() {
   const handleAcceptOrder = useCallback(async (id: string) => {
     try {
       const t = await getToken();
-      const res = await fetch(`${API_URL}/api/v1/orders/${id}/accept`, { 
-        method: 'POST', 
-        headers: { 
-          Authorization: `Bearer ${t}`, 
+      const res = await fetch(`${API_URL}/api/v1/orders/${id}/accept`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${t}`,
           'ngrok-skip-browser-warning': 'true',
           'localtunnel-skip-clearing-house': 'true'
-        } 
+        }
       });
       if (res.ok) {
         setShowNewOrderModal(false);
@@ -772,12 +772,12 @@ export default function RiderDashboard() {
       const t = await getToken();
       const res = await fetch(`${API_URL}/api/v1/orders/${id}/status`, {
         method: 'PATCH',
-        headers: { 
-        'Content-Type': 'application/json', 
-        Authorization: `Bearer ${t}`, 
-        'ngrok-skip-browser-warning': 'true',
-        'localtunnel-skip-clearing-house': 'true'
-      },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${t}`,
+          'ngrok-skip-browser-warning': 'true',
+          'localtunnel-skip-clearing-house': 'true'
+        },
         body: JSON.stringify({ status, verificationCode, photoBase64 }),
       });
       if (res.ok) {
@@ -801,8 +801,8 @@ export default function RiderDashboard() {
       const t = await getToken();
       const res = await fetch(`${API_URL}/api/incidents`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
+        headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${t}`,
           'ngrok-skip-browser-warning': 'true',
           'localtunnel-skip-clearing-house': 'true'
@@ -900,8 +900,8 @@ export default function RiderDashboard() {
       {/* CONNECTIVITY BANNER */}
       {!isNetConnected && (
         <View style={{ position: 'absolute', top: insets.top + 70, left: 24, right: 24, zIndex: 100, backgroundColor: '#f43f5e', borderRadius: 12, paddingVertical: 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10, elevation: 15 }}>
-           <Feather name="wifi-off" size={14} color="white" />
-           <Text style={{ color: 'white', fontWeight: '900', fontSize: 10, marginLeft: 8, textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('home.searching_signal')} ({t('home.establishing_uplink')})</Text>
+          <Feather name="wifi-off" size={14} color="white" />
+          <Text style={{ color: 'white', fontWeight: '900', fontSize: 10, marginLeft: 8, textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('home.searching_signal')} ({t('home.establishing_uplink')})</Text>
         </View>
       )}
       {/* HEADER */}
@@ -923,47 +923,47 @@ export default function RiderDashboard() {
                 {notifications.length > 0 && <View style={styles.badgeMicro} />}
               </TouchableOpacity>
               <View style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}>
-                <Switch 
-                  value={isOnline} 
-                  onValueChange={handleToggleOnline} 
-                  trackColor={{ false: '#cbd5e1', true: '#4f46e5' }} 
+                <Switch
+                  value={isOnline}
+                  onValueChange={handleToggleOnline}
+                  trackColor={{ false: '#cbd5e1', true: '#4f46e5' }}
                   thumbColor="#fff"
                 />
               </View>
             </View>
           </View>
         </BlurView>
-        
+
         {/* 🚀 TIER 2: VERTICAL TACTICAL STRIP (Left Side) */}
         <Animated.View style={[styles.tacticalStrip, { top: insets.top + 80 }]}>
-            {/* Mission Stats */}
-            {routeMeta && (
-              <View style={styles.stripSection}>
-                <View style={styles.pillStat}>
-                  <Text style={styles.pillValue}>{Math.ceil(routeMeta.duration / 60)}</Text>
-                  <Text style={styles.pillLabel}>MIN</Text>
-                </View>
-                <View style={styles.pillDivider} />
-                <View style={styles.pillStat}>
-                  <Text style={styles.pillValue}>{(routeMeta.distance / 1000).toFixed(1)}</Text>
-                  <Text style={styles.pillLabel}>KM</Text>
-                </View>
-                <View style={[styles.pillDivider, { width: 24, height: 2, marginVertical: 12, backgroundColor: 'rgba(79, 70, 229, 0.4)' }]} />
-              </View>
-            )}
-
-            {/* Vital Stats */}
+          {/* Mission Stats */}
+          {routeMeta && (
             <View style={styles.stripSection}>
               <View style={styles.pillStat}>
-                <Text style={[styles.pillValue, { color: isDark ? '#fff' : '#0f172a' }]}>{speed}</Text>
-                <Text style={styles.pillLabel}>KM/H</Text>
+                <Text style={styles.pillValue}>{Math.ceil(routeMeta.duration / 60)}</Text>
+                <Text style={styles.pillLabel}>MIN</Text>
               </View>
               <View style={styles.pillDivider} />
               <View style={styles.pillStat}>
-                <MaterialCommunityIcons name={batteryLevel > 20 ? 'battery-high' : 'battery-low'} size={16} color={batteryLevel > 20 ? '#10b981' : '#f43f5e'} />
-                <Text style={[styles.pillLabel, { marginTop: 2 }]}>{batteryLevel}%</Text>
+                <Text style={styles.pillValue}>{(routeMeta.distance / 1000).toFixed(1)}</Text>
+                <Text style={styles.pillLabel}>KM</Text>
               </View>
+              <View style={[styles.pillDivider, { width: 24, height: 2, marginVertical: 12, backgroundColor: 'rgba(79, 70, 229, 0.4)' }]} />
             </View>
+          )}
+
+          {/* Vital Stats */}
+          <View style={styles.stripSection}>
+            <View style={styles.pillStat}>
+              <Text style={[styles.pillValue, { color: isDark ? '#fff' : '#0f172a' }]}>{speed}</Text>
+              <Text style={styles.pillLabel}>KM/H</Text>
+            </View>
+            <View style={styles.pillDivider} />
+            <View style={styles.pillStat}>
+              <MaterialCommunityIcons name={batteryLevel > 20 ? 'battery-high' : 'battery-low'} size={16} color={batteryLevel > 20 ? '#10b981' : '#f43f5e'} />
+              <Text style={[styles.pillLabel, { marginTop: 2 }]}>{batteryLevel}%</Text>
+            </View>
+          </View>
         </Animated.View>
       </View>
 
@@ -971,26 +971,26 @@ export default function RiderDashboard() {
       {currentPosition ? (
         <View style={{ flex: 1 }}>
           <LiveRiderMap mapRef={mapRef} currentPosition={currentPosition} focusedOrder={focusedOrder} routeToPickup={routeToPickup} routeCoords={routeCoords} bearing={bearing} routeMeta={routeMeta} isPickedUp={isPickedUp} isDark={preferences?.darkMode} />
-          
+
           <View style={[styles.mapControls, { top: insets.top + 90 }]}>
             <TouchableOpacity style={styles.mapBtn} onPress={() => { setIsSheetCollapsed(!isSheetCollapsed); snapSheet(isSheetCollapsed ? 'middle' : 'bottom'); }}><MaterialCommunityIcons name={isSheetCollapsed ? 'arrow-expand-all' : 'arrow-collapse-all'} size={20} color="#4f46e5" /></TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.mapBtn, { marginTop: 10, borderColor: headingLocked ? '#4f46e5' : '#f1f5f9', borderWidth: headingLocked ? 2 : 1 }]} 
-              onPress={() => { 
+            <TouchableOpacity
+              style={[styles.mapBtn, { marginTop: 10, borderColor: headingLocked ? '#4f46e5' : '#f1f5f9', borderWidth: headingLocked ? 2 : 1 }]}
+              onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                setHeadingLocked(true); 
-                mapRef.current?.animateCamera({ 
-                  center: { latitude: currentPosition.lat, longitude: currentPosition.lng}, 
-                  zoom: 19.5, 
-                  pitch: 75, 
-                  heading: bearing 
-                }, { duration: 1000 }); 
+                setHeadingLocked(true);
+                mapRef.current?.animateCamera({
+                  center: { latitude: currentPosition.lat, longitude: currentPosition.lng },
+                  zoom: 19.5,
+                  pitch: 75,
+                  heading: bearing
+                }, { duration: 1000 });
               }}
             >
-              <MaterialCommunityIcons 
-                name={headingLocked ? "navigation" : "crosshairs-gps"} 
-                size={22} 
-                color={headingLocked ? "#4f46e5" : "#94a3b8"} 
+              <MaterialCommunityIcons
+                name={headingLocked ? "navigation" : "crosshairs-gps"}
+                size={22}
+                color={headingLocked ? "#4f46e5" : "#94a3b8"}
               />
             </TouchableOpacity>
             <TouchableOpacity style={[styles.mapBtn, { marginTop: 10, backgroundColor: headingLocked ? '#4f46e5' : 'white' }]} onPress={handleToggleHeadingLock}><MaterialCommunityIcons name={headingLocked ? 'compass' : 'compass-off'} size={20} color={headingLocked ? 'white' : '#94a3b8'} /></TouchableOpacity>
@@ -1030,50 +1030,50 @@ export default function RiderDashboard() {
           </Animated.View>
 
           <Animated.View style={[styles.bottomSheet, { transform: [{ translateY: sheetTranslateY }], paddingBottom: Math.max(insets.bottom, 34) + 10 }]} {...sheetPanResponder.panHandlers}>
-          <View style={{ height: 22 }} />
-          <View style={styles.tabs}>
-            {[
-              { id: 'PENDING', label: t('tabs.pending'), icon: 'time-outline' },
-              { id: 'ACTIVE', label: t('tabs.active'), icon: 'navigate-outline' },
-              { id: 'HISTORY', label: t('tabs.history'), icon: 'checkmark-done-outline' }
-            ].map(tab => (
-              <TouchableOpacity key={tab.id} style={[styles.tab, activeTab === tab.id && styles.tabActive]} onPress={() => setActiveTab(tab.id as any)}>
-                <Ionicons
-                  name={tab.icon as any}
-                  size={13}
-                  color={activeTab === tab.id ? 'white' : (isDark ? '#94a3b8' : '#64748b')}
-                />
-                <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>{tab.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <ScrollView style={styles.scroll}>
-            <View style={styles.listPad}>
-              {(activeTab === 'ACTIVE' ? activeOrders : activeTab === 'PENDING' ? pendingOrders : historyOrders).map(order => (
-                <OrderCard 
-                  key={order._id} 
-                  order={order} 
-                  isActive={order._id === focusedOrderId} 
-                  onPress={(o) => { 
-                    if (activeTab === 'ACTIVE') { 
-                      setFocusedOrderId(o._id); 
-                      snapSheet('bottom'); 
-                    } else { 
-                      setSelectedOrder(o); 
-                      setShowDetailModal(true); 
-                    } 
-                  }} 
-                  onLongPress={(o) => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                    setSelectedOrder(o);
-                    setShowDetailModal(true);
-                  }}
-                />
+            <View style={{ height: 22 }} />
+            <View style={styles.tabs}>
+              {[
+                { id: 'PENDING', label: t('tabs.pending'), icon: 'time-outline' },
+                { id: 'ACTIVE', label: t('tabs.active'), icon: 'navigate-outline' },
+                { id: 'HISTORY', label: t('tabs.history'), icon: 'checkmark-done-outline' }
+              ].map(tab => (
+                <TouchableOpacity key={tab.id} style={[styles.tab, activeTab === tab.id && styles.tabActive]} onPress={() => setActiveTab(tab.id as any)}>
+                  <Ionicons
+                    name={tab.icon as any}
+                    size={13}
+                    color={activeTab === tab.id ? 'white' : (isDark ? '#94a3b8' : '#64748b')}
+                  />
+                  <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>{tab.label}</Text>
+                </TouchableOpacity>
               ))}
-              {(activeTab === 'ACTIVE' && activeOrders.length === 0) && <EmptyState icon="leaf-outline" text={t('home.mission_ready')} />}
             </View>
-          </ScrollView>
-        </Animated.View>
+            <ScrollView style={styles.scroll}>
+              <View style={styles.listPad}>
+                {(activeTab === 'ACTIVE' ? activeOrders : activeTab === 'PENDING' ? pendingOrders : historyOrders).map(order => (
+                  <OrderCard
+                    key={order._id}
+                    order={order}
+                    isActive={order._id === focusedOrderId}
+                    onPress={(o) => {
+                      if (activeTab === 'ACTIVE') {
+                        setFocusedOrderId(o._id);
+                        snapSheet('bottom');
+                      } else {
+                        setSelectedOrder(o);
+                        setShowDetailModal(true);
+                      }
+                    }}
+                    onLongPress={(o) => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                      setSelectedOrder(o);
+                      setShowDetailModal(true);
+                    }}
+                  />
+                ))}
+                {(activeTab === 'ACTIVE' && activeOrders.length === 0) && <EmptyState icon="leaf-outline" text={t('home.mission_ready')} />}
+              </View>
+            </ScrollView>
+          </Animated.View>
         </>
       ) : (
         <View style={[styles.offlinePanel, { paddingBottom: Math.max(insets.bottom, 34) + 15 }]}>
@@ -1098,7 +1098,7 @@ export default function RiderDashboard() {
 
       {/* Active Order Status Card */}
       {isOnline && focusedOrder && (
-        <Animated.View style={[styles.compactCard, { 
+        <Animated.View style={[styles.compactCard, {
           bottom: (height * 0.42) + 45,
           transform: [{ translateY: sheetTranslateY }],
           height: 64, // Sleek, small height
@@ -1128,16 +1128,16 @@ export default function RiderDashboard() {
           {/* Side-by-Side Action Pills */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             {focusedOrder.status === 'ACCEPTED' ? (
-              <TouchableOpacity 
-                style={{ backgroundColor: '#4f46e5', paddingHorizontal: 12, height: 36, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }} 
+              <TouchableOpacity
+                style={{ backgroundColor: '#4f46e5', paddingHorizontal: 12, height: 36, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }}
                 onPress={() => handleUpdateStatus('ARRIVED_PICKUP', undefined, undefined, focusedOrder._id)}
               >
                 <MaterialCommunityIcons name="map-marker-check" size={16} color="white" />
                 <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>ARRIVE</Text>
               </TouchableOpacity>
             ) : focusedOrder.status === 'ARRIVED_PICKUP' ? (
-              <TouchableOpacity 
-                style={{ backgroundColor: '#10b981', paddingHorizontal: 12, height: 36, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }} 
+              <TouchableOpacity
+                style={{ backgroundColor: '#10b981', paddingHorizontal: 12, height: 36, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }}
                 onPress={() => handleUpdateStatus('PICKED_UP', undefined, undefined, focusedOrder._id)}
               >
                 <MaterialCommunityIcons name="package-variant-closed" size={16} color="white" />
@@ -1145,25 +1145,25 @@ export default function RiderDashboard() {
               </TouchableOpacity>
             ) : (focusedOrder.status === 'PICKED_UP' || focusedOrder.status === 'ARRIVED_DELIVERY') ? (
               <View style={{ flexDirection: 'row', gap: 6 }}>
-                 {focusedOrder.status === 'PICKED_UP' && (
-                    <TouchableOpacity 
-                      style={{ backgroundColor: '#f59e0b', width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }} 
-                      onPress={() => handleUpdateStatus('ARRIVED_DELIVERY', undefined, undefined, focusedOrder._id)}
-                    >
-                      <MaterialCommunityIcons name="map-marker-radius" size={18} color="white" />
-                    </TouchableOpacity>
-                 )}
-                 <TouchableOpacity 
-                    style={{ backgroundColor: '#4f46e5', paddingHorizontal: 12, height: 36, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }} 
-                    onPress={() => { setSelectedOrder(focusedOrder); setShowDetailModal(true); }}
+                {focusedOrder.status === 'PICKED_UP' && (
+                  <TouchableOpacity
+                    style={{ backgroundColor: '#f59e0b', width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}
+                    onPress={() => handleUpdateStatus('ARRIVED_DELIVERY', undefined, undefined, focusedOrder._id)}
                   >
-                    <MaterialCommunityIcons name="shield-check" size={16} color="white" />
-                    <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>VERIFY</Text>
+                    <MaterialCommunityIcons name="map-marker-radius" size={18} color="white" />
                   </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={{ backgroundColor: '#4f46e5', paddingHorizontal: 12, height: 36, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                  onPress={() => { setSelectedOrder(focusedOrder); setShowDetailModal(true); }}
+                >
+                  <MaterialCommunityIcons name="shield-check" size={16} color="white" />
+                  <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>VERIFY</Text>
+                </TouchableOpacity>
               </View>
             ) : (
-               <TouchableOpacity 
-                style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9', width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }} 
+              <TouchableOpacity
+                style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9', width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => { setSelectedOrder(focusedOrder); setShowDetailModal(true); }}
               >
                 <Feather name="chevron-right" size={18} color="#4f46e5" />
@@ -1180,4 +1180,4 @@ export default function RiderDashboard() {
       <OnboardingModal visible={showOnboarding} initialData={riderProfile} getToken={getToken} onComplete={handleOnboardingSubmit} />
     </View>
   );
-}
+} 

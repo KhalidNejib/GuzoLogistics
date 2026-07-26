@@ -11,9 +11,11 @@ const router: Router = Router();
  *
  * Query params:
  *   role    — filter by role (MERCHANT | RIDER | ADMIN)
- *   status  — 'pending'  => onboardingCompleted: false, not deleted
- *             'active'   => onboardingCompleted: true, not deleted
- *             (omit for all, including soft-deleted)
+ *   status  — 'pending'  => onboardingCompleted: true, isApproved: false, not disabled/deleted
+ *                           (submitted their info, awaiting admin review — matches the
+ *                           "Pending" badge and pendingCount shown in the dashboard UI)
+ *             'active'   => isApproved: true, not disabled/deleted
+ *             (omit for all, including soft-deleted and still-onboarding users)
  *   page    — page number (default: 1)
  *   limit   — results per page (default: 50, max: 200)
  *   search  — partial match on fullName or email
@@ -33,10 +35,13 @@ router.get('/users', requireUser, requireRole('ADMIN'), async (req: any, res: an
     }
 
     if (status === 'pending') {
-      filter.onboardingCompleted = false;
+      filter.onboardingCompleted = true;
+      filter.isApproved = false;
+      filter.disabled = { $ne: true };
       filter.deletedAt = null;
     } else if (status === 'active') {
-      filter.onboardingCompleted = true;
+      filter.isApproved = true;
+      filter.disabled = { $ne: true };
       filter.deletedAt = null;
     }
 
