@@ -31,7 +31,7 @@ import * as Battery from 'expo-battery';
 import { BlurView } from 'expo-blur';
 import { Audio } from 'expo-av';
 import * as SecureStore from 'expo-secure-store';
-import { useRouter } from 'expo-router';
+import { useRouter, useRootNavigationState } from 'expo-router';
 import { Notifications } from '../../services/safeNotifications';
 import NetInfo from '@react-native-community/netinfo';
 import * as Location from 'expo-location';
@@ -82,6 +82,7 @@ export default function RiderDashboard() {
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
 
   // ── UI state ────────────────────────────────────────────────
   const [isOnline, setIsOnline] = useState(true);
@@ -883,9 +884,17 @@ export default function RiderDashboard() {
   }, [getToken, fetchData, router, snapSheet]);
 
   useEffect(() => {
-    // Cold start: the app was fully closed/killed and the user tapped a push
-    // to launch it. This won't fire the listener below since that's only
-    // attached once the JS runtime is already up, so it's checked separately.
+    // Cold start: the app was fully closed/killed and the user tapped/swiped
+    // a push to launch it. At that moment this component has *mounted*, but
+    // Expo Router's root Stack may not have finished attaching internally yet
+    // — calling router.push/replace in that gap throws "Attempted to
+    // navigate before mounting the Root Layout component." Waiting for
+    // rootNavigationState.key closes that gap: it's only set once the
+    // navigator has actually reported ready.
+    if (!rootNavigationState?.key) return;
+
+    // This won't fire the listener below since that's only attached once the
+    // JS runtime is already up, so it's checked separately.
     Notifications.getLastNotificationResponseAsync().then((response) => {
       const data = response?.notification?.request?.content?.data;
       if (data) handleNotificationTap(data);
@@ -899,7 +908,7 @@ export default function RiderDashboard() {
     });
 
     return () => sub.remove();
-  }, [handleNotificationTap]);
+  }, [handleNotificationTap, rootNavigationState?.key]);
 
   if (isLoading) return <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#4f46e5" /><Text style={styles.loadingText}>{t('home.collecting_intel')}</Text></View>;
 
